@@ -17,6 +17,7 @@ engines/*/spec/**/*.cjs
 engines/*/spec/**/*.js
 engines/*/spec/**/*.js.map
 engines/*/spec/**/*.d.ts
+engines/*/spec/**/*.ttl
 
 packages/*/lib/**/*.cjs
 packages/*/lib/**/*.js

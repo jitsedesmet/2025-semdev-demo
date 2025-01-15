@@ -19,6 +19,9 @@
     "import": "./lib/index.js",
     "require": "./lib/index.cjs"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "files": [
     "lib/**/*.d.ts",
     "lib/**/*.js",
