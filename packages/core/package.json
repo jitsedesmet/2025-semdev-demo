@@ -40,5 +40,9 @@
   "dependencies": {
     "chevrotain": "^11.0.3",
     "rdf-data-factory": "^2.0.1"
+  },
+  "devDependencies": {
+    "@chevrotain/types": "^11.0.3",
+    "@rdfjs/types": "^2.0.0"
   }
 }

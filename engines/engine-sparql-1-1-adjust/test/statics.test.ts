@@ -26,7 +26,7 @@ describe('a SPARQL 1.1 + adjust parser', () => {
     });
   }
 
-  importSparql11NoteTests(parser, new DataFactory<BaseQuad>());
+  importSparql11NoteTests(args => new Sparql11AdjustParser(args), new DataFactory<BaseQuad>());
 
   it('parses ADJUST function', ({expect}) => {
     const query =  `

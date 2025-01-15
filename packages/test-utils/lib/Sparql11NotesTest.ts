@@ -1,6 +1,5 @@
-import {beforeEach, describe, it} from "vitest";
+import {describe, it} from "vitest";
 import type {TestFunction} from "vitest";
-import {Sparql11Parser} from "@traqula/engine-sparql-1-1";
 import {DataFactory} from "rdf-data-factory";
 import {BaseQuad} from "@rdfjs/types";
 
@@ -8,7 +7,10 @@ interface Parser {
   parse: (query: string) => unknown;
 }
 
-export function importSparql11NoteTests(parser: Parser, dataFactory: DataFactory<BaseQuad>) {
+type ParserConstructor = (args?: {prefixes?: Record<string, string>, baseIRI?: string}) => Parser;
+
+export function importSparql11NoteTests(constructor: ParserConstructor, dataFactory: DataFactory<BaseQuad>) {
+  const parser = constructor();
 
   function testErroneousQuery(query: string, errorMsg: string): TestFunction<object> {
     return ({ expect }) => {
@@ -75,7 +77,7 @@ export function importSparql11NoteTests(parser: Parser, dataFactory: DataFactory
 
   describe('with pre-defined prefixes', () => {
     const prefixes = { a: 'ex:abc#', b: 'ex:def#' };
-    const parser = new Sparql11Parser({ prefixes });
+    const parser = constructor({ prefixes });
 
     it('should use those prefixes', ({ expect }) => {
       const query = 'SELECT * { a:a b:b "" }';
@@ -141,7 +143,7 @@ export function importSparql11NoteTests(parser: Parser, dataFactory: DataFactory
   });
 
   describe('with pre-defined base IRI', () => {
-    const parser = new Sparql11Parser({ baseIRI: 'http://ex.org/' });
+    const parser = constructor({ baseIRI: 'http://ex.org/' });
 
     it('should use the base IRI', ({ expect }) => {
       const query = 'SELECT * { <> <#b> "" }';
@@ -162,7 +164,7 @@ export function importSparql11NoteTests(parser: Parser, dataFactory: DataFactory
 
       const goodQuery = 'SELECT * { <> <#b> "" }';
 
-      const parser = new Sparql11Parser({ baseIRI: 'http://ex2.org/' });
+      const parser = constructor({ baseIRI: 'http://ex2.org/' });
       const result = {
         subject: dataFactory.namedNode('http://ex2.org/'),
         predicate: dataFactory.namedNode('http://ex2.org/#b'),

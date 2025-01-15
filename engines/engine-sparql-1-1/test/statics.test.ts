@@ -26,5 +26,5 @@ describe('a SPARQL 1.1 parser', () => {
     });
   }
 
-  importSparql11NoteTests(parser, new DataFactory<BaseQuad>());
+  importSparql11NoteTests(args => new Sparql11Parser(args), new DataFactory<BaseQuad>());
 });

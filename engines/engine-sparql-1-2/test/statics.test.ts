@@ -3,6 +3,7 @@ import { Sparql12Parser } from "../lib";
 import {positiveTest, importSparql11NoteTests, negativeTest} from "@traqula/test-utils";
 import {DataFactory} from "rdf-data-factory";
 import {BaseQuad} from "@rdfjs/types";
+import {Sparql11Parser} from "@traqula/engine-sparql-1-1";
 
 describe('a SPARQL 1.2 parser', () => {
   const parser = new Sparql12Parser({ prefixes: { ex: 'http://example.org/' }});
@@ -43,5 +44,5 @@ describe('a SPARQL 1.2 parser', () => {
     });
   }
 
-  importSparql11NoteTests(parser, new DataFactory<BaseQuad>());
+  importSparql11NoteTests(args => new Sparql11Parser(args), new DataFactory<BaseQuad>());
 });

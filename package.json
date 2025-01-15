@@ -15,14 +15,17 @@
     "build:transpile": "lerna run build:transpile",
     "build:transpile-spec": "lerna run build:transpile-spec",
     "clean": "git clean -dfx",
+    "depcheck": "lerna exec --concurrency 1 -- depcheck --ignores=\"vitest\"",
     "publish": "yarn run build",
     "spec:all": "lerna run spec:all --concurrency 1",
     "spec:earl": "lerna run spec:earl --concurrency 1",
-    "test": "yarn build && vitest test --run"
+    "test": "yarn build && vitest test --run",
+    "version": "manual-git-changelog onversion"
   },
   "devDependencies": {
     "@rdfjs/types": "^2.0.0",
     "@vitest/coverage-v8": "2.1.8",
+    "depcheck": "^1.4.7",
     "esbuild": "^0.24.0",
     "lerna": "8.1.4",
     "manual-git-changelog": "^1.0.2",
