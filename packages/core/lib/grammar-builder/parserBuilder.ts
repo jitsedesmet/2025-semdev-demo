@@ -1,4 +1,3 @@
-/* eslint-disable ts/ban-ts-comment */
 import type { ILexerConfig, IParserConfig } from '@chevrotain/types';
 import type {IToken, TokenType, TokenVocabulary} from 'chevrotain';
 import { EmbeddedActionsParser, Lexer } from 'chevrotain';
@@ -22,18 +21,19 @@ function listToRuleDefMap<T extends readonly RuleDef[]>(rules: T): RuleListToObj
 }
 
 export class Builder<Names extends string, RuleDefs extends RuleDefMap<Names>> {
+  /**
+   * Create a builder with from some initial grammar rules or an existing builder.
+   * If a builder is provided, a new copy will be created.
+   */
   public static createBuilder<
     Rules extends readonly RuleDef[] = RuleDef[],
     Names extends string = RuleNamesFromList<Rules>,
-    // @ts-expect-error TS2344
     RuleDefs extends RuleDefMap<Names> = RuleListToObject<Rules>,
-// eslint-disable-next-line antfu/consistent-list-newline
 >(start: Rules | Builder<Names, RuleDefs>): Builder<Names, RuleDefs> {
     if (start instanceof Builder) {
       return new Builder({ ...start.rules });
     }
-    // @ts-expect-error TS2344
-    return new Builder(listToRuleDefMap(start));
+    return <Builder<Names, RuleDefs>> <unknown> new Builder(listToRuleDefMap(start));
   }
 
   private rules: RuleDefs;
@@ -42,50 +42,61 @@ export class Builder<Names extends string, RuleDefs extends RuleDefMap<Names>> {
     this.rules = startRules;
   }
 
+  /**
+   * Change the implementation of an existing grammar rule.
+   */
   public patchRule<U extends Names, RET, ARGS extends unknown[]>(patch: RuleDef<U, RET, ARGS>):
-  // @ts-expect-error TS2344
-  Builder<Names, {[Key in Names]: Key extends U ? RuleDef<Key, RET, ARGS> : RuleDefs[Key] }> {
-    // @ts-expect-error TS2322
-    this.rules[patch.name] = patch;
-    // @ts-expect-error TS2344
-    return <Builder<Names, Omit<RuleDefs, U> & Record<U, RuleDef<U, RET, ARGS>>>> this;
+  Builder<Names, {[Key in Names]: Key extends U ? RuleDef<Key, RET, ARGS> : (RuleDefs[Key] extends RuleDef<Key> ? RuleDefs[Key] : never) }> {
+    const self = <Builder<Names, {[Key in Names]: Key extends U ? RuleDef<Key, RET, ARGS> : (RuleDefs[Key] extends RuleDef<Key> ? RuleDefs[Key] : never) }>>
+      <unknown> this;
+    self.rules[patch.name] = <any> patch;
+    return self;
   }
 
+  /**
+   * Add a rule to the grammar. If the rule already exists, but the implementation differs, an error will be thrown.
+   */
   public addRuleRedundant<U extends string, RET, ARGS extends undefined[]>(rule: RuleDef<U, RET, ARGS>):
-  // @ts-expect-error TS2344
-  Builder<Names | U, {[K in Names | U]: K extends U ? RuleDef<K, RET, ARGS> : RuleDefs[K] }> {
-    const rules = <Record<string, RuleDef>> this.rules;
+  Builder<Names | U, {[K in Names | U]: K extends U ? RuleDef<K, RET, ARGS> : ( K extends Names ? (RuleDefs[K] extends RuleDef<K> ? RuleDefs[K] : never ) : never) }> {
+    const self = <Builder<Names | U, {[K in Names | U]: K extends U ? RuleDef<K, RET, ARGS> : ( K extends Names ? (RuleDefs[K] extends RuleDef<K> ? RuleDefs[K] : never ) : never) }>>
+      <unknown> this;
+    const rules = <Record<string, RuleDef>> self.rules;
     if (rules[rule.name] !== undefined && rules[rule.name] !== rule) {
       throw new Error(`Rule ${rule.name} already exists in the builder`);
     }
-    // @ts-expect-error TS2536
-    this.rules[rule.name] = rule;
-    // @ts-expect-error TS2536
-    return <Builder<Names | U, RuleDefs | Record<U, RuleDef<U, RET, ARGS>>>> <unknown> this;
+    rules[rule.name] = rule;
+    return self;
   }
 
+  /**
+   * Add a rule to the grammar. Will raise a typescript error if the rule already exists in the grammar.
+   */
   public addRule<U extends string, RET, ARGS extends unknown[]>(
     rule: CheckOverlap<U, Names, RuleDef<U, RET, ARGS>>,
-    // @ts-expect-error TS2536
-  ): Builder<Names | U, {[K in Names | U]: K extends U ? RuleDef<K, RET, ARGS> : RuleDefs[K] }> {
+  ): Builder<Names | U, {[K in Names | U]: K extends U ? RuleDef<K, RET, ARGS> : ( K extends Names ? (RuleDefs[K] extends RuleDef<K> ? RuleDefs[K] : never ) : never) }> {
     return this.addRuleRedundant(rule);
   }
 
   public addMany<U extends RuleDef[]>(
     ...rules: CheckOverlap<RuleNamesFromList<U>, Names, U>
-    // @ts-expect-error TS2536
-  ): Builder<Names | RuleNamesFromList<U>, RuleDefs & RuleListToObject<U>> {
+  ): Builder<
+    Names | RuleNamesFromList<U>,
+    {[K in Names | RuleNamesFromList<U>]:
+      K extends keyof RuleListToObject<typeof rules> ? (
+        RuleListToObject<typeof rules>[K] extends RuleDef<K> ? RuleListToObject<typeof rules>[K] : never
+      ) : (
+        K extends Names ? (RuleDefs[K] extends RuleDef<K> ? RuleDefs[K] : never) : never
+      )
+    }> {
     this.rules = { ...this.rules, ...listToRuleDefMap(rules) };
-    // @ts-expect-error TS2536
-    return <Builder<Names | RuleNamesFromList<U>, RuleDefs & RuleListToObject<U>>> <unknown> this;
+    return <any> <unknown> this;
   }
 
   public deleteRule<U extends Names>(ruleName: U):
-  // @ts-expect-error TS2536
-  Builder<Exclude<Names, U>, Omit<RuleDefs, U>> {
+  Builder<Exclude<Names, U>, { [K in Exclude<Names, U>]: RuleDefs[K] extends RuleDef<K> ? RuleDefs[K] : never }> {
     delete this.rules[ruleName];
-    // @ts-expect-error TS2536
-    return <Builder<Exclude<Names, U>, Omit<RuleDefs, U>>> <unknown> this;
+    return <Builder<Exclude<Names, U>, { [K in Exclude<Names, U>]: RuleDefs[K] extends RuleDef<K> ? RuleDefs[K] : never }>>
+      <unknown> this;
   }
 
   public merge<OtherNames extends string, OtherRules extends RuleDefMap<OtherNames>, OW extends readonly RuleDef[]>(
@@ -94,11 +105,14 @@ export class Builder<Names extends string, RuleDefs extends RuleDefMap<Names>> {
   ):
     Builder<
       Names | OtherNames | RuleNamesFromList<OW>,
-      // @ts-expect-error TS2344
-      {[K in Names | OtherNames | RuleNamesFromList<OW>]: K extends Names | OtherNames ? (
-        K extends Names ? RuleDefs[K] : (K extends OtherNames ? OtherRules[K] : never)
-      ) : (K extends keyof RuleListToObject<OW> ? RuleListToObject<OW>[K] : never) }
-    > {
+      {[K in Names | OtherNames | RuleNamesFromList<OW>]:
+        K extends keyof RuleListToObject<OW> ? (
+          RuleListToObject<OW>[K] extends RuleDef<K> ? RuleListToObject<OW>[K] : never
+        )
+        : (
+          K extends Names ? (RuleDefs[K] extends RuleDef<K> ? RuleDefs[K] : never)
+          : K extends OtherNames ? (OtherRules[K] extends RuleDef<K> ? OtherRules[K] : never) : never
+        )}> {
     // Assume the other grammar is bigger than yours. So start from that one and add this one
     const otherRules: Record<string, RuleDef> = { ...builder.rules };
     const myRules: Record<string, RuleDef> = this.rules;
@@ -121,10 +135,8 @@ export class Builder<Names extends string, RuleDefs extends RuleDefMap<Names>> {
       }
     }
 
-    // @ts-expect-error TS2322
-    this.rules = otherRules;
-    // @ts-expect-error TS2322
-    return this;
+    this.rules = <any> <unknown> otherRules;
+    return <any> <unknown> this;
   }
 
   public consumeToParser({ tokenVocabulary, parserConfig = {}, lexerConfig = {}}: {
@@ -144,8 +156,7 @@ export class Builder<Names extends string, RuleDefs extends RuleDefMap<Names>> {
     const selfSufficientParser: Partial<ParserFromRules<Names, RuleDefs>> = {};
     // eslint-disable-next-line ts/no-unnecessary-type-assertion
     for (const rule of <RuleDef<Names>[]> Object.values(this.rules)) {
-      // @ts-expect-error TS7053
-      selfSufficientParser[rule.name] = (input: string, ...args: unknown[]) => {
+      selfSufficientParser[rule.name] = <any> ((input: string, ...args: unknown[]) => {
         // Transform input in accordance to 19.2
         input = input.replaceAll(
           /\\u([0-9a-fA-F]{4})|\\U([0-9a-fA-F]{8})/gu,
@@ -179,7 +190,7 @@ export class Builder<Names extends string, RuleDefs extends RuleDefMap<Names>> {
 ${parser.errors.map(x => `${x.token.startLine}: ${x.message}`).join('\n')}`);
         }
         return result;
-      };
+      });
     }
     return <ParserFromRules<Names, RuleDefs>> selfSufficientParser;
   }
@@ -226,8 +237,7 @@ ${parser.errors.map(x => `${x.token.startLine}: ${x.message}`).join('\n')}`);
         };
 
         for (const rule of Object.values(<Record<string, RuleDef>>rules)) {
-          // @ts-expect-error TS7053
-          this[rule.name] = this.RULE(rule.name, rule.impl(implArgs));
+          this[<keyof (typeof this)> rule.name] = <any> this.RULE(rule.name, rule.impl(implArgs));
         }
         this.performSelfAnalysis();
       }
@@ -319,99 +329,77 @@ ${parser.errors.map(x => `${x.token.startLine}: ${x.message}`).join('\n')}`);
           ACTION: func => this.ACTION(func),
           BACKTRACK: (cstDef, ...args) => {
             try {
-              // @ts-expect-error TS7053
-              // eslint-disable-next-line ts/no-unsafe-argument
-              return this.BACKTRACK(this[cstDef.name], { ARGS: args });
+              return this.BACKTRACK(<any> this[<keyof (typeof this)> cstDef.name], <any> { ARGS: args });
             } catch (error: unknown) {
               throw error;
             }
           },
           SUBRULE: (cstDef, ...args) => {
             try {
-              // @ts-expect-error TS7053
-              // eslint-disable-next-line ts/no-unsafe-argument
-              return this.SUBRULE(this[cstDef.name], { ARGS: args });
+              return this.SUBRULE(<any> this[<keyof (typeof this)> cstDef.name], <any> { ARGS: args });
             } catch (error: unknown) {
               throw error;
             }
           },
           SUBRULE1: (cstDef, ...args) => {
             try {
-              // @ts-expect-error TS7053
-              // eslint-disable-next-line ts/no-unsafe-argument
-              return this.SUBRULE1(this[cstDef.name], { ARGS: args });
+              return this.SUBRULE1(<any> this[<keyof (typeof this)> cstDef.name], <any> { ARGS: args });
             } catch (error: unknown) {
               throw error;
             }
           },
           SUBRULE2: (cstDef, ...args) => {
             try {
-              // @ts-expect-error TS7053
-              // eslint-disable-next-line ts/no-unsafe-argument
-              return this.SUBRULE2(this[cstDef.name], { ARGS: args });
+              return this.SUBRULE2(<any> this[<keyof (typeof this)> cstDef.name], <any> { ARGS: args });
             } catch (error: unknown) {
               throw error;
             }
           },
           SUBRULE3: (cstDef, ...args) => {
             try {
-              // @ts-expect-error TS7053
-              // eslint-disable-next-line ts/no-unsafe-argument
-              return this.SUBRULE3(this[cstDef.name], { ARGS: args });
+              return this.SUBRULE3(<any> this[<keyof (typeof this)> cstDef.name], <any> { ARGS: args });
             } catch (error: unknown) {
               throw error;
             }
           },
           SUBRULE4: (cstDef, ...args) => {
             try {
-              // @ts-expect-error TS7053
-              // eslint-disable-next-line ts/no-unsafe-argument
-              return this.SUBRULE4(this[cstDef.name], { ARGS: args });
+              return this.SUBRULE4(<any> this[<keyof (typeof this)> cstDef.name], <any> { ARGS: args });
             } catch (error: unknown) {
               throw error;
             }
           },
           SUBRULE5: (cstDef, ...args) => {
             try {
-              // @ts-expect-error TS7053
-              // eslint-disable-next-line ts/no-unsafe-argument
-              return this.SUBRULE5(this[cstDef.name], { ARGS: args });
+              return this.SUBRULE5(<any> this[<keyof (typeof this)> cstDef.name], <any> { ARGS: args });
             } catch (error: unknown) {
               throw error;
             }
           },
           SUBRULE6: (cstDef, ...args) => {
             try {
-              // @ts-expect-error TS7053
-              // eslint-disable-next-line ts/no-unsafe-argument
-              return this.SUBRULE6(this[cstDef.name], { ARGS: args });
+              return this.SUBRULE6(<any> this[<keyof (typeof this)> cstDef.name], <any> { ARGS: args });
             } catch (error: unknown) {
               throw error;
             }
           },
           SUBRULE7: (cstDef, ...args) => {
             try {
-              // @ts-expect-error TS7053
-              // eslint-disable-next-line ts/no-unsafe-argument
-              return this.SUBRULE7(this[cstDef.name], { ARGS: args });
+              return this.SUBRULE7(<any> this[<keyof (typeof this)> cstDef.name], <any> { ARGS: args });
             } catch (error: unknown) {
               throw error;
             }
           },
           SUBRULE8: (cstDef, ...args) => {
             try {
-              // @ts-expect-error TS7053
-              // eslint-disable-next-line ts/no-unsafe-argument
-              return this.SUBRULE8(this[cstDef.name], { ARGS: args });
+              return this.SUBRULE8(<any> this[<keyof (typeof this)> cstDef.name], <any> { ARGS: args });
             } catch (error: unknown) {
               throw error;
             }
           },
           SUBRULE9: (cstDef, ...args) => {
             try {
-              // @ts-expect-error TS7053
-              // eslint-disable-next-line ts/no-unsafe-argument
-              return this.SUBRULE9(this[cstDef.name], { ARGS: args });
+              return this.SUBRULE9(<any> this[<keyof (typeof this)> cstDef.name], <any> { ARGS: args });
             } catch (error: unknown) {
               throw error;
             }

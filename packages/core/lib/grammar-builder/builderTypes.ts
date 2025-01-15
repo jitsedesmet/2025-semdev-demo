@@ -12,14 +12,15 @@ export type CheckOverlap<T, U, V, W = never> = T & U extends never ? V : W;
  */
 export type RuleListToObject<
   T extends readonly RuleDef[],
+  Names extends string = RuleNamesFromList<T>,
   Agg extends Record<string, RuleDef> = Record<never, never>,
 > = T extends readonly [infer First, ...infer Rest] ? (
   First extends RuleDef ? (
     Rest extends readonly RuleDef[] ? (
-      RuleListToObject<Rest, {[K in keyof Agg | First['name']]: K extends First['name'] ? First : Agg[K] }>
+      RuleListToObject<Rest, Names, {[K in keyof Agg | First['name']]: K extends First['name'] ? First : Agg[K] }>
     ) : never
   ) : never
-) : Agg;
+) : RuleDefMap<Names> & Agg;
 
 export type ParserFromRules<Names extends string, RuleDefs extends RuleDefMap<Names>> = {
   [K in Names]: RuleDefs[K] extends RuleDef<K, infer RET, infer ARGS> ? (...args: ARGS) => RET : never
