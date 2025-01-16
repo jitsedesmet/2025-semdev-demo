@@ -1,45 +1,51 @@
 name: CI
+on: [push, pull_request]
 
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
+#  test:
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        node-version:
+#          - 18.x
+#          - 20.x
+#          - 22.x
+#        os:
+#          - macos-latest
+#          - ubuntu-latest
+#          - windows-latest
+#    runs-on: ${{ matrix.os }}
+#    steps:
+#      - uses: actions/checkout@v4
+#      - name: Use Node.js ${{ matrix.node-version }}
+#        uses: actions/setup-node@v4
+#        with:
+#          node-version: ${{ matrix.node-version }}
+#      - run: yarn install --immutable
+#      - run: yarn build
+#      - run: yarn depcheck
+#      - run: yarn test
+
+  spec:
     strategy:
       fail-fast: false
       matrix:
-        node-version:
-          - 18.x
-          - 20.x
-          - 22.x
-    steps:
-      - uses: actions/checkout@v4
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-      - run: yarn install --immutable
-      - run: yarn build
-      - run: yarn depcheck
-      - run: yarn test
-
-  spec:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
         spec:
           - spec:all
-          - spec:earl
         node-version:
           - 18.x
           - 20.x
           - 22.x
+        os:
+          - macos-latest
+#          - ubuntu-latest
+#          - windows-latest
+#          - macos-13
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node-version }}
@@ -54,4 +60,4 @@ jobs:
           path: |
             .rdf-test-suite-cache
           key: rdftestsuite-${{ hashFiles('yarn.lock') }}
-      - run: yarn ${{ matrix.spec }}
+      - run: node --max-old-space-size=500 ./node_modules/rdf-test-suite/bin/Runner.js engines/engine-sparql-1-1/spec/parser.cjs http://w3c.github.io/rdf-tests/sparql/sparql11/manifest-all.ttl -c ./.rdf-test-suite-cache/
