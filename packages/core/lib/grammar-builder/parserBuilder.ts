@@ -217,8 +217,6 @@ ${parser.errors.map(x => `${x.token.startLine}: ${x.message}`).join('\n')}`);
         this.initialParseContext = {
           dataFactory: new DataFactory({ blankNodePrefix: 'g_' }),
           baseIRI: undefined,
-          flushedBlankNodeLabels: new Set(),
-          usedBlankNodeLabels: new Set(),
           parseMode: new Set(),
           skipValidation: false,
           ...context,
@@ -250,8 +248,6 @@ ${parser.errors.map(x => `${x.token.startLine}: ${x.message}`).join('\n')}`);
         });
         this.runningContext.prefixes = { ...this.initialParseContext.prefixes };
         this.runningContext.parseMode = new Set(this.initialParseContext.parseMode);
-        this.runningContext.usedBlankNodeLabels.clear();
-        this.runningContext.flushedBlankNodeLabels.clear();
       }
 
       private getSelfRef(): CstDef {

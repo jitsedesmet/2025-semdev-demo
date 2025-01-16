@@ -183,7 +183,7 @@ export const selectQuery: RuleDef<'selectQuery', Omit<SelectQuery, HandledByBase
         }
       }
       // Check if id of each AS-selected column is not yet bound by subquery
-      const subqueries = where.filter(pattern => pattern.type === 'query');
+      const subqueries = <Omit<SelectQuery, "prefixes">[]> where.filter(pattern => pattern.type === 'query');
       if (subqueries.length > 0) {
         const selectedVarIds: string[] = [];
         for (const selectedVar of variables) {

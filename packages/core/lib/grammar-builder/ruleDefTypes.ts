@@ -38,14 +38,6 @@ export interface ImplArgs extends CstDef {
      */
     baseIRI: string | undefined;
     /**
-     * Set of blank node labels that have been flushed. Used for note 10.
-     */
-    flushedBlankNodeLabels: Set<string>;
-    /**
-     * Set of blank node labels that have been used. Used for note 10.
-     */
-    usedBlankNodeLabels: Set<string>;
-    /**
      * Can be used to disable the validation that used variables in a select clause are in scope.
      */
     skipValidation: boolean;

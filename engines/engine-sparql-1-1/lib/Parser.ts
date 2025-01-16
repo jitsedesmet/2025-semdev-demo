@@ -45,16 +45,10 @@ const queryOrUpdate: RuleDef<'queryOrUpdate', Query | Update | Pick<Update, 'bas
         }));
       } },
       { ALT: () => {
+
         let result: Update | Pick<Update, 'base' | 'prefixes'> = prologueValues;
         OPTION1(() => {
           const updateOperation = SUBRULE(gram.update1);
-
-          ACTION(() => {
-            for (const label of context.usedBlankNodeLabels) {
-              context.flushedBlankNodeLabels.add(label);
-            }
-            context.usedBlankNodeLabels.clear();
-          });
 
           const recursiveRes = OPTION2(() => {
             CONSUME(l.symbols.semi);
@@ -76,6 +70,33 @@ const queryOrUpdate: RuleDef<'queryOrUpdate', Query | Update | Pick<Update, 'bas
             }
             result = updateResult;
           });
+        });
+
+        ACTION(() => {
+          const blankLabelsUsedInInsertData = new Set<string>();
+          if ('updates' in result) {
+            for (const updateOperation of result.updates) {
+              const iterBlankNodes = (callback: (blankNodeLabel: string) => void) => {
+                if ('updateType' in updateOperation && updateOperation.updateType === 'insert') {
+                  for (const quad of updateOperation.insert) {
+                    for (const triple of quad.triples) {
+                      for (const position of <const> ['subject', 'object']) {
+                        if (triple[position].termType === 'BlankNode') {
+                          callback(triple[position].value);
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              iterBlankNodes(label => {
+                if (blankLabelsUsedInInsertData.has(label)) {
+                  throw new Error('Detected reuse blank node across different INSERT DATA clauses');
+                }
+              });
+              iterBlankNodes(label => blankLabelsUsedInInsertData.add(label));
+            }
+          }
         });
         return result;
       } },

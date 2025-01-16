@@ -37,6 +37,7 @@ export const updateUnit: RuleDef<'updateUnit', Update> = <const> {
 export const update: RuleDef<'update', Update> = <const> {
   name: 'update',
   impl: ({ ACTION, SUBRULE, CONSUME, OPTION1, OPTION2, context }) => () => {
+    const blankLabelsUsedInInsertData = new Set<string>();
     const prologueValues = SUBRULE(prologue);
     const result: Update = {
       type: 'update',
@@ -46,13 +47,6 @@ export const update: RuleDef<'update', Update> = <const> {
     };
     OPTION1(() => {
       const updateOperation = SUBRULE(update1);
-
-      ACTION(() => {
-        for (const label of context.usedBlankNodeLabels) {
-          context.flushedBlankNodeLabels.add(label);
-        }
-        context.usedBlankNodeLabels.clear();
-      });
 
       const recursiveRes = OPTION2(() => {
         CONSUME(l.symbols.semi);
