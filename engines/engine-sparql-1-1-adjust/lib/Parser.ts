@@ -26,7 +26,7 @@ export const adjustBuilder = Builder.createBuilder(sparql11ParserBuilder)
   .addRule(gram.existingBuildInCall)
   .patchRule(builtInPatch);
 
-export class Sparql11AdjustParser implements ISparqlParser {
+export class Parser implements ISparqlParser {
   private readonly parser: {
     queryOrUpdate: (input: string) => SparqlQuery;
     path: (input: string) => PropertyPath | IriTerm;

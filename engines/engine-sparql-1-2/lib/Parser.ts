@@ -57,7 +57,7 @@ export const sparql12ParserBuilder = Builder.createBuilder(sparql11ParserBuilder
   .patchRule(S12.rdfLiteral);
 
 
-export class Sparql12Parser implements ISparqlParser {
+export class Parser implements ISparqlParser {
   private readonly parser: {
     queryOrUpdate: (input: string) => SparqlQuery;
     path: (input: string) => PropertyPath | IriTerm;

@@ -20,13 +20,13 @@ yarn add @traqula/engine-sparql-1-1
 Either through ESM import:
 
 ```javascript
-import { Sparql11AdjustParser } from '@traqula/engine-sparql-1-1-adjust';
+import {Parser} from '@traqula/engine-sparql-1-1-adjust';
 ```
 
 _or_ CJS require:
 
 ```javascript
-const Sparql11AdjustParser = require('@traqula/engine-sparql-1-1-adjust').Sparql11AdjustParser;
+const Sparql11AdjustParser = require('@traqula/engine-sparql-1-1-adjust').Parser;
 ```
 
 ## Usage
@@ -34,7 +34,7 @@ const Sparql11AdjustParser = require('@traqula/engine-sparql-1-1-adjust').Sparql
 This package contains a `Sparql11AdjustParser` that is able to parse SPARQL 1.1 queries including the [builtin function ADJUST](https://github.com/w3c/sparql-dev/blob/main/SEP/SEP-0002/sep-0002.md):
 
 ```typescript
-const parser = new Sparql11Parser();
+const parser = new Parser();
 const abstractSyntaxTree = parser.parse(`
 SELECT ?s ?p (ADJUST(?o, "-PT10H"^^<http://www.w3.org/2001/XMLSchema#dayTimeDuration>) as ?adjusted) WHERE {
   ?s ?p ?o

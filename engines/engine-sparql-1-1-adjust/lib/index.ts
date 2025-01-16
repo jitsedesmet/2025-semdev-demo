@@ -1,1 +1,1 @@
-export * from './Sparql11AdjustParser';
+export * from './Parser';

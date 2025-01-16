@@ -20,21 +20,21 @@ yarn add @traqula/engine-sparql-1-1
 Either through ESM import:
 
 ```javascript
-import { Sparql12Parser } from '@traqula/engine-sparql-1-2';
+import {Parser} from '@traqula/engine-sparql-1-2';
 ```
 
 _or_ CJS require:
 
 ```javascript
-const Sparql12Parser = require('@traqula/engine-sparql-1-2').Sparql12Parser;
+const Parser = require('@traqula/engine-sparql-1-2').Parser;
 ```
 
 ## Usage
 
-This package contains a `Sparql12Parser` that is able to parse SPARQL 1.2 queries:
+This package contains a `Parser` that is able to parse SPARQL 1.2 queries:
 
 ```typescript
-const parser = new Sparql12Parser();
+const parser = new Parser();
 const abstractSyntaxTree = parser.parse('SELECT * { ?s ?p ?o }');
 ```
 

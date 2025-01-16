@@ -90,7 +90,7 @@ export const sparql11ParserBuilder = Builder.createBuilder(queryUnitParserBuilde
   .deleteRule('updateUnit')
   .addRule(queryOrUpdate);
 
-export class Sparql11Parser implements ISparqlParser {
+export class Parser implements ISparqlParser {
   private readonly parser: {
     queryOrUpdate: (input: string) => SparqlQuery;
     path: (input: string) => PropertyPath | IriTerm;

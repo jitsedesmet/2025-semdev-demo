@@ -10,9 +10,10 @@ import { triplesSameSubject } from './tripleBlock';
  */
 export const prologue: RuleDef<'prologue', Pick<BaseQuery, 'base' | 'prefixes'>> = <const> {
   name: 'prologue',
-  impl: ({ ACTION, SUBRULE, MANY, OR }) => () => {
+  impl: ({ ACTION, SUBRULE, MANY, OR, context }) => () => {
     const result: Pick<BaseQuery, 'base' | 'prefixes'> = {
       prefixes: {},
+      ...(context.baseIRI && { base: context.baseIRI }),
     };
     MANY(() => {
       OR([

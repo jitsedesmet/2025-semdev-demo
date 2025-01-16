@@ -20,21 +20,21 @@ yarn add @traqula/engine-sparql-1-1
 Either through ESM import:
 
 ```javascript
-import { Sparql11Parser } from '@traqula/engine-sparql-1-1';
+import {Parser} from '@traqula/engine-sparql-1-1';
 ```
 
 _or_ CJS require:
 
 ```javascript
-const Sparql11Parser = require('@traqula/engine-sparql-1-1').Sparql11Parser;
+const Parser = require('@traqula/engine-sparql-1-1').Parser;
 ```
 
 ## Usage
 
-This package contains a `Sparql11Parser` that is able to parse SPARQL 1.1 queries:
+This package contains a `Parser` that is able to parse SPARQL 1.1 queries:
 
 ```typescript
-const parser = new Sparql11Parser();
+const parser = new Parser();
 const abstractSyntaxTree = parser.parse('SELECT * { ?s ?p ?o }');
 ```
 
@@ -70,7 +70,7 @@ As an example the `triplesBlockParserBuilder` is created by merging the `objectL
 
 ## Configuration
 
-Optionally, the following parameters can be set in the `Sparql11Parser` constructor:
+Optionally, the following parameters can be set in the `Parser` constructor:
 
 * `dataFactory`: A custom [RDFJS DataFactory](http://rdf.js.org/#datafactory-interface) to construct terms and triples. _(Default: `require('@rdfjs/data-model')`)_
 * `baseIRI`:  An initial default base IRI. _(Default: none)_

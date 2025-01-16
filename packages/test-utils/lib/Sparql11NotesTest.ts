@@ -145,6 +145,13 @@ export function importSparql11NoteTests(constructor: ParserConstructor, dataFact
   describe('with pre-defined base IRI', () => {
     const parser = constructor({ baseIRI: 'http://ex.org/' });
 
+    it('contains the base', ({expect}) => {
+      const query = 'SELECT * { ?s ?p ?o }';
+      expect(parser.parse(query)).toMatchObject({
+        base: 'http://ex.org/'
+      });
+    })
+
     it('should use the base IRI', ({ expect }) => {
       const query = 'SELECT * { <> <#b> "" }';
       const result = {
