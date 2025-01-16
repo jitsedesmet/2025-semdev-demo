@@ -152,6 +152,23 @@ export function importSparql11NoteTests(constructor: ParserConstructor, dataFact
       });
     })
 
+    it('using prefixed as relative iri', ({expect}) => {
+      const parser = constructor({ baseIRI: 'http://ex.org/apl' });
+      const query = `
+CONSTRUCT
+FROM <data.ttl>
+WHERE { ?s ?p ?o }
+`;
+      expect(parser.parse(query)).toMatchObject({
+        from: {
+          default: [
+            dataFactory.namedNode('http://ex.org/data.ttl'),
+          ]
+        }
+      })
+
+    })
+
     it('should use the base IRI', ({ expect }) => {
       const query = 'SELECT * { <> <#b> "" }';
       const result = {

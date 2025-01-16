@@ -24,6 +24,8 @@ export const prologue: RuleDef<'prologue', Pick<BaseQuery, 'base' | 'prefixes'>>
         },
         {
           ALT: () => {
+            // TODO: the [spec](https://www.w3.org/TR/sparql11-query/#iriRefs) says you cannot redefine prefixes.
+            //  We might need to check this.
             const pref = SUBRULE(prefixDecl);
             ACTION(() => {
               const [ name, value ] = pref;

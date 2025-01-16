@@ -17,7 +17,7 @@ export function unCapitalize<T extends string>(str: T): Uncapitalize<T> {
 }
 
 /**
- * Resolves an IRI against a base path
+ * Resolves an IRI against a base path in accordance to the [Syntax for IRIs](https://www.w3.org/TR/sparql11-query/#QSynIRI)
  */
 export function resolveIRI(iri: string, base: string | undefined): string {
   // Return absolute IRIs unmodified
@@ -39,10 +39,16 @@ export function resolveIRI(iri: string, base: string | undefined): string {
       return base.replace(/(?:\?.*)?$/u, iri);
     // Resolve root relative IRIs at the root of the base IRI
     case '/':
-      return base + iri;
+      const baseMatch = base.match(/^(?:[a-z]+:\/*)?[^\/]*/);
+      if (!baseMatch) {
+        throw new Error(`Could not determine relative IRI using base: ${base}`);
+      }
+      const baseRoot = baseMatch[0];
+      return baseRoot + iri;
     // Resolve all other IRIs at the base IRI's path
     default:
-      return base + iri;
+      const basePath = base.replace(/[^\/:]*$/, '');
+      return basePath + iri;
   }
 }
 

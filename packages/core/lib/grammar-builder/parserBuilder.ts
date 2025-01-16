@@ -213,7 +213,7 @@ ${parser.errors.map(x => `${x.token.startLine}: ${x.message}`).join('\n')}`);
         });
 
         const selfRef = this.getSelfRef();
-        // Remember to change the reset function accordingly!
+        // !!! Remember to change the RESET function accordingly !!!
         this.initialParseContext = {
           dataFactory: new DataFactory({ blankNodePrefix: 'g_' }),
           baseIRI: undefined,
