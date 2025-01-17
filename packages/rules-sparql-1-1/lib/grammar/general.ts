@@ -74,23 +74,32 @@ export const prefixDecl: RuleDef<'prefixDecl', [string, string]> = <const> {
   },
 };
 
+
 /**
  * [[52]](https://www.w3.org/TR/sparql11-query/#rTriplesTemplate)
  */
 export const triplesTemplate: RuleDef<'triplesTemplate', Triple[]> = <const> {
   name: 'triplesTemplate',
-  impl: ({ SUBRULE, CONSUME, OPTION1, OPTION2 }) => () => {
-    const triples: Triple[][] = [];
+  impl: ({ ACTION, AT_LEAST_ONE, AT_LEAST_ONE_SEP, SUBRULE, CONSUME, OPTION }) => () => {
+    const triples: Triple[] = [];
 
-    triples.push(SUBRULE(triplesSameSubject));
-    OPTION1(() => {
-      CONSUME(l.symbols.dot);
-      OPTION2(() => {
-        triples.push(SUBRULE(triplesTemplate));
-      });
+    let parsedDot = true;
+    AT_LEAST_ONE({
+      GATE: () => parsedDot,
+      DEF: () => {
+        parsedDot = false;
+        const template = SUBRULE(triplesSameSubject)
+        ACTION(() => {
+          triples.push(...template);
+        });
+        OPTION(() => {
+          CONSUME(l.symbols.dot);
+          parsedDot = true;
+        });
+      }
     });
 
-    return triples.flat(1);
+    return triples;
   },
 };
 

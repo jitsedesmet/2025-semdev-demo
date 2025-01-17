@@ -18,9 +18,6 @@ export type Triple = {
   object: Term;
 };
 
-export type TripleCreatorS = (part: Pick<Triple, 'subject'>) => Triple;
-export type TripleCreatorSP = (part: Pick<Triple, 'subject' | 'predicate'>) => Triple;
-
 export interface IGraphNode {
   node: ITriplesNode['node'] | Term;
   triples: Triple[];

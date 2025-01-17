@@ -68,20 +68,6 @@
         },
         {
           "subject": {
-            "termType": "Variable",
-            "value": "s"
-          },
-          "predicate": {
-            "termType": "NamedNode",
-            "value": "http://example/id/p2"
-          },
-          "object": {
-            "termType": "Variable",
-            "value": "_"
-          }
-        },
-        {
-          "subject": {
             "termType": "BlankNode",
             "value": "g_1"
           },
@@ -98,6 +84,20 @@
           "object": {
             "termType": "Variable",
             "value": "o"
+          }
+        },
+        {
+          "subject": {
+            "termType": "Variable",
+            "value": "s"
+          },
+          "predicate": {
+            "termType": "NamedNode",
+            "value": "http://example/id/p2"
+          },
+          "object": {
+            "termType": "Variable",
+            "value": "_"
           }
         },
         {

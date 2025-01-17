@@ -26,7 +26,7 @@ import type * as RDF from '@rdfjs/types';
 // ```
 const queryOrUpdate: RuleDef<'queryOrUpdate', Query | Update | Pick<Update, 'base' | 'prefixes'>> = {
   name: 'queryOrUpdate',
-  impl: ({ ACTION, SUBRULE, OR1, OR2, CONSUME, OPTION1, OPTION2, context }) => () => {
+  impl: ({ ACTION, SUBRULE, SUBRULE2, OR1, OR2, CONSUME, OPTION1, OPTION2, MANY, context }) => () => {
     const prologueValues = SUBRULE(gram.prologue);
     return OR1<Query | Update | Pick<Update, 'base' | 'prefixes'>>([
       { ALT: () => {
@@ -45,60 +45,65 @@ const queryOrUpdate: RuleDef<'queryOrUpdate', Query | Update | Pick<Update, 'bas
         }));
       } },
       { ALT: () => {
+        // Prologue ( Update1 ( ';' Update )? )?
+        // Is equivalent to:
 
-        let result: Update | Pick<Update, 'base' | 'prefixes'> = prologueValues;
-        OPTION1(() => {
-          const updateOperation = SUBRULE(gram.update1);
+        let parsedPrologue = true;
+        const updateResult: Update = {
+          ...prologueValues,
+          type: 'update',
+          updates: [],
+        }
+        MANY({
+          GATE: () => parsedPrologue,
+          DEF: () => {
+            parsedPrologue = false;
+            const updateOperation = SUBRULE(gram.update1);
 
-          const recursiveRes = OPTION2(() => {
-            CONSUME(l.symbols.semi);
-            return SUBRULE(gram.update);
-          });
+            updateResult.updates.push(updateOperation);
 
-          return ACTION(() => {
-            const updateResult: Update = {
-              ...result,
-              type: 'update',
-              updates: [ updateOperation ],
-            };
-            if (recursiveRes) {
-              updateResult.updates.push(...recursiveRes.updates);
-              updateResult.base = recursiveRes.base ?? result.base;
-              updateResult.prefixes = recursiveRes.prefixes ?
-                  { ...result.prefixes, ...recursiveRes.prefixes } :
-                updateResult.prefixes;
-            }
-            result = updateResult;
-          });
+            OPTION1(() => {
+              CONSUME(l.symbols.semi);
+              const prologueValues = SUBRULE2(gram.prologue);
+
+              ACTION(() => {
+                updateResult.base = prologueValues.base ?? updateResult.base;
+                updateResult.prefixes = prologueValues.prefixes ?
+                  { ...updateResult.prefixes, ...prologueValues.prefixes } :
+                  updateResult.prefixes;
+              });
+
+              parsedPrologue = true;
+            })
+          }
         });
 
         ACTION(() => {
           const blankLabelsUsedInInsertData = new Set<string>();
-          if ('updates' in result) {
-            for (const updateOperation of result.updates) {
-              const iterBlankNodes = (callback: (blankNodeLabel: string) => void) => {
-                if ('updateType' in updateOperation && updateOperation.updateType === 'insert') {
-                  for (const quad of updateOperation.insert) {
-                    for (const triple of quad.triples) {
-                      for (const position of <const> ['subject', 'object']) {
-                        if (triple[position].termType === 'BlankNode') {
-                          callback(triple[position].value);
-                        }
+          for (const updateOperation of updateResult.updates) {
+            const iterBlankNodes = (callback: (blankNodeLabel: string) => void) => {
+              if ('updateType' in updateOperation && updateOperation.updateType === 'insert') {
+                for (const quad of updateOperation.insert) {
+                  for (const triple of quad.triples) {
+                    for (const position of <const> ['subject', 'object']) {
+                      if (triple[position].termType === 'BlankNode') {
+                        callback(triple[position].value);
                       }
                     }
                   }
                 }
               }
-              iterBlankNodes(label => {
-                if (blankLabelsUsedInInsertData.has(label)) {
-                  throw new Error('Detected reuse blank node across different INSERT DATA clauses');
-                }
-              });
-              iterBlankNodes(label => blankLabelsUsedInInsertData.add(label));
             }
+            iterBlankNodes(label => {
+              if (blankLabelsUsedInInsertData.has(label)) {
+                throw new Error('Detected reuse blank node across different INSERT DATA clauses');
+              }
+            });
+            iterBlankNodes(label => blankLabelsUsedInInsertData.add(label));
           }
         });
-        return result;
+
+        return updateResult.updates.length > 0 ? updateResult : prologueValues;
       } },
     ]);
   },

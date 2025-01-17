@@ -9,7 +9,7 @@ import type { DirectionalLanguage } from '@rdfjs/types';
 import type { NamedNode } from 'rdf-data-factory';
 import * as l12 from './lexer';
 import type { RuleDefReturn, RuleDef } from '@traqula/core';
-import { funcExpr1, funcExpr3 } from '@traqula/rules-sparql-1-1';
+import {funcExpr1, funcExpr3} from '@traqula/rules-sparql-1-1';
 import { gram as S11, lex as l11 } from '@traqula/rules-sparql-1-1';
 import type * as T11 from '@traqula/rules-sparql-1-1';
 import { CommonIRIs } from '@traqula/core';
@@ -19,8 +19,6 @@ import type {
   IGraphNode,
   Term,
   Triple,
-  TripleCreatorS,
-  TripleCreatorSP,
 } from './sparql12Types';
 
 function reifiedTripleBlockImpl<T extends string>(name: T, allowPath: boolean): RuleDef<T, Triple[]> {
@@ -28,11 +26,11 @@ function reifiedTripleBlockImpl<T extends string>(name: T, allowPath: boolean): 
     name,
     impl: ({ ACTION, SUBRULE }) => () => {
       const triple = SUBRULE(reifiedTriple);
-      const properties = SUBRULE(allowPath ? S11.propertyListPath : S11.propertyList);
+      const properties = SUBRULE(allowPath ? S11.propertyListPath : S11.propertyList, triple.node);
 
       return ACTION(() => [
         ...triple.triples,
-        ...properties.map(partial => partial({ subject: triple.node })),
+        ...properties,
       ]);
     },
   };
@@ -108,36 +106,38 @@ export const triplesSameSubject = triplesSameSubjectImpl('triplesSameSubject', f
  */
 export const triplesSameSubjectPath = triplesSameSubjectImpl('triplesSameSubjectPath', true);
 
-function objectImpl<T extends string>(name: T, allowPaths: boolean): RuleDef<T, TripleCreatorSP[]> {
+function objectImpl<T extends string>(name: T, allowPaths: boolean): RuleDef<T, Triple[], [Triple['subject'], Triple['predicate']]> {
   return <const>{
     name,
-    impl: ({ ACTION, SUBRULE, context }) => () => {
+    impl: ({ ACTION, SUBRULE, context }) => (subject, predicate) => {
       const objectVal = SUBRULE(allowPaths ? graphNodePath : graphNode);
       const annotationVal = SUBRULE(allowPaths ? annotationPath : annotation);
 
+      // This rule knows the annotation. And for each annotation node, we need to make a triple:
+      // <annotationNode, reifies, parsedSubjectAndObject>
+
       return ACTION(() => {
-        const result: TripleCreatorSP[] = [
+        if ('type' in predicate && predicate.type === 'path' && annotationVal.length > 0) {
+          throw new Error('Note 17 violation');
+        }
+
+        const result: Triple[] = [
           // You parse the object
-          ({ subject, predicate }) => ({ subject, predicate, object: objectVal.node }),
+          { subject, predicate, object: objectVal.node },
           // You might get some additional triples from parsing the object (like when it's a collection)
-          ...objectVal.triples.map(triple => () => triple),
+          ...objectVal.triples,
         ];
         for (const annotation of annotationVal) {
-          result.push(({ subject, predicate }) => {
-            if ('type' in predicate && predicate.type === 'path') {
-              throw new Error('Note 17 violation');
-            }
-            return <Triple> context.dataFactory.quad(
-              annotation.node,
-              context.dataFactory.namedNode(CommonIRIs.REIFIES),
-              context.dataFactory.quad(
-                subject,
-                <Exclude<typeof predicate, T11.PropertyPath>>predicate,
-                objectVal.node,
-              ),
-            )
-          });
-          result.push(...annotation.triples.map(triple => () => triple));
+          result.push(<Triple> context.dataFactory.quad(
+            annotation.node,
+            context.dataFactory.namedNode(CommonIRIs.REIFIES),
+            context.dataFactory.quad(
+              subject,
+              <Exclude<typeof predicate, T11.PropertyPath>>predicate,
+              objectVal.node,
+            ),
+          ));
+          result.push(...annotation.triples);
         }
         return result;
       });
@@ -177,18 +177,23 @@ function annotationImpl<T extends string>(name: T, allowPaths: boolean): RuleDef
             currentReifier = node;
           } },
           { ALT: () => {
-            const block = SUBRULE(allowPaths ? annotationBlockPath : annotationBlock);
-
+            let node: Triple['subject'];
+            const block = SUBRULE(
+              allowPaths ? annotationBlockPath : annotationBlock,
+              ACTION(() => {
+                if (currentReifier === undefined && !context.parseMode.has(S11.canCreateBlankNodes)) {
+                  throw new Error('Cannot create blanknodes in current parse mode');
+                }
+                node = currentReifier ?? context.dataFactory.blankNode();
+                return node;
+              }),
+            );
             ACTION(() => {
-              if (currentReifier === undefined && !context.parseMode.has(S11.canCreateBlankNodes)) {
-                throw new Error('Cannot create blanknodes in current parse mode');
-              }
-              const node = currentReifier ?? context.dataFactory.blankNode();
               annotations.push({
                 node,
-                triples: block.map(partial => partial({ subject: node })),
+                triples: block,
               });
-              currentReifier = undefined;
+              currentReifier = undefined
             });
           } },
         ]);
@@ -209,12 +214,12 @@ export const annotationPath = annotationImpl('annotationPath', true);
  */
 export const annotation = annotationImpl('annotation', false);
 
-function annotationBlockImpl<T extends string>(name: T, allowPaths: boolean): RuleDef<T, TripleCreatorS[]> {
+function annotationBlockImpl<T extends string>(name: T, allowPaths: boolean): RuleDef<T, Triple[], [Triple['subject']]> {
   return <const> {
     name,
-    impl: ({ SUBRULE, CONSUME }) => () => {
+    impl: ({ SUBRULE, CONSUME }) => (subject) => {
       CONSUME(l12.annotationOpen);
-      const res = <TripleCreatorS[]> SUBRULE(allowPaths ? S11.propertyListPathNotEmpty : S11.propertyListNotEmpty);
+      const res = SUBRULE(allowPaths ? S11.propertyListPathNotEmpty : S11.propertyListNotEmpty, <T11.Term> subject);
       CONSUME(l12.annotationClose);
 
       return res;

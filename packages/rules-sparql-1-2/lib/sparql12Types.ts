@@ -13,15 +13,6 @@ export type Triple = {
 };
 
 /**
- * OVERRIDES: {@link T11.TripleCreatorS}
- */
-export type TripleCreatorS = (part: Pick<Triple, 'subject'>) => Triple;
-/**
- * OVERRIDES: {@link T11.TripleCreatorSP}
- */
-export type TripleCreatorSP = (part: Pick<Triple, 'subject' | 'predicate'>) => Triple;
-
-/**
  * OVERRIDES: {@link T11.ITriplesNode}
  */
 export interface ITriplesNode {

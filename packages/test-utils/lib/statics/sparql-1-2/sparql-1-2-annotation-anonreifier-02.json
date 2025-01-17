@@ -29,7 +29,7 @@
           "value": "",
           "subject": {
             "termType": "BlankNode",
-            "value": "g_2"
+            "value": "g_0"
           },
           "predicate": {
             "termType": "NamedNode",
@@ -63,25 +63,11 @@
         {
           "subject": {
             "termType": "BlankNode",
-            "value": "g_2"
+            "value": "g_0"
           },
           "predicate": {
             "termType": "NamedNode",
             "value": "http://example.com/ns#source"
-          },
-          "object": {
-            "termType": "BlankNode",
-            "value": "g_0"
-          }
-        },
-        {
-          "subject": {
-            "termType": "BlankNode",
-            "value": "g_2"
-          },
-          "predicate": {
-            "termType": "Variable",
-            "value": "source"
           },
           "object": {
             "termType": "BlankNode",
@@ -99,7 +85,7 @@
           },
           "object": {
             "termType": "NamedNode",
-            "value": "http://host2/"
+            "value": "http://host1/"
           }
         },
         {
@@ -113,7 +99,7 @@
           },
           "object": {
             "termType": "Literal",
-            "value": "2020-12-31",
+            "value": "2020-01-20",
             "language": "",
             "datatype": {
               "termType": "NamedNode",
@@ -128,18 +114,32 @@
             "value": "g_0"
           },
           "predicate": {
-            "termType": "NamedNode",
-            "value": "http://example.com/ns#graph"
+            "termType": "Variable",
+            "value": "source"
           },
           "object": {
-            "termType": "NamedNode",
-            "value": "http://host1/"
+            "termType": "BlankNode",
+            "value": "g_2"
           }
         },
         {
           "subject": {
             "termType": "BlankNode",
-            "value": "g_0"
+            "value": "g_2"
+          },
+          "predicate": {
+            "termType": "NamedNode",
+            "value": "http://example.com/ns#graph"
+          },
+          "object": {
+            "termType": "NamedNode",
+            "value": "http://host2/"
+          }
+        },
+        {
+          "subject": {
+            "termType": "BlankNode",
+            "value": "g_2"
           },
           "predicate": {
             "termType": "NamedNode",
@@ -147,7 +147,7 @@
           },
           "object": {
             "termType": "Literal",
-            "value": "2020-01-20",
+            "value": "2020-12-31",
             "language": "",
             "datatype": {
               "termType": "NamedNode",

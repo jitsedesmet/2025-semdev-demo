@@ -76,6 +76,40 @@
         },
         {
           "subject": {
+            "termType": "BlankNode",
+            "value": "g_0"
+          },
+          "predicate": {
+            "termType": "NamedNode",
+            "value": "http://example.com/ns#graph"
+          },
+          "object": {
+            "termType": "NamedNode",
+            "value": "http://host1/"
+          }
+        },
+        {
+          "subject": {
+            "termType": "BlankNode",
+            "value": "g_0"
+          },
+          "predicate": {
+            "termType": "NamedNode",
+            "value": "http://example.com/ns#date"
+          },
+          "object": {
+            "termType": "Literal",
+            "value": "2020-01-20",
+            "language": "",
+            "datatype": {
+              "termType": "NamedNode",
+              "value": "http://www.w3.org/2001/XMLSchema#date"
+            },
+            "direction": ""
+          }
+        },
+        {
+          "subject": {
             "termType": "NamedNode",
             "value": "http://example.com/ns#iri"
           },
@@ -114,40 +148,6 @@
           "object": {
             "termType": "Literal",
             "value": "2020-12-31",
-            "language": "",
-            "datatype": {
-              "termType": "NamedNode",
-              "value": "http://www.w3.org/2001/XMLSchema#date"
-            },
-            "direction": ""
-          }
-        },
-        {
-          "subject": {
-            "termType": "BlankNode",
-            "value": "g_0"
-          },
-          "predicate": {
-            "termType": "NamedNode",
-            "value": "http://example.com/ns#graph"
-          },
-          "object": {
-            "termType": "NamedNode",
-            "value": "http://host1/"
-          }
-        },
-        {
-          "subject": {
-            "termType": "BlankNode",
-            "value": "g_0"
-          },
-          "predicate": {
-            "termType": "NamedNode",
-            "value": "http://example.com/ns#date"
-          },
-          "object": {
-            "termType": "Literal",
-            "value": "2020-01-20",
             "language": "",
             "datatype": {
               "termType": "NamedNode",

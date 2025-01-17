@@ -56,7 +56,7 @@ export class Builder<Names extends string, RuleDefs extends RuleDefMap<Names>> {
   /**
    * Add a rule to the grammar. If the rule already exists, but the implementation differs, an error will be thrown.
    */
-  public addRuleRedundant<U extends string, RET, ARGS extends undefined[]>(rule: RuleDef<U, RET, ARGS>):
+  public addRuleRedundant<U extends string, RET, ARGS extends unknown[]>(rule: RuleDef<U, RET, ARGS>):
   Builder<Names | U, {[K in Names | U]: K extends U ? RuleDef<K, RET, ARGS> : ( K extends Names ? (RuleDefs[K] extends RuleDef<K> ? RuleDefs[K] : never ) : never) }> {
     const self = <Builder<Names | U, {[K in Names | U]: K extends U ? RuleDef<K, RET, ARGS> : ( K extends Names ? (RuleDefs[K] extends RuleDef<K> ? RuleDefs[K] : never ) : never) }>>
       <unknown> this;
@@ -156,7 +156,7 @@ export class Builder<Names extends string, RuleDefs extends RuleDefMap<Names>> {
     const selfSufficientParser: Partial<ParserFromRules<Names, RuleDefs>> = {};
     // eslint-disable-next-line ts/no-unnecessary-type-assertion
     for (const rule of <RuleDef<Names>[]> Object.values(this.rules)) {
-      selfSufficientParser[rule.name] = <any> ((input: string, ...args: unknown[]) => {
+      selfSufficientParser[rule.name] = <any> ((input: string, arg: unknown) => {
         // Transform input in accordance to 19.2
         input = input.replaceAll(
           /\\u([0-9a-fA-F]{4})|\\U([0-9a-fA-F]{8})/gu,
@@ -183,7 +183,7 @@ export class Builder<Names extends string, RuleDefs extends RuleDefMap<Names>> {
 
         parser.reset();
         parser.input = lexResult.tokens;
-        const result = parser[rule.name](...args);
+        const result = parser[rule.name](arg);
         if (parser.errors.length > 0) {
           // Console.log(lexResult.tokens);
           throw new Error(`Parse error on line ${parser.errors.map(x => x.token.startLine).join(', ')}
@@ -251,6 +251,11 @@ ${parser.errors.map(x => `${x.token.startLine}: ${x.message}`).join('\n')}`);
       }
 
       private getSelfRef(): CstDef {
+        const subRuleImpl = (subrule: typeof this.SUBRULE): CstDef['SUBRULE'] => {
+          return ((cstDef, ...args) => {
+            return subrule(<any> this[<keyof (typeof this)> cstDef.name], <any> { ARGS: args });
+          }) satisfies CstDef['SUBRULE'];
+        }
         return {
           CONSUME: (tokenType, option) => this.CONSUME(tokenType, option),
           CONSUME1: (tokenType, option) => this.CONSUME1(tokenType, option),
@@ -330,76 +335,16 @@ ${parser.errors.map(x => `${x.token.startLine}: ${x.message}`).join('\n')}`);
               throw error;
             }
           },
-          SUBRULE: (cstDef, ...args) => {
-            try {
-              return this.SUBRULE(<any> this[<keyof (typeof this)> cstDef.name], <any> { ARGS: args });
-            } catch (error: unknown) {
-              throw error;
-            }
-          },
-          SUBRULE1: (cstDef, ...args) => {
-            try {
-              return this.SUBRULE1(<any> this[<keyof (typeof this)> cstDef.name], <any> { ARGS: args });
-            } catch (error: unknown) {
-              throw error;
-            }
-          },
-          SUBRULE2: (cstDef, ...args) => {
-            try {
-              return this.SUBRULE2(<any> this[<keyof (typeof this)> cstDef.name], <any> { ARGS: args });
-            } catch (error: unknown) {
-              throw error;
-            }
-          },
-          SUBRULE3: (cstDef, ...args) => {
-            try {
-              return this.SUBRULE3(<any> this[<keyof (typeof this)> cstDef.name], <any> { ARGS: args });
-            } catch (error: unknown) {
-              throw error;
-            }
-          },
-          SUBRULE4: (cstDef, ...args) => {
-            try {
-              return this.SUBRULE4(<any> this[<keyof (typeof this)> cstDef.name], <any> { ARGS: args });
-            } catch (error: unknown) {
-              throw error;
-            }
-          },
-          SUBRULE5: (cstDef, ...args) => {
-            try {
-              return this.SUBRULE5(<any> this[<keyof (typeof this)> cstDef.name], <any> { ARGS: args });
-            } catch (error: unknown) {
-              throw error;
-            }
-          },
-          SUBRULE6: (cstDef, ...args) => {
-            try {
-              return this.SUBRULE6(<any> this[<keyof (typeof this)> cstDef.name], <any> { ARGS: args });
-            } catch (error: unknown) {
-              throw error;
-            }
-          },
-          SUBRULE7: (cstDef, ...args) => {
-            try {
-              return this.SUBRULE7(<any> this[<keyof (typeof this)> cstDef.name], <any> { ARGS: args });
-            } catch (error: unknown) {
-              throw error;
-            }
-          },
-          SUBRULE8: (cstDef, ...args) => {
-            try {
-              return this.SUBRULE8(<any> this[<keyof (typeof this)> cstDef.name], <any> { ARGS: args });
-            } catch (error: unknown) {
-              throw error;
-            }
-          },
-          SUBRULE9: (cstDef, ...args) => {
-            try {
-              return this.SUBRULE9(<any> this[<keyof (typeof this)> cstDef.name], <any> { ARGS: args });
-            } catch (error: unknown) {
-              throw error;
-            }
-          },
+          SUBRULE: subRuleImpl((rule, args) => this.SUBRULE(rule, args)),
+          SUBRULE1: subRuleImpl((rule, args) => this.SUBRULE1(rule, args)),
+          SUBRULE2: subRuleImpl((rule, args) => this.SUBRULE2(rule, args)),
+          SUBRULE3: subRuleImpl((rule, args) => this.SUBRULE3(rule, args)),
+          SUBRULE4: subRuleImpl((rule, args) => this.SUBRULE4(rule, args)),
+          SUBRULE5: subRuleImpl((rule, args) => this.SUBRULE5(rule, args)),
+          SUBRULE6: subRuleImpl((rule, args) => this.SUBRULE6(rule, args)),
+          SUBRULE7: subRuleImpl((rule, args) => this.SUBRULE7(rule, args)),
+          SUBRULE8: subRuleImpl((rule, args) => this.SUBRULE8(rule, args)),
+          SUBRULE9: subRuleImpl((rule, args) => this.SUBRULE9(rule, args)),
         };
       }
     }

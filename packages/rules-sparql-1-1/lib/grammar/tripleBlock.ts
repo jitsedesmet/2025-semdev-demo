@@ -5,14 +5,12 @@ import { var_, varOrTerm, verb } from './general';
 import { canCreateBlankNodes } from './literals';
 import { path } from './propertyPaths';
 import type {
-  BgpPattern,
+  BgpPattern, BlankTerm,
   IGraphNode,
   IriTerm,
   ITriplesNode,
   PropertyPath,
   Triple,
-  TripleCreatorS,
-  TripleCreatorSP,
   VariableTerm,
 } from '../Sparql11types';
 
@@ -45,18 +43,15 @@ function triplesSameSubjectImpl<T extends string>(name: T, allowPaths: boolean):
       {
         ALT: () => {
           const subject = SUBRULE(varOrTerm);
-          const propNotEmpty = SUBRULE(allowPaths ? propertyListPathNotEmpty : propertyListNotEmpty);
-
-          return ACTION(() =>
-            propNotEmpty.map(partial => partial({ subject })));
+          return SUBRULE(allowPaths ? propertyListPathNotEmpty : propertyListNotEmpty, subject);
         },
       },
       {
         ALT: () => {
           const subjectNode = SUBRULE(allowPaths ? triplesNodePath : triplesNode);
-          const restNode = SUBRULE(allowPaths ? propertyListPath : propertyList);
+          const restNode = SUBRULE(allowPaths ? propertyListPath : propertyList, subjectNode.node);
           return ACTION(() => [
-            ...restNode.map(partial => partial({ subject: subjectNode.node })),
+            ...restNode,
             ...subjectNode.triples,
           ]);
         },
@@ -71,11 +66,11 @@ export const triplesSameSubjectPath = triplesSameSubjectImpl('triplesSameSubject
  * [[76]](https://www.w3.org/TR/sparql11-query/#rPropertyList)
  * [[82]](https://www.w3.org/TR/sparql11-query/#rPropertyListPath)
  */
-function propertyListImpl<T extends string>(name: T, allowPaths: boolean): RuleDef<T, TripleCreatorS[]> {
+function propertyListImpl<T extends string>(name: T, allowPaths: boolean): RuleDef<T, Triple[], [Triple['subject']]> {
   return {
     name,
-    impl: ({ SUBRULE, OPTION }) => () =>
-      OPTION(() => SUBRULE(allowPaths ? propertyListPathNotEmpty : propertyListNotEmpty)) ?? [],
+    impl: ({ SUBRULE, OPTION }) => (subject) =>
+      OPTION(() => SUBRULE(allowPaths ? propertyListPathNotEmpty : propertyListNotEmpty, subject)) ?? [],
   };
 }
 export const propertyList = propertyListImpl('propertyList', false);
@@ -90,58 +85,38 @@ export const propertyListPath = propertyListImpl('propertyListPath', true);
 function propertyListNotEmptyImplementation<T extends string>(
   name: T,
   allowPaths: boolean,
-): RuleDef<T, TripleCreatorS[]> {
+): RuleDef<T, Triple[], [Triple['subject']]> {
   return {
     name,
-    impl: ({ ACTION, CONSUME, MANY, SUBRULE1, SUBRULE2, OPTION, OR1, OR2, context }) => () => {
-      const result: TripleCreatorS[] = [];
-      const resultAppendage: typeof result = [];
+    impl: ({ ACTION, CONSUME, AT_LEAST_ONE, SUBRULE1, MANY2, OR1 }) => (subject) => {
+      const result: Triple[] = [];
 
-      // Generates predicate and objectList
-      const firstProperty = allowPaths ?
-        OR1<IriTerm | VariableTerm | PropertyPath>([
-          { ALT: () => SUBRULE1(verbPath) },
-          { ALT: () => SUBRULE1(verbSimple) },
-        ]) :
-        SUBRULE1(verb);
-      const firstObjects = SUBRULE1(allowPaths ? objectListPath : objectList);
-      ACTION(() => {
-        // TODO: this filter is only here to be compliant with sparqlJS and is quite arbitrary.
-        //   For the first predicate,
-        //   additionally generated triples (like from collections) are shoved to the back of the result.
-        const filterSubject = context.dataFactory.namedNode('internal:filterSubject');
-        for (const cObject of firstObjects) {
-          const triple = cObject({ subject: filterSubject, predicate: firstProperty });
-          const generator: TripleCreatorS = rest => cObject({ ...rest, predicate: firstProperty });
-          if (triple.subject === filterSubject) {
-            result.push(generator);
-          } else {
-            resultAppendage.push(generator);
-          }
+      let parsedSemi = true;
+      AT_LEAST_ONE({
+        GATE: () => parsedSemi,
+        DEF: () => {
+          parsedSemi = false;
+          const predicate = allowPaths ?
+            OR1<IriTerm | VariableTerm | PropertyPath>([
+              { ALT: () => SUBRULE1(verbPath) },
+              { ALT: () => SUBRULE1(verbSimple) },
+            ]) :
+            SUBRULE1(verb);
+          const triples = SUBRULE1(
+            allowPaths ? objectListPath : objectList,
+            subject,
+            predicate
+          );
+
+          ACTION(() => result.push(...triples));
+
+          MANY2(() => {
+            CONSUME(l.symbols.semi);
+            parsedSemi = true;
+          })
         }
       });
-
-      MANY(() => {
-        CONSUME(l.symbols.semi);
-        OPTION(() => {
-          const predicate = allowPaths ?
-            OR2<IriTerm | VariableTerm | PropertyPath>([
-              { ALT: () => SUBRULE2(verbPath) },
-              { ALT: () => SUBRULE2(verbSimple) },
-            ]) :
-            SUBRULE2(verb);
-          // https://www.w3.org/2013/sparql-errata#errata-query-3
-          const objects = SUBRULE2(allowPaths ? objectListPath : objectList);
-
-          ACTION(() => {
-            result.push(
-              ...objects
-                .map(object => (partS: Pick<Triple, 'subject'>) => object({ ...partS, predicate })),
-            );
-          });
-        });
-      });
-      return [ ...result, ...resultAppendage ];
+      return result;
     },
   };
 }
@@ -168,14 +143,14 @@ export const verbSimple: RuleDef<'verbSimple', VariableTerm> = <const> {
  * [[79]](https://www.w3.org/TR/sparql11-query/#rObjectList)
  * [[86]](https://www.w3.org/TR/sparql11-query/#rObjectListPath)
  */
-function objectListImpl<T extends string>(name: T, allowPaths: boolean): RuleDef<T, TripleCreatorSP[]> {
+function objectListImpl<T extends string>(name: T, allowPaths: boolean): RuleDef<T, Triple[], [Triple['subject'], Triple['predicate']]> {
   return {
     name,
-    impl: ({ ACTION, SUBRULE, AT_LEAST_ONE_SEP }) => () => {
-      const objects: TripleCreatorSP[] = [];
+    impl: ({ ACTION, SUBRULE, AT_LEAST_ONE_SEP }) => (subject, predicate) => {
+      const objects: Triple[] = [];
       AT_LEAST_ONE_SEP({
         DEF: () => {
-          const objectTriples = SUBRULE(allowPaths ? objectPath : object);
+          const objectTriples = SUBRULE(allowPaths ? objectPath : object, subject, predicate);
           ACTION(() => objects.push(...objectTriples));
         },
         SEP: l.symbols.comma,
@@ -187,15 +162,15 @@ function objectListImpl<T extends string>(name: T, allowPaths: boolean): RuleDef
 export const objectList = objectListImpl('objectList', false);
 export const objectListPath = objectListImpl('objectListPath', true);
 
-function objectImpl<T extends string>(name: T, allowPaths: boolean): RuleDef<T, TripleCreatorSP[]> {
+function objectImpl<T extends string>(name: T, allowPaths: boolean): RuleDef<T, Triple[], [Triple['subject'], Triple['predicate']]> {
   return {
     name,
-    impl: ({ ACTION, SUBRULE }) => () => {
+    impl: ({ ACTION, SUBRULE }) => (subject, predicate) => {
       const node = SUBRULE(allowPaths ? graphNodePath : graphNode);
       return ACTION(() => [
-        part => ({ ...part, object: node.node }),
-        ...node.triples.map(val => () => val),
-      ] satisfies TripleCreatorSP[]);
+        { subject, predicate, object: node.node },
+        ...node.triples,
+      ]);
     },
   };
 }
@@ -235,14 +210,17 @@ function blankNodePropertyListImpl<T extends string>(name: T, allowPaths: boolea
     name,
     impl: ({ ACTION, SUBRULE, CONSUME, context }) => () => {
       CONSUME(l.symbols.LSquare);
-      const propList = SUBRULE(allowPaths ? propertyListPathNotEmpty : propertyListNotEmpty);
+      let blankNode: BlankTerm;
+      const propList = SUBRULE(
+        allowPaths ? propertyListPathNotEmpty : propertyListNotEmpty,
+        ACTION(() => blankNode = context.dataFactory.blankNode()),
+      );
       CONSUME(l.symbols.RSquare);
 
       return ACTION(() => {
-        const subject = context.dataFactory.blankNode();
         return {
-          node: subject,
-          triples: propList.map(part => part({ subject })),
+          node: blankNode,
+          triples: propList,
         };
       });
     },

@@ -6,29 +6,29 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-#  test:
-#    strategy:
-#      fail-fast: false
-#      matrix:
-#        node-version:
-#          - 18.x
-#          - 20.x
-#          - 22.x
-#        os:
-#          - macos-latest
-#          - ubuntu-latest
-#          - windows-latest
-#    runs-on: ${{ matrix.os }}
-#    steps:
-#      - uses: actions/checkout@v4
-#      - name: Use Node.js ${{ matrix.node-version }}
-#        uses: actions/setup-node@v4
-#        with:
-#          node-version: ${{ matrix.node-version }}
-#      - run: yarn install --immutable
-#      - run: yarn build
-#      - run: yarn depcheck
-#      - run: yarn test
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version:
+          - 18.x
+          - 20.x
+          - 22.x
+        os:
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: yarn install --immutable
+      - run: yarn build
+      - run: yarn depcheck
+      - run: yarn test
 
   spec:
     strategy:
@@ -42,9 +42,9 @@ jobs:
           - 22.x
         os:
           - macos-latest
-#          - ubuntu-latest
-#          - windows-latest
-#          - macos-13
+          - ubuntu-latest
+          - windows-latest
+          - macos-13
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -60,4 +60,4 @@ jobs:
           path: |
             .rdf-test-suite-cache
           key: rdftestsuite-${{ hashFiles('yarn.lock') }}
-      - run: node --max-old-space-size=500 ./node_modules/rdf-test-suite/bin/Runner.js engines/engine-sparql-1-1/spec/parser.cjs http://w3c.github.io/rdf-tests/sparql/sparql11/manifest-all.ttl -c ./.rdf-test-suite-cache/
+      - run: yarn ${{ matrix.spec }}

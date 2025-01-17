@@ -40,6 +40,18 @@ describe('a SPARQL 1.2 parser', () => {
     }
   });
 
+  it(`should NOT parse $only thing}`, async ({expect}) => {
+    const query = `
+    PREFIX : <http://example.com/ns#>
+
+SELECT * WHERE {
+   <<( ?s ?p ?o )>> .
+}
+    `
+    parser._resetBlanks();
+    expect(() => parser.parse(query)).toThrow();
+  });
+
   describe('negative sparql 1.2', () => {
     for (const {name, statics} of [...negativeTest('sparql-1-2-invalid')]) {
       const parser = new Parser({prefixes: {ex: 'http://example.org/'}});

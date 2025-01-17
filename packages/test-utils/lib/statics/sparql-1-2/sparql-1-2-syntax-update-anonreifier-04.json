@@ -63,7 +63,7 @@
               "value": "",
               "subject": {
                 "termType": "BlankNode",
-                "value": "g_2"
+                "value": "g_1"
               },
               "predicate": {
                 "termType": "NamedNode",
@@ -97,7 +97,7 @@
             {
               "subject": {
                 "termType": "BlankNode",
-                "value": "g_2"
+                "value": "g_1"
               },
               "predicate": {
                 "termType": "Variable",
@@ -105,7 +105,7 @@
               },
               "object": {
                 "termType": "BlankNode",
-                "value": "g_1"
+                "value": "g_2"
               }
             },
             {
@@ -113,7 +113,7 @@
               "value": "",
               "subject": {
                 "termType": "BlankNode",
-                "value": "g_1"
+                "value": "g_2"
               },
               "predicate": {
                 "termType": "NamedNode",
@@ -206,7 +206,7 @@
               "value": "",
               "subject": {
                 "termType": "BlankNode",
-                "value": "g_5"
+                "value": "g_4"
               },
               "predicate": {
                 "termType": "NamedNode",
@@ -240,7 +240,7 @@
             {
               "subject": {
                 "termType": "BlankNode",
-                "value": "g_5"
+                "value": "g_4"
               },
               "predicate": {
                 "termType": "Variable",
@@ -248,7 +248,7 @@
               },
               "object": {
                 "termType": "BlankNode",
-                "value": "g_4"
+                "value": "g_5"
               }
             },
             {
@@ -256,7 +256,7 @@
               "value": "",
               "subject": {
                 "termType": "BlankNode",
-                "value": "g_4"
+                "value": "g_5"
               },
               "predicate": {
                 "termType": "NamedNode",

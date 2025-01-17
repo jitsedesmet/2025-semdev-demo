@@ -17,13 +17,13 @@ export type RuleDef<
   ParamType extends unknown[] = unknown[],
 > = {
   name: NameType;
-  impl: (def: ImplArgs) => (...args: ArrayElementsUndefinable<ParamType>) => ReturnType;
+  impl: (def: ImplArgs) => (...args: ArrayMagicWork<ParamType>) => ReturnType;
 };
 
 export type RuleDefReturn<T> = T extends RuleDef<any, infer Ret, any> ? Ret : never;
 
-type ArrayElementsUndefinable<ArrayType extends any[]> =
-  ArrayType extends [infer First, ...infer Rest] ? [First | undefined, ...ArrayElementsUndefinable<Rest>] : [];
+type ArrayMagicWork<ArrayType extends unknown[]> =
+  ArrayType extends [infer First, ...infer Rest] ? [First, ...ArrayMagicWork<Rest>] : [];
 
 export interface ImplArgs extends CstDef {
   cache: WeakMap<RuleDef, unknown>;
