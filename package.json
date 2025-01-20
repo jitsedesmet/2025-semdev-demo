@@ -9,17 +9,18 @@
     "packages/*"
   ],
   "scripts": {
-    "bench": "yarn build && vitest bench --run",
+    "bench": "vitest bench --run",
     "build": "yarn build:ts && yarn build:transpile && yarn build:transpile-spec",
     "build:ts": "tsc",
     "build:transpile": "lerna run build:transpile",
     "build:transpile-spec": "lerna run build:transpile-spec",
     "clean": "git clean -dfx",
     "depcheck": "lerna exec --concurrency 1 -- depcheck --ignores=\"vitest\"",
+    "postinstall": "yarn husky && yarn run build",
     "publish": "yarn run build",
     "spec:all": "lerna run spec:all --concurrency 1",
     "spec:earl": "lerna run spec:earl --concurrency 1",
-    "test": "yarn build && vitest test --run",
+    "test": "vitest test --run",
     "version": "manual-git-changelog onversion"
   },
   "devDependencies": {
@@ -27,6 +28,7 @@
     "@vitest/coverage-v8": "2.1.8",
     "depcheck": "^1.4.7",
     "esbuild": "^0.24.0",
+    "husky": "^9.1.7",
     "lerna": "8.1.4",
     "manual-git-changelog": "^1.0.2",
     "rdf-test-suite": "^2.0.0",
