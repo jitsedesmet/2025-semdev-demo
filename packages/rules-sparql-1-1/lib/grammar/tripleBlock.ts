@@ -1,5 +1,5 @@
 import * as l from '../lexer';
-import type { RuleDef } from '@traqula/core';
+import type { SparqlRuleDef } from '@traqula/core';
 import { CommonIRIs } from '@traqula/core';
 import { var_, varOrTerm, verb } from './general';
 import { canCreateBlankNodes } from './literals';
@@ -17,13 +17,13 @@ import type {
 /**
  * [[55]](https://www.w3.org/TR/sparql11-query/#rTriplesBlock)
  */
-export const triplesBlock: RuleDef<'triplesBlock', BgpPattern> = <const> {
+export const triplesBlock: SparqlRuleDef<'triplesBlock', BgpPattern> = <const> {
   name: 'triplesBlock',
   impl: ({ ACTION, SUBRULE, CONSUME, OPTION1, OPTION2 }) => () => {
-    const triples = SUBRULE(triplesSameSubjectPath);
+    const triples = SUBRULE(triplesSameSubjectPath, undefined);
     const pattern = OPTION1(() => {
       CONSUME(l.symbols.dot);
-      return OPTION2(() => SUBRULE(triplesBlock));
+      return OPTION2(() => SUBRULE(triplesBlock, undefined));
     });
     return ACTION(() => ({
       type: 'bgp',
@@ -36,20 +36,20 @@ export const triplesBlock: RuleDef<'triplesBlock', BgpPattern> = <const> {
  * [[75]](https://www.w3.org/TR/sparql11-query/#rTriplesSameSubject)
  * [[81]](https://www.w3.org/TR/sparql11-query/#rTriplesSameSubjectPath)
  */
-function triplesSameSubjectImpl<T extends string>(name: T, allowPaths: boolean): RuleDef<T, Triple[]> {
+function triplesSameSubjectImpl<T extends string>(name: T, allowPaths: boolean): SparqlRuleDef<T, Triple[]> {
   return <const> {
     name,
     impl: ({ ACTION, SUBRULE, OR }) => () => OR<Triple[]>([
       {
         ALT: () => {
-          const subject = SUBRULE(varOrTerm);
-          return SUBRULE(allowPaths ? propertyListPathNotEmpty : propertyListNotEmpty, subject);
+          const subject = SUBRULE(varOrTerm, undefined);
+          return SUBRULE(allowPaths ? propertyListPathNotEmpty : propertyListNotEmpty, {subject});
         },
       },
       {
         ALT: () => {
-          const subjectNode = SUBRULE(allowPaths ? triplesNodePath : triplesNode);
-          const restNode = SUBRULE(allowPaths ? propertyListPath : propertyList, subjectNode.node);
+          const subjectNode = SUBRULE(allowPaths ? triplesNodePath : triplesNode, undefined);
+          const restNode = SUBRULE(allowPaths ? propertyListPath : propertyList, { subject: subjectNode.node});
           return ACTION(() => [
             ...restNode,
             ...subjectNode.triples,
@@ -66,11 +66,11 @@ export const triplesSameSubjectPath = triplesSameSubjectImpl('triplesSameSubject
  * [[76]](https://www.w3.org/TR/sparql11-query/#rPropertyList)
  * [[82]](https://www.w3.org/TR/sparql11-query/#rPropertyListPath)
  */
-function propertyListImpl<T extends string>(name: T, allowPaths: boolean): RuleDef<T, Triple[], [Triple['subject']]> {
+function propertyListImpl<T extends string>(name: T, allowPaths: boolean): SparqlRuleDef<T, Triple[], Pick<Triple, 'subject'>> {
   return {
     name,
-    impl: ({ SUBRULE, OPTION }) => (subject) =>
-      OPTION(() => SUBRULE(allowPaths ? propertyListPathNotEmpty : propertyListNotEmpty, subject)) ?? [],
+    impl: ({ SUBRULE, OPTION }) => (_, arg) =>
+      OPTION(() => SUBRULE(allowPaths ? propertyListPathNotEmpty : propertyListNotEmpty, arg)) ?? [],
   };
 }
 export const propertyList = propertyListImpl('propertyList', false);
@@ -85,10 +85,10 @@ export const propertyListPath = propertyListImpl('propertyListPath', true);
 function propertyListNotEmptyImplementation<T extends string>(
   name: T,
   allowPaths: boolean,
-): RuleDef<T, Triple[], [Triple['subject']]> {
+): SparqlRuleDef<T, Triple[], Pick<Triple, 'subject'>> {
   return {
     name,
-    impl: ({ ACTION, CONSUME, AT_LEAST_ONE, SUBRULE1, MANY2, OR1 }) => (subject) => {
+    impl: ({ ACTION, CONSUME, AT_LEAST_ONE, SUBRULE1, MANY2, OR1 }) => (_, arg) => {
       const result: Triple[] = [];
 
       let parsedSemi = true;
@@ -98,14 +98,13 @@ function propertyListNotEmptyImplementation<T extends string>(
           parsedSemi = false;
           const predicate = allowPaths ?
             OR1<IriTerm | VariableTerm | PropertyPath>([
-              { ALT: () => SUBRULE1(verbPath) },
-              { ALT: () => SUBRULE1(verbSimple) },
+              { ALT: () => SUBRULE1(verbPath, undefined) },
+              { ALT: () => SUBRULE1(verbSimple, undefined) },
             ]) :
-            SUBRULE1(verb);
+            SUBRULE1(verb, undefined);
           const triples = SUBRULE1(
             allowPaths ? objectListPath : objectList,
-            subject,
-            predicate
+            ACTION(() => ({ subject: arg.subject, predicate})),
           );
 
           ACTION(() => result.push(...triples));
@@ -126,31 +125,31 @@ export const propertyListPathNotEmpty = propertyListNotEmptyImplementation('prop
 /**
  * [[84]](https://www.w3.org/TR/sparql11-query/#rVerbPath)
  */
-export const verbPath: RuleDef<'verbPath', PropertyPath | IriTerm> = <const> {
+export const verbPath: SparqlRuleDef<'verbPath', PropertyPath | IriTerm> = <const> {
   name: 'verbPath',
-  impl: ({ SUBRULE }) => () => SUBRULE(path),
+  impl: ({ SUBRULE }) => () => SUBRULE(path, undefined),
 };
 
 /**
  * [[85]](https://www.w3.org/TR/sparql11-query/#rVerbSimple)
  */
-export const verbSimple: RuleDef<'verbSimple', VariableTerm> = <const> {
+export const verbSimple: SparqlRuleDef<'verbSimple', VariableTerm> = <const> {
   name: 'verbSimple',
-  impl: ({ SUBRULE }) => () => SUBRULE(var_),
+  impl: ({ SUBRULE }) => () => SUBRULE(var_, undefined),
 };
 
 /**
  * [[79]](https://www.w3.org/TR/sparql11-query/#rObjectList)
  * [[86]](https://www.w3.org/TR/sparql11-query/#rObjectListPath)
  */
-function objectListImpl<T extends string>(name: T, allowPaths: boolean): RuleDef<T, Triple[], [Triple['subject'], Triple['predicate']]> {
-  return {
+function objectListImpl<T extends string>(name: T, allowPaths: boolean): SparqlRuleDef<T, Triple[], Pick<Triple, 'subject' | 'predicate'>> {
+  return <const> {
     name,
-    impl: ({ ACTION, SUBRULE, AT_LEAST_ONE_SEP }) => (subject, predicate) => {
+    impl: ({ ACTION, SUBRULE, AT_LEAST_ONE_SEP }) => (_, arg) => {
       const objects: Triple[] = [];
       AT_LEAST_ONE_SEP({
         DEF: () => {
-          const objectTriples = SUBRULE(allowPaths ? objectPath : object, subject, predicate);
+          const objectTriples = SUBRULE(allowPaths ? objectPath : object, arg);
           ACTION(() => objects.push(...objectTriples));
         },
         SEP: l.symbols.comma,
@@ -162,13 +161,13 @@ function objectListImpl<T extends string>(name: T, allowPaths: boolean): RuleDef
 export const objectList = objectListImpl('objectList', false);
 export const objectListPath = objectListImpl('objectListPath', true);
 
-function objectImpl<T extends string>(name: T, allowPaths: boolean): RuleDef<T, Triple[], [Triple['subject'], Triple['predicate']]> {
+function objectImpl<T extends string>(name: T, allowPaths: boolean): SparqlRuleDef<T, Triple[], Pick<Triple, 'subject' | 'predicate'>> {
   return {
     name,
-    impl: ({ ACTION, SUBRULE }) => (subject, predicate) => {
-      const node = SUBRULE(allowPaths ? graphNodePath : graphNode);
+    impl: ({ ACTION, SUBRULE }) => (_, arg) => {
+      const node = SUBRULE(allowPaths ? graphNodePath : graphNode, undefined);
       return ACTION(() => [
-        { subject, predicate, object: node.node },
+        { subject: arg.subject, predicate: arg.predicate, object: node.node },
         ...node.triples,
       ]);
     },
@@ -186,18 +185,18 @@ export const objectPath = objectImpl('objectPath', true);
  * [[98]](https://www.w3.org/TR/sparql11-query/#rTriplesNode)
  * [[100]](https://www.w3.org/TR/sparql11-query/#rTriplesNodePath)
  */
-export const triplesNode: RuleDef<'triplesNode', ITriplesNode> = <const> {
+export const triplesNode: SparqlRuleDef<'triplesNode', ITriplesNode> = <const> {
   name: 'triplesNode',
   impl: ({ SUBRULE, OR }) => () => OR<ITriplesNode>([
-    { ALT: () => SUBRULE(collection) },
-    { ALT: () => SUBRULE(blankNodePropertyList) },
+    { ALT: () => SUBRULE(collection, undefined) },
+    { ALT: () => SUBRULE(blankNodePropertyList, undefined) },
   ]),
 };
-export const triplesNodePath: RuleDef<'triplesNodePath', ITriplesNode> = <const> {
+export const triplesNodePath: SparqlRuleDef<'triplesNodePath', ITriplesNode> = <const> {
   name: 'triplesNodePath',
   impl: ({ SUBRULE, OR }) => () => OR<ITriplesNode>([
-    { ALT: () => SUBRULE(collectionPath) },
-    { ALT: () => SUBRULE(blankNodePropertyListPath) },
+    { ALT: () => SUBRULE(collectionPath, undefined) },
+    { ALT: () => SUBRULE(blankNodePropertyListPath, undefined) },
   ]),
 };
 
@@ -205,15 +204,15 @@ export const triplesNodePath: RuleDef<'triplesNodePath', ITriplesNode> = <const>
  * [[99]](https://www.w3.org/TR/sparql11-query/#rBlankNodePropertyList)
  * [[101]](https://www.w3.org/TR/sparql11-query/#rBlankNodePropertyListPath)
  */
-function blankNodePropertyListImpl<T extends string>(name: T, allowPaths: boolean): RuleDef<T, ITriplesNode> {
+function blankNodePropertyListImpl<T extends string>(name: T, allowPaths: boolean): SparqlRuleDef<T, ITriplesNode> {
   return {
     name,
-    impl: ({ ACTION, SUBRULE, CONSUME, context }) => () => {
+    impl: ({ ACTION, SUBRULE, CONSUME }) => (C) => {
       CONSUME(l.symbols.LSquare);
       let blankNode: BlankTerm;
       const propList = SUBRULE(
         allowPaths ? propertyListPathNotEmpty : propertyListNotEmpty,
-        ACTION(() => blankNode = context.dataFactory.blankNode()),
+        { subject: ACTION(() => blankNode = C.dataFactory.blankNode()) },
       );
       CONSUME(l.symbols.RSquare);
 
@@ -233,17 +232,16 @@ export const blankNodePropertyListPath = blankNodePropertyListImpl('blankNodePro
  * [[102]](https://www.w3.org/TR/sparql11-query/#rCollection)
  * [[103]](https://www.w3.org/TR/sparql11-query/#rCollectionPath)
  */
-function collectionImpl<T extends string>(name: T, allowPaths: boolean): RuleDef<T, ITriplesNode> {
+function collectionImpl<T extends string>(name: T, allowPaths: boolean): SparqlRuleDef<T, ITriplesNode> {
   return {
     name,
-    impl: ({ ACTION, AT_LEAST_ONE, SUBRULE, CONSUME, context }) => () => {
+    impl: ({ ACTION, AT_LEAST_ONE, SUBRULE, CONSUME }) => (C) => {
       // Construct a [cons list](https://en.wikipedia.org/wiki/Cons#Lists),
       // here called a [RDF collection](https://www.w3.org/TR/sparql11-query/#collections).
       const terms: IGraphNode[] = [];
-      const dataFactory = context.dataFactory;
       CONSUME(l.symbols.LParen);
       AT_LEAST_ONE(() => {
-        terms.push(SUBRULE(allowPaths ? graphNodePath : graphNode));
+        terms.push(SUBRULE(allowPaths ? graphNodePath : graphNode, undefined));
       });
       CONSUME(l.symbols.RParen);
 
@@ -251,10 +249,10 @@ function collectionImpl<T extends string>(name: T, allowPaths: boolean): RuleDef
         const triples: Triple[] = [];
         const appendTriples: Triple[] = [];
 
-        const listHead = dataFactory.blankNode();
+        const listHead = C.dataFactory.blankNode();
         let iterHead = listHead;
-        const predFirst = dataFactory.namedNode(CommonIRIs.FIRST);
-        const predRest = dataFactory.namedNode(CommonIRIs.REST);
+        const predFirst = C.dataFactory.namedNode(CommonIRIs.FIRST);
+        const predRest = C.dataFactory.namedNode(CommonIRIs.REST);
         for (const [ index, term ] of terms.entries()) {
           const headTriple: Triple = {
             subject: iterHead,
@@ -269,11 +267,11 @@ function collectionImpl<T extends string>(name: T, allowPaths: boolean): RuleDef
             const nilTriple: Triple = {
               subject: iterHead,
               predicate: predRest,
-              object: dataFactory.namedNode(CommonIRIs.NIL),
+              object: C.dataFactory.namedNode(CommonIRIs.NIL),
             };
             triples.push(nilTriple);
           } else {
-            const tail = dataFactory.blankNode();
+            const tail = C.dataFactory.blankNode();
             const linkTriple: Triple = {
               subject: iterHead,
               predicate: predRest,
@@ -298,13 +296,13 @@ export const collectionPath = collectionImpl('collectionPath', true);
  * [[103]](https://www.w3.org/TR/sparql11-query/#rGraphNode)
  * [[105]](https://www.w3.org/TR/sparql11-query/#rGraphNodePath)
  */
-function graphNodeImpl<T extends string>(name: T, allowPaths: boolean): RuleDef<T, IGraphNode> {
+function graphNodeImpl<T extends string>(name: T, allowPaths: boolean): SparqlRuleDef<T, IGraphNode> {
   return {
     name,
-    impl: ({ SUBRULE, OR, context }) => () => OR<IGraphNode>([
+    impl: ({ SUBRULE, OR }) => (C) => OR<IGraphNode>([
       {
         ALT: () => {
-          const val = SUBRULE(varOrTerm);
+          const val = SUBRULE(varOrTerm, undefined);
           return {
             node: val,
             triples: [],
@@ -312,8 +310,8 @@ function graphNodeImpl<T extends string>(name: T, allowPaths: boolean): RuleDef<
         },
       },
       {
-        GATE: () => context.parseMode.has(canCreateBlankNodes),
-        ALT: () => SUBRULE(allowPaths ? triplesNodePath : triplesNode),
+        GATE: () => C.parseMode.has(canCreateBlankNodes),
+        ALT: () => SUBRULE(allowPaths ? triplesNodePath : triplesNode, undefined),
       },
     ]),
   };

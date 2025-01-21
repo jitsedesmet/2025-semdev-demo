@@ -1,4 +1,4 @@
-import { Builder } from '@traqula/core';
+import {Builder, type RuleNamesFromList, SparqlContext} from '@traqula/core';
 import { gram }from '@traqula/rules-sparql-1-1';
 
 

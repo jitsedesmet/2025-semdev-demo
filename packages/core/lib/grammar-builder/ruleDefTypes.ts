@@ -1,4 +1,6 @@
 import type {
+  EmbeddedActionsParser,
+  ISeparatedIterationResult,
   AtLeastOneSepMethodOpts,
   DSLMethodOpts,
   DSLMethodOptsWithErr,
@@ -11,52 +13,104 @@ import type * as RDF from '@rdfjs/types';
 import type { ConsumeMethodOpts, IToken, TokenType } from 'chevrotain';
 import type { DataFactory } from 'rdf-data-factory';
 
-export type RuleDef<
+export type SparqlRuleDef<
+  /**
+   * Name of grammar rule, should be a strict subtype of string like 'myGrammarRule'.
+   */
   NameType extends string = string,
+  /**
+   * Type that will be returned after a correct parse of this rule.
+   * This type will be the return type of calling SUBRULE with this grammar rule.
+   */
   ReturnType = unknown,
-  ParamType extends unknown[] = unknown[],
+  /**
+   * Function arguments that can be given to convey the state of the current parse operation.
+   */
+  ParamType = undefined,
+> = RuleDef<SparqlContext, NameType, ReturnType, ParamType>;
+
+/**
+ * Get the return-type of a RuleDef
+ */
+export type RuleDefReturn<T extends RuleDef> = T extends RuleDef<any, string, infer Ret> ? Ret : never;
+
+/**
+ * Type used to declare grammar rules.
+ */
+export type RuleDef<
+  /**
+   * Context object available in rule implementation.
+   */
+  Context = any,
+  /**
+   * Name of grammar rule, should be a strict subtype of string like 'myGrammarRule'.
+   */
+  NameType extends string = string,
+  /**
+   * Type that will be returned after a correct parse of this rule.
+   * This type will be the return type of calling SUBRULE with this grammar rule.
+   */
+  ReturnType = unknown,
+  /**
+   * Function arguments that can be given to convey the state of the current parse operation.
+   */
+  ParamType = any,
 > = {
   name: NameType;
-  impl: (def: ImplArgs) => (...args: ArrayMagicWork<ParamType>) => ReturnType;
+  impl: (def: ImplArgs) => (context: Context, params: ParamType) => ReturnType;
 };
 
-export type RuleDefReturn<T> = T extends RuleDef<any, infer Ret, any> ? Ret : never;
-
-type ArrayMagicWork<ArrayType extends unknown[]> =
-  ArrayType extends [infer First, ...infer Rest] ? [First, ...ArrayMagicWork<Rest>] : [];
-
-export interface ImplArgs extends CstDef {
-  cache: WeakMap<RuleDef, unknown>;
-  context: {
-    dataFactory: DataFactory<RDF.BaseQuad>;
-    /**
-     * Current scoped prefixes. Used for resolving prefixed names.
-     */
-    prefixes: Record<string, string>;
-    /**
-     * The base IRI for the query. Used for resolving relative IRIs.
-     */
-    baseIRI: string | undefined;
-    /**
-     * Can be used to disable the validation that used variables in a select clause are in scope.
-     */
-    skipValidation: boolean;
-    /**
-     * Set of queryModes. Primarily used for note 8, 14.
-     */
-    parseMode: Set<symbol>;
-  };
+export interface SparqlContext {
+  /**
+   * Data-factory to be used when constructing rdf primitives.
+   */
+  dataFactory: DataFactory<RDF.BaseQuad>;
+  /**
+   * Current scoped prefixes. Used for resolving prefixed names.
+   */
+  prefixes: Record<string, string>;
+  /**
+   * The base IRI for the query. Used for resolving relative IRIs.
+   */
+  baseIRI: string | undefined;
+  /**
+   * Can be used to disable the validation that used variables in a select clause are in scope.
+   */
+  skipValidation: boolean;
+  /**
+   * Set of queryModes. Primarily used for note 8, 14.
+   */
+  parseMode: Set<symbol>;
 }
 
-type SubRuleFunc = <T extends string, U = unknown, ARGS extends any[] = []>(
-  cstDef: RuleDef<T, U, ARGS>,
-  ...argument: ARGS
+/**
+ * Type expected by grammar rules in the main `impl` function.
+ */
+export interface ImplArgs extends CstDef {
+  cache: WeakMap<SparqlRuleDef, unknown>;
+}
+
+/**
+ * Type definition used by {@link CstDef.SUBRULE} and family.
+ */
+type SubRuleFunc = <T extends string, U = unknown, ARGS = any>(
+  cstDef: RuleDef<any, T, U, ARGS>,
+  argument: ARGS
 ) => U;
-type BacktrackFunc = <T extends string, U = unknown, ARGS extends any[] = []>(
-  cstDef: RuleDef<T, U, ARGS>,
-  ...argument: ARGS
+/**
+ * Type definition used by {@link CstDef.BACKTRACK}.
+ */
+type BacktrackFunc = <T extends string, U = unknown, ARGS = any>(
+  cstDef: RuleDef<any, T, U, ARGS>,
+  argument: ARGS
 ) => () => boolean;
 
+/**
+ * Mainly a repetition of the functions exposed by the {@link EmbeddedActionsParser},
+ * with some small adjustments that allow for the API changes made by traqula.
+ * Specifically changes are made to the {@link CstDef.SUBRULE} (and family) interface,
+ * and to the {@link CstDef.BACKTRACK} interface.
+ */
 export interface CstDef {
   /**
    *
@@ -388,7 +442,7 @@ export interface CstDef {
    *
    * @param options - An object defining the grammar of each iteration and the separator between iterations
    *
-   * @return {ISeparatedIterationResult<OUT>}
+   * @return ISeparatedIterationResult<OUT>
    */
   AT_LEAST_ONE_SEP: (options: AtLeastOneSepMethodOpts<any>) => void;
   AT_LEAST_ONE_SEP1: (options: AtLeastOneSepMethodOpts<any>) => void;

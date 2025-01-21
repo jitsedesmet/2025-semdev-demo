@@ -1,5 +1,5 @@
 import * as l from '../lexer';
-import type { RuleDef } from '@traqula/core';
+import type { SparqlRuleDef } from '@traqula/core';
 import { builtInCall, canParseAggregate } from './builtIn';
 import { brackettedExpression, expression } from './expression';
 import { var_ } from './general';
@@ -10,13 +10,13 @@ import { constraint, functionCall } from './whereClause';
  * [[18]](https://www.w3.org/TR/sparql11-query/#rSolutionModifier)
  */
 export type ISolutionModifier = Pick<SelectQuery, 'group' | 'having' | 'order' | 'limit' | 'offset'>;
-export const solutionModifier: RuleDef<'solutionModifier', ISolutionModifier> = <const> {
+export const solutionModifier: SparqlRuleDef<'solutionModifier', ISolutionModifier> = <const> {
   name: 'solutionModifier',
   impl: ({ ACTION, SUBRULE, OPTION1, OPTION2, OPTION3, OPTION4 }) => () => {
-    const group = OPTION1(() => SUBRULE(groupClause));
-    const having = OPTION2(() => SUBRULE(havingClause));
-    const order = OPTION3(() => SUBRULE(orderClause));
-    const limitAndOffset = OPTION4(() => SUBRULE(limitOffsetClauses));
+    const group = OPTION1(() => SUBRULE(groupClause, undefined));
+    const having = OPTION2(() => SUBRULE(havingClause, undefined));
+    const order = OPTION3(() => SUBRULE(orderClause, undefined));
+    const limitAndOffset = OPTION4(() => SUBRULE(limitOffsetClauses, undefined));
 
     return ACTION(() => ({
       ...limitAndOffset,
@@ -30,13 +30,13 @@ export const solutionModifier: RuleDef<'solutionModifier', ISolutionModifier> = 
 /**
  * [[19]](https://www.w3.org/TR/sparql11-query/#rGroupClause)
  */
-export const groupClause: RuleDef<'groupClause', Grouping[]> = <const> {
+export const groupClause: SparqlRuleDef<'groupClause', Grouping[]> = <const> {
   name: 'groupClause',
   impl: ({ AT_LEAST_ONE, SUBRULE, CONSUME }) => () => {
     const groupings: Grouping[] = [];
     CONSUME(l.groupBy);
     AT_LEAST_ONE(() => {
-      groupings.push(SUBRULE(groupCondition));
+      groupings.push(SUBRULE(groupCondition, undefined));
     });
 
     return groupings;
@@ -46,17 +46,17 @@ export const groupClause: RuleDef<'groupClause', Grouping[]> = <const> {
 /**
  * [[20]](https://www.w3.org/TR/sparql11-query/#rGroupCondition)
  */
-export const groupCondition: RuleDef<'groupCondition', Grouping> = <const> {
+export const groupCondition: SparqlRuleDef<'groupCondition', Grouping> = <const> {
   name: 'groupCondition',
   impl: ({ SUBRULE, CONSUME, SUBRULE1, SUBRULE2, OPTION, OR }) => () => OR<Grouping>([
     { ALT: () => {
-      const expression = SUBRULE(builtInCall);
+      const expression = SUBRULE(builtInCall, undefined);
       return {
         expression,
       };
     } },
     { ALT: () => {
-      const expression = SUBRULE(functionCall);
+      const expression = SUBRULE(functionCall, undefined);
       return {
         expression,
       };
@@ -64,10 +64,10 @@ export const groupCondition: RuleDef<'groupCondition', Grouping> = <const> {
     {
       ALT: () => {
         CONSUME(l.symbols.LParen);
-        const expressionValue = SUBRULE(expression);
+        const expressionValue = SUBRULE(expression, undefined);
         const variable = OPTION(() => {
           CONSUME(l.as);
-          return SUBRULE1(var_);
+          return SUBRULE1(var_, undefined);
         });
         CONSUME(l.symbols.RParen);
 
@@ -78,7 +78,7 @@ export const groupCondition: RuleDef<'groupCondition', Grouping> = <const> {
       },
     },
     { ALT: () => {
-      const expression = SUBRULE2(var_);
+      const expression = SUBRULE2(var_, undefined);
       return {
         expression,
       };
@@ -89,18 +89,18 @@ export const groupCondition: RuleDef<'groupCondition', Grouping> = <const> {
 /**
  * [[21]](https://www.w3.org/TR/sparql11-query/#rHavingClause)
  */
-export const havingClause: RuleDef<'havingClause', Expression[]> = <const> {
+export const havingClause: SparqlRuleDef<'havingClause', Expression[]> = <const> {
   name: 'havingClause',
-  impl: ({ ACTION, AT_LEAST_ONE, SUBRULE, CONSUME, context }) => () => {
+  impl: ({ ACTION, AT_LEAST_ONE, SUBRULE, CONSUME }) => (C) => {
     const expressions: Expression[] = [];
 
     CONSUME(l.having);
     const couldParseAgg = ACTION(() =>
-      context.parseMode.has(canParseAggregate) || !context.parseMode.add(canParseAggregate));
+      C.parseMode.has(canParseAggregate) || !C.parseMode.add(canParseAggregate));
     AT_LEAST_ONE(() => {
-      expressions.push(SUBRULE(havingCondition));
+      expressions.push(SUBRULE(havingCondition, undefined));
     });
-    ACTION(() => !couldParseAgg && context.parseMode.delete(canParseAggregate));
+    ACTION(() => !couldParseAgg && C.parseMode.delete(canParseAggregate));
 
     return expressions;
   },
@@ -109,26 +109,26 @@ export const havingClause: RuleDef<'havingClause', Expression[]> = <const> {
 /**
  * [[22]](https://www.w3.org/TR/sparql11-query/#rHavingCondition)
  */
-export const havingCondition: RuleDef<'havingCondition', Expression> = <const> {
+export const havingCondition: SparqlRuleDef<'havingCondition', Expression> = <const> {
   name: 'havingCondition',
-  impl: ({ SUBRULE }) => () => SUBRULE(constraint),
+  impl: ({ SUBRULE }) => () => SUBRULE(constraint, undefined),
 };
 
 /**
  * [[23]](https://www.w3.org/TR/sparql11-query/#rOrderClause)
  */
-export const orderClause: RuleDef<'orderClause', Ordering[]> = <const> {
+export const orderClause: SparqlRuleDef<'orderClause', Ordering[]> = <const> {
   name: 'orderClause',
-  impl: ({ ACTION, AT_LEAST_ONE, SUBRULE, CONSUME, context }) => () => {
+  impl: ({ ACTION, AT_LEAST_ONE, SUBRULE, CONSUME }) => (C) => {
     const orderings: Ordering[] = [];
 
     CONSUME(l.order);
     const couldParseAgg = ACTION(() =>
-      context.parseMode.has(canParseAggregate) || !context.parseMode.add(canParseAggregate));
+      C.parseMode.has(canParseAggregate) || !C.parseMode.add(canParseAggregate));
     AT_LEAST_ONE(() => {
-      orderings.push(SUBRULE(orderCondition));
+      orderings.push(SUBRULE(orderCondition, undefined));
     });
-    ACTION(() => !couldParseAgg && context.parseMode.delete(canParseAggregate));
+    ACTION(() => !couldParseAgg && C.parseMode.delete(canParseAggregate));
 
     return orderings;
   },
@@ -137,7 +137,7 @@ export const orderClause: RuleDef<'orderClause', Ordering[]> = <const> {
 /**
  * [[24]](https://www.w3.org/TR/sparql11-query/#rOrderCondition)
  */
-export const orderCondition: RuleDef<'orderCondition', Ordering> = <const> {
+export const orderCondition: SparqlRuleDef<'orderCondition', Ordering> = <const> {
   name: 'orderCondition',
   impl: ({ SUBRULE, CONSUME, OR1, OR2 }) => () => OR1([
     {
@@ -152,7 +152,7 @@ export const orderCondition: RuleDef<'orderCondition', Ordering> = <const> {
             return true;
           } },
         ]);
-        const expr = SUBRULE(brackettedExpression);
+        const expr = SUBRULE(brackettedExpression, undefined);
 
         return {
           expression: expr,
@@ -161,13 +161,13 @@ export const orderCondition: RuleDef<'orderCondition', Ordering> = <const> {
       },
     },
     { ALT: () => {
-      const expr = SUBRULE(constraint);
+      const expr = SUBRULE(constraint, undefined);
       return {
         expression: expr,
       };
     } },
     { ALT: () => {
-      const expr = SUBRULE(var_);
+      const expr = SUBRULE(var_, undefined);
       return {
         expression: expr,
       };
@@ -179,13 +179,13 @@ export const orderCondition: RuleDef<'orderCondition', Ordering> = <const> {
  * Parses limit and or offset in any order.
  * [[25]](https://www.w3.org/TR/sparql11-query/#rLimitOffsetClauses)
  */
-export const limitOffsetClauses: RuleDef<'limitOffsetClauses', Pick<SelectQuery, 'limit' | 'offset'>> = <const> {
+export const limitOffsetClauses: SparqlRuleDef<'limitOffsetClauses', Pick<SelectQuery, 'limit' | 'offset'>> = <const> {
   name: 'limitOffsetClauses',
   impl: ({ SUBRULE1, SUBRULE2, OPTION1, OPTION2, OR }) => () => OR<Pick<SelectQuery, 'limit' | 'offset'>>([
     {
       ALT: () => {
-        const limit = SUBRULE1(limitClause);
-        const offset = OPTION1(() => SUBRULE1(offsetClause));
+        const limit = SUBRULE1(limitClause, undefined);
+        const offset = OPTION1(() => SUBRULE1(offsetClause, undefined));
         return {
           limit,
           offset,
@@ -194,8 +194,8 @@ export const limitOffsetClauses: RuleDef<'limitOffsetClauses', Pick<SelectQuery,
     },
     {
       ALT: () => {
-        const offset = SUBRULE2(offsetClause);
-        const limit = OPTION2(() => SUBRULE2(limitClause));
+        const offset = SUBRULE2(offsetClause, undefined);
+        const limit = OPTION2(() => SUBRULE2(limitClause, undefined));
         return {
           limit,
           offset,
@@ -208,7 +208,7 @@ export const limitOffsetClauses: RuleDef<'limitOffsetClauses', Pick<SelectQuery,
 /**
  * [[26]](https://www.w3.org/TR/sparql11-query/#rLimitClause)
  */
-export const limitClause: RuleDef<'limitClause', number> = <const> {
+export const limitClause: SparqlRuleDef<'limitClause', number> = <const> {
   name: 'limitClause',
   impl: ({ CONSUME }) => () => {
     CONSUME(l.limit);
@@ -219,7 +219,7 @@ export const limitClause: RuleDef<'limitClause', number> = <const> {
 /**
  * [[27]](https://www.w3.org/TR/sparql11-query/#rWhereClause)
  */
-export const offsetClause: RuleDef<'offsetClause', number> = <const> {
+export const offsetClause: SparqlRuleDef<'offsetClause', number> = <const> {
   name: <const> 'offsetClause',
   impl: ({ CONSUME }) => () => {
     CONSUME(l.offset);

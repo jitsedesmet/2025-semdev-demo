@@ -1,7 +1,7 @@
 import type { TokenType } from 'chevrotain';
 import * as l from './lexer';
 import { Wildcard } from '@traqula/core';
-import type { RuleDef } from '@traqula/core';
+import type { SparqlRuleDef } from '@traqula/core';
 import { expression, expressionList } from './grammar/expression';
 import { var_ } from './grammar/general';
 import type { Expression, Pattern, VariableTerm } from './Sparql11types';
@@ -16,7 +16,7 @@ export interface IExpressionFunctionX<U extends (Expression | Pattern)[]> {
 }
 
 export type RuleDefExpressionFunctionX<T extends string, U extends (Expression | Pattern)[]>
-  = RuleDef<T, IExpressionFunctionX<U>>;
+  = SparqlRuleDef<T, IExpressionFunctionX<U>>;
 
 function formatOperator(operator: string): string {
   return operator.toLowerCase().replaceAll(' ', '');
@@ -29,7 +29,7 @@ RuleDefExpressionFunctionX<Uncapitalize<T>, [Expression]> {
     impl: ({ SUBRULE, CONSUME }) => () => {
       const operator = CONSUME(func);
       CONSUME(l.symbols.LParen);
-      const arg = SUBRULE(expression);
+      const arg = SUBRULE(expression, undefined);
       CONSUME(l.symbols.RParen);
       return {
         type: 'operation',
@@ -47,9 +47,9 @@ RuleDefExpressionFunctionX<Uncapitalize<T>, [Expression, Expression]> {
     impl: ({ SUBRULE1, SUBRULE2, CONSUME }) => () => {
       const operator = CONSUME(func);
       CONSUME(l.symbols.LParen);
-      const arg1 = SUBRULE1(expression);
+      const arg1 = SUBRULE1(expression, undefined);
       CONSUME(l.symbols.comma);
-      const arg2 = SUBRULE2(expression);
+      const arg2 = SUBRULE2(expression, undefined);
       CONSUME(l.symbols.RParen);
       return {
         type: 'operation',
@@ -67,11 +67,11 @@ RuleDefExpressionFunctionX<Uncapitalize<T>, [Expression, Expression, Expression]
     impl: ({ SUBRULE1, SUBRULE2, SUBRULE3, CONSUME, CONSUME1, CONSUME2 }) => () => {
       const operator = CONSUME(func);
       CONSUME(l.symbols.LParen);
-      const arg1 = SUBRULE1(expression);
+      const arg1 = SUBRULE1(expression, undefined);
       CONSUME1(l.symbols.comma);
-      const arg2 = SUBRULE2(expression);
+      const arg2 = SUBRULE2(expression, undefined);
       CONSUME2(l.symbols.comma);
-      const arg3 = SUBRULE3(expression);
+      const arg3 = SUBRULE3(expression, undefined);
       CONSUME(l.symbols.RParen);
       return {
         type: 'operation',
@@ -89,7 +89,7 @@ RuleDefExpressionFunctionX<Uncapitalize<T>, [VariableTerm]> {
     impl: ({ SUBRULE, CONSUME }) => () => {
       const operator = CONSUME(func);
       CONSUME(l.symbols.LParen);
-      const arg = SUBRULE(var_);
+      const arg = SUBRULE(var_, undefined);
       CONSUME(l.symbols.RParen);
       return {
         type: 'operation',
@@ -110,7 +110,7 @@ RuleDefExpressionFunctionX<Uncapitalize<T>, [] | [Expression]> {
         {
           ALT: () => {
             CONSUME(l.symbols.LParen);
-            const arg = SUBRULE(expression);
+            const arg = SUBRULE(expression, undefined);
             CONSUME(l.symbols.RParen);
             return [ arg ];
           },
@@ -153,7 +153,7 @@ RuleDefExpressionFunctionX<Uncapitalize<T>, Expression[]> {
     name: unCapitalize(func.name),
     impl: ({ CONSUME, SUBRULE }) => () => {
       const operator = CONSUME(func);
-      const args = SUBRULE(expressionList);
+      const args = SUBRULE(expressionList, undefined);
       return {
         type: 'operation',
         operator: formatOperator(operator.image),
@@ -170,12 +170,12 @@ RuleDefExpressionFunctionX<Uncapitalize<T>, [Expression, Expression] | [Expressi
     impl: ({ CONSUME, SUBRULE1, SUBRULE2, SUBRULE3, CONSUME1, OPTION, CONSUME2 }) => () => {
       const operator = CONSUME(func);
       CONSUME(l.symbols.LParen);
-      const arg1 = SUBRULE1(expression);
+      const arg1 = SUBRULE1(expression, undefined);
       CONSUME1(l.symbols.comma);
-      const arg2 = SUBRULE2(expression);
+      const arg2 = SUBRULE2(expression, undefined);
       const arg3 = OPTION(() => {
         CONSUME2(l.symbols.comma);
-        return SUBRULE3(expression);
+        return SUBRULE3(expression, undefined);
       });
       CONSUME(l.symbols.RParen);
       return {
@@ -197,14 +197,14 @@ RuleDefExpressionFunctionX<
     impl: ({ CONSUME, SUBRULE1, SUBRULE2, SUBRULE3, CONSUME1, OPTION, CONSUME2, SUBRULE4, CONSUME3 }) => () => {
       const operator = CONSUME(func);
       CONSUME(l.symbols.LParen);
-      const arg1 = SUBRULE1(expression);
+      const arg1 = SUBRULE1(expression, undefined);
       CONSUME1(l.symbols.comma);
-      const arg2 = SUBRULE2(expression);
+      const arg2 = SUBRULE2(expression, undefined);
       CONSUME2(l.symbols.comma);
-      const arg3 = SUBRULE3(expression);
+      const arg3 = SUBRULE3(expression, undefined);
       const arg4 = OPTION(() => {
         CONSUME3(l.symbols.comma);
-        return SUBRULE4(expression);
+        return SUBRULE4(expression, undefined);
       });
       CONSUME(l.symbols.RParen);
       return {
@@ -225,7 +225,7 @@ RuleDefExpressionFunctionX<
     name: unCapitalize(func.name),
     impl: ({ ACTION, SUBRULE, CONSUME }) => () => {
       const operator = CONSUME(func);
-      const group = SUBRULE(groupGraphPattern);
+      const group = SUBRULE(groupGraphPattern, undefined);
       return ACTION(() => ({
         type: 'operation',
         operator: formatOperator(operator.image),
@@ -243,7 +243,7 @@ export interface IExpressionAggregator {
   separator?: string;
 }
 
-export type RuleDefExpressionAggregatorX<T extends string> = RuleDef<T, IExpressionAggregator>;
+export type RuleDefExpressionAggregatorX<T extends string> = SparqlRuleDef<T, IExpressionAggregator>;
 
 export function baseAggregateFunc<T extends string>(func: TokenType & { name: T }):
 RuleDefExpressionAggregatorX<Uncapitalize<T>> {
@@ -260,7 +260,7 @@ RuleDefExpressionAggregatorX<Uncapitalize<T>> {
             return new Wildcard();
           },
         },
-        { ALT: () => SUBRULE(expression) },
+        { ALT: () => SUBRULE(expression, undefined) },
       ]);
       CONSUME(l.symbols.RParen);
       return {

@@ -1,17 +1,19 @@
-import type { ILexerConfig, IParserConfig } from '@chevrotain/types';
-import type {IToken, TokenType, TokenVocabulary} from 'chevrotain';
-import { EmbeddedActionsParser, Lexer } from 'chevrotain';
-import { DataFactory } from 'rdf-data-factory';
+import {ILexerConfig, IParserConfig} from '@chevrotain/types';
+import type {TokenType, TokenVocabulary} from 'chevrotain';
+import {EmbeddedActionsParser, Lexer} from 'chevrotain';
 import type {
   CheckOverlap,
-  RuleDefMap,
+  ParseMethodsFromRules,
   ParserFromRules,
+  RuleDefMap,
   RuleListToObject,
   RuleNamesFromList,
-  ParseMethodsFromRules,
 } from './builderTypes';
-import type { CstDef, ImplArgs, RuleDef } from './ruleDefTypes';
+import type {CstDef, ImplArgs, RuleDef} from './ruleDefTypes';
 
+/**
+ * Converts a list of ruledefs to a record mapping a name to the corresponding ruledef.
+ */
 function listToRuleDefMap<T extends readonly RuleDef[]>(rules: T): RuleListToObject<T> {
   const newRules: Record<string, RuleDef> = {};
   for (const rule of rules) {
@@ -20,20 +22,28 @@ function listToRuleDefMap<T extends readonly RuleDef[]>(rules: T): RuleListToObj
   return <RuleListToObject<T>>newRules;
 }
 
-export class Builder<Names extends string, RuleDefs extends RuleDefMap<Names>> {
+/**
+ * The grammar builder. This is the core of traqula (besides using the amazing chevrotain framework).
+ * Using the builder you can create a grammar + AST creator.
+ * At any point in time, a parser can be constructed from the added rules.
+ * Constructing a parser will cause a validation which will validate the correctness of the grammar.
+ */
+// This code is wild so other code can be simple.
+export class Builder<Context, Names extends string, RuleDefs extends RuleDefMap<Names>> {
   /**
-   * Create a builder with from some initial grammar rules or an existing builder.
+   * Create a builder from some initial grammar rules or an existing builder.
    * If a builder is provided, a new copy will be created.
    */
   public static createBuilder<
-    Rules extends readonly RuleDef[] = RuleDef[],
+    Rules extends readonly RuleDef[] = readonly RuleDef[],
+    Context = Rules[0] extends RuleDef<infer context> ? context : never,
     Names extends string = RuleNamesFromList<Rules>,
     RuleDefs extends RuleDefMap<Names> = RuleListToObject<Rules>,
->(start: Rules | Builder<Names, RuleDefs>): Builder<Names, RuleDefs> {
+>(start: Rules | Builder<Context, Names, RuleDefs>): Builder<Context, Names, RuleDefs> {
     if (start instanceof Builder) {
       return new Builder({ ...start.rules });
     }
-    return <Builder<Names, RuleDefs>> <unknown> new Builder(listToRuleDefMap(start));
+    return <Builder<Context, Names, RuleDefs>> <unknown> new Builder(listToRuleDefMap(start));
   }
 
   private rules: RuleDefs;
@@ -45,9 +55,9 @@ export class Builder<Names extends string, RuleDefs extends RuleDefMap<Names>> {
   /**
    * Change the implementation of an existing grammar rule.
    */
-  public patchRule<U extends Names, RET, ARGS extends unknown[]>(patch: RuleDef<U, RET, ARGS>):
-  Builder<Names, {[Key in Names]: Key extends U ? RuleDef<Key, RET, ARGS> : (RuleDefs[Key] extends RuleDef<Key> ? RuleDefs[Key] : never) }> {
-    const self = <Builder<Names, {[Key in Names]: Key extends U ? RuleDef<Key, RET, ARGS> : (RuleDefs[Key] extends RuleDef<Key> ? RuleDefs[Key] : never) }>>
+  public patchRule<U extends Names, RET, ARGS>(patch: RuleDef<Context, U, RET, ARGS>):
+  Builder<Context, Names, {[Key in Names]: Key extends U ? RuleDef<Context, Key, RET, ARGS> : (RuleDefs[Key] extends RuleDef<Context, Key> ? RuleDefs[Key] : never) }> {
+    const self = <Builder<Context, Names, {[Key in Names]: Key extends U ? RuleDef<Context, Key, RET, ARGS> : (RuleDefs[Key] extends RuleDef<Context, Key> ? RuleDefs[Key] : never) }>>
       <unknown> this;
     self.rules[patch.name] = <any> patch;
     return self;
@@ -56,11 +66,11 @@ export class Builder<Names extends string, RuleDefs extends RuleDefMap<Names>> {
   /**
    * Add a rule to the grammar. If the rule already exists, but the implementation differs, an error will be thrown.
    */
-  public addRuleRedundant<U extends string, RET, ARGS extends unknown[]>(rule: RuleDef<U, RET, ARGS>):
-  Builder<Names | U, {[K in Names | U]: K extends U ? RuleDef<K, RET, ARGS> : ( K extends Names ? (RuleDefs[K] extends RuleDef<K> ? RuleDefs[K] : never ) : never) }> {
-    const self = <Builder<Names | U, {[K in Names | U]: K extends U ? RuleDef<K, RET, ARGS> : ( K extends Names ? (RuleDefs[K] extends RuleDef<K> ? RuleDefs[K] : never ) : never) }>>
+  public addRuleRedundant<U extends string, RET, ARGS>(rule: RuleDef<Context, U, RET, ARGS>):
+  Builder<Context, Names | U, {[K in Names | U]: K extends U ? RuleDef<Context, K, RET, ARGS> : ( K extends Names ? (RuleDefs[K] extends RuleDef<Context, K> ? RuleDefs[K] : never ) : never) }> {
+    const self = <Builder<Context, Names | U, {[K in Names | U]: K extends U ? RuleDef<Context, K, RET, ARGS> : ( K extends Names ? (RuleDefs[K] extends RuleDef<Context, K> ? RuleDefs[K] : never ) : never) }>>
       <unknown> this;
-    const rules = <Record<string, RuleDef>> self.rules;
+    const rules = <Record<string, RuleDef<Context>>> self.rules;
     if (rules[rule.name] !== undefined && rules[rule.name] !== rule) {
       throw new Error(`Rule ${rule.name} already exists in the builder`);
     }
@@ -71,51 +81,63 @@ export class Builder<Names extends string, RuleDefs extends RuleDefMap<Names>> {
   /**
    * Add a rule to the grammar. Will raise a typescript error if the rule already exists in the grammar.
    */
-  public addRule<U extends string, RET, ARGS extends unknown[]>(
-    rule: CheckOverlap<U, Names, RuleDef<U, RET, ARGS>>,
-  ): Builder<Names | U, {[K in Names | U]: K extends U ? RuleDef<K, RET, ARGS> : ( K extends Names ? (RuleDefs[K] extends RuleDef<K> ? RuleDefs[K] : never ) : never) }> {
+  public addRule<U extends string, RET, ARGS>(
+    rule: CheckOverlap<U, Names, RuleDef<Context, U, RET, ARGS>>,
+  ): Builder<Context, Names | U, {[K in Names | U]: K extends U ? RuleDef<Context, K, RET, ARGS> : ( K extends Names ? (RuleDefs[K] extends RuleDef<Context, K> ? RuleDefs[K] : never ) : never) }> {
     return this.addRuleRedundant(rule);
   }
 
-  public addMany<U extends RuleDef[]>(
+  public addMany<U extends readonly RuleDef<Context>[]>(
     ...rules: CheckOverlap<RuleNamesFromList<U>, Names, U>
   ): Builder<
+    Context,
     Names | RuleNamesFromList<U>,
     {[K in Names | RuleNamesFromList<U>]:
       K extends keyof RuleListToObject<typeof rules> ? (
-        RuleListToObject<typeof rules>[K] extends RuleDef<K> ? RuleListToObject<typeof rules>[K] : never
+        RuleListToObject<typeof rules>[K] extends RuleDef<Context, K> ? RuleListToObject<typeof rules>[K] : never
       ) : (
-        K extends Names ? (RuleDefs[K] extends RuleDef<K> ? RuleDefs[K] : never) : never
+        K extends Names ? (RuleDefs[K] extends RuleDef<Context, K> ? RuleDefs[K] : never) : never
       )
     }> {
     this.rules = { ...this.rules, ...listToRuleDefMap(rules) };
     return <any> <unknown> this;
   }
 
+  /**
+   * Delete a grammar rule by its name.
+   */
   public deleteRule<U extends Names>(ruleName: U):
-  Builder<Exclude<Names, U>, { [K in Exclude<Names, U>]: RuleDefs[K] extends RuleDef<K> ? RuleDefs[K] : never }> {
+  Builder<Context, Exclude<Names, U>, { [K in Exclude<Names, U>]: RuleDefs[K] extends RuleDef<Context, K> ? RuleDefs[K] : never }> {
     delete this.rules[ruleName];
-    return <Builder<Exclude<Names, U>, { [K in Exclude<Names, U>]: RuleDefs[K] extends RuleDef<K> ? RuleDefs[K] : never }>>
+    return <Builder<Context, Exclude<Names, U>, { [K in Exclude<Names, U>]: RuleDefs[K] extends RuleDef<Context, K> ? RuleDefs[K] : never }>>
       <unknown> this;
   }
 
-  public merge<OtherNames extends string, OtherRules extends RuleDefMap<OtherNames>, OW extends readonly RuleDef[]>(
-    builder: Builder<OtherNames, OtherRules>,
+  /**
+   * Merge this grammar builder with another.
+   * It is best to merge the bigger grammar with the smaller one.
+   * If the two builders both have a grammar rule with the same name, no error will be thrown case they map to the same ruledef object.
+   * If they map to a different object, an error will be thrown.
+   * To fix this problem, the overridingRules array should contain a rule with the same conflicting name, this rule implementation will be used.
+   */
+  public merge<OtherNames extends string, OtherRules extends RuleDefMap<OtherNames>, OW extends readonly RuleDef<Context>[]>(
+    builder: Builder<Context, OtherNames, OtherRules>,
     overridingRules: OW,
   ):
     Builder<
+      Context,
       Names | OtherNames | RuleNamesFromList<OW>,
       {[K in Names | OtherNames | RuleNamesFromList<OW>]:
         K extends keyof RuleListToObject<OW> ? (
-          RuleListToObject<OW>[K] extends RuleDef<K> ? RuleListToObject<OW>[K] : never
+          RuleListToObject<OW>[K] extends RuleDef<Context, K> ? RuleListToObject<OW>[K] : never
         )
         : (
-          K extends Names ? (RuleDefs[K] extends RuleDef<K> ? RuleDefs[K] : never)
-          : K extends OtherNames ? (OtherRules[K] extends RuleDef<K> ? OtherRules[K] : never) : never
+          K extends Names ? (RuleDefs[K] extends RuleDef<Context, K> ? RuleDefs[K] : never)
+          : K extends OtherNames ? (OtherRules[K] extends RuleDef<Context, K> ? OtherRules[K] : never) : never
         )}> {
     // Assume the other grammar is bigger than yours. So start from that one and add this one
-    const otherRules: Record<string, RuleDef> = { ...builder.rules };
-    const myRules: Record<string, RuleDef> = this.rules;
+    const otherRules: Record<string, RuleDef<Context>> = { ...builder.rules };
+    const myRules: Record<string, RuleDef<Context>> = this.rules;
 
     for (const rule of Object.values(myRules)) {
       if (otherRules[rule.name] === undefined) {
@@ -143,7 +165,7 @@ export class Builder<Names extends string, RuleDefs extends RuleDefMap<Names>> {
     tokenVocabulary: TokenType[];
     parserConfig?: IParserConfig;
     lexerConfig?: ILexerConfig;
-  }, context: Partial<ImplArgs['context']> = {}): ParserFromRules<Names, RuleDefs> {
+  }): ParserFromRules<Context, Names, RuleDefs> {
     const lexer: Lexer = new Lexer(tokenVocabulary, {
       positionTracking: 'onlyStart',
       recoveryEnabled: false,
@@ -152,11 +174,13 @@ export class Builder<Names extends string, RuleDefs extends RuleDefMap<Names>> {
       ensureOptimizations: true,
       ...lexerConfig,
     });
-    const parser = this.consume({ tokenVocabulary, config: parserConfig }, context);
-    const selfSufficientParser: Partial<ParserFromRules<Names, RuleDefs>> = {};
-    // eslint-disable-next-line ts/no-unnecessary-type-assertion
-    for (const rule of <RuleDef<Names>[]> Object.values(this.rules)) {
-      selfSufficientParser[rule.name] = <any> ((input: string, arg: unknown) => {
+    // get the chevrotain parser
+    const parser = this.consume({ tokenVocabulary, config: parserConfig });
+    // Start building a parser that does not pass input using a state, but instead gets it as a function argument.
+    const selfSufficientParser: Partial<ParserFromRules<Context, Names, RuleDefs>> = {};
+    // To do that, we need to create a wrapper for each parser rule.
+    for (const rule of <RuleDef<Context, Names>[]> Object.values(this.rules)) {
+      selfSufficientParser[rule.name] = <any> ((input: string, context: Context, arg: unknown) => {
         // Transform input in accordance to 19.2
         input = input.replaceAll(
           /\\u([0-9a-fA-F]{4})|\\U([0-9a-fA-F]{8})/gu,
@@ -179,11 +203,11 @@ export class Builder<Names extends string, RuleDefs extends RuleDefMap<Names>> {
         }
 
         const lexResult = lexer.tokenize(input);
-        // Console.log(lexResult.tokens);
 
-        parser.reset();
+        // This also resets the parser
         parser.input = lexResult.tokens;
-        const result = parser[rule.name](arg);
+        parser.setContext(context);
+        const result = parser[rule.name](context, arg);
         if (parser.errors.length > 0) {
           // Console.log(lexResult.tokens);
           throw new Error(`Parse error on line ${parser.errors.map(x => x.token.startLine).join(', ')}
@@ -192,17 +216,27 @@ ${parser.errors.map(x => `${x.token.startLine}: ${x.message}`).join('\n')}`);
         return result;
       });
     }
-    return <ParserFromRules<Names, RuleDefs>> selfSufficientParser;
+    return <ParserFromRules<Context, Names, RuleDefs>> selfSufficientParser;
   }
 
   public consume({ tokenVocabulary, config = {}}: {
     tokenVocabulary: TokenVocabulary;
     config?: IParserConfig;
-  }, context: Partial<ImplArgs['context']> = {}): EmbeddedActionsParser & ParseMethodsFromRules<Names, RuleDefs> {
+  }): EmbeddedActionsParser & ParseMethodsFromRules<Context, Names, RuleDefs> & { setContext: (context: Context) => void } {
     const rules = this.rules;
     class MyParser extends EmbeddedActionsParser {
-      private readonly initialParseContext: ImplArgs['context'];
-      private readonly runningContext: ImplArgs['context'];
+      private context: Context | undefined;
+
+      private getSafeContext(): Context {
+        if (this.context === undefined) {
+          throw new Error('context was not correctly set');
+        }
+        return this.context;
+      }
+
+      public setContext(context: Context): void {
+        this.context = context;
+      }
 
       public constructor() {
         super(tokenVocabulary, {
@@ -211,49 +245,23 @@ ${parser.errors.map(x => `${x.token.startLine}: ${x.message}`).join('\n')}`);
           // SkipValidations: true,
           ...config,
         });
-
+        this.context = undefined;
         const selfRef = this.getSelfRef();
-        // !!! Remember to change the RESET function accordingly !!!
-        this.initialParseContext = {
-          dataFactory: new DataFactory({ blankNodePrefix: 'g_' }),
-          baseIRI: undefined,
-          parseMode: new Set(),
-          skipValidation: false,
-          ...context,
-          prefixes: context.prefixes ? { ...context.prefixes } : {},
-        };
-        this.runningContext = {
-          ...this.initialParseContext,
-          prefixes: { ...this.initialParseContext.prefixes },
-          parseMode: new Set(this.initialParseContext.parseMode),
-        };
-
         const implArgs: ImplArgs = {
           ...selfRef,
           cache: new WeakMap(),
-          context: this.runningContext,
         };
 
-        for (const rule of Object.values(<Record<string, RuleDef>>rules)) {
+        for (const rule of Object.values(<Record<string, RuleDef<Context>>>rules)) {
           this[<keyof (typeof this)> rule.name] = <any> this.RULE(rule.name, rule.impl(implArgs));
         }
         this.performSelfAnalysis();
       }
 
-      public override reset(): void {
-        super.reset();
-        // We need to keep the original object reference.
-        Object.assign(this.runningContext, {
-          ...this.initialParseContext,
-        });
-        this.runningContext.prefixes = { ...this.initialParseContext.prefixes };
-        this.runningContext.parseMode = new Set(this.initialParseContext.parseMode);
-      }
-
       private getSelfRef(): CstDef {
-        const subRuleImpl = (subrule: typeof this.SUBRULE): CstDef['SUBRULE'] => {
-          return ((cstDef, ...args) => {
-            return subrule(<any> this[<keyof (typeof this)> cstDef.name], <any> { ARGS: args });
+        const subRuleImpl = (chevrotainSubrule: typeof this.SUBRULE): CstDef['SUBRULE'] => {
+          return ((cstDef, arg) => {
+            return chevrotainSubrule(<any> this[<keyof (typeof this)> cstDef.name], <any> { ARGS: [this.context, arg] });
           }) satisfies CstDef['SUBRULE'];
         }
         return {
@@ -348,6 +356,6 @@ ${parser.errors.map(x => `${x.token.startLine}: ${x.message}`).join('\n')}`);
         };
       }
     }
-    return <EmbeddedActionsParser & ParseMethodsFromRules<Names, RuleDefs>><unknown> new MyParser();
+    return <EmbeddedActionsParser & ParseMethodsFromRules<Context, Names, RuleDefs> & { setContext: (context: Context) => void }><unknown> new MyParser();
   }
 }

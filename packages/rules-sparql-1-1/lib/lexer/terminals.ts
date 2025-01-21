@@ -60,7 +60,7 @@ export const langTag = createToken({ name: 'LangTag', pattern: langTagPattern })
 export const integer = createToken({ name: 'Integer', pattern: integerPattern });
 export const decimal = createToken({ name: 'Decimal', pattern: decimalPattern });
 export const double = createToken({ name: 'Double', pattern: doublePattern });
-export const interferePositive = createToken({ name: 'InterferePositive', pattern: interferePositivePattern });
+export const integerPositive = createToken({ name: 'InterferePositive', pattern: interferePositivePattern });
 export const decimalPositive = createToken({ name: 'DecimalPositive', pattern: decimalPositivePattern });
 export const doublePositive = createToken({ name: 'DoublePositive', pattern: doublePositivePattern });
 export const integerNegative = createToken({ name: 'IntegerNegative', pattern: integerNegativePattern });
@@ -86,7 +86,7 @@ export const allTerminals = LexerBuilder.create().add(
   double,
   decimal,
   integer,
-  interferePositive,
+  integerPositive,
   decimalPositive,
   doublePositive,
   integerNegative,

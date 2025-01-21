@@ -1,6 +1,6 @@
 import type { NamedNode } from 'rdf-data-factory';
 import * as l from '../lexer';
-import type { RuleDef } from '@traqula/core';
+import type { SparqlRuleDef } from '@traqula/core';
 import { CommonIRIs, resolveIRI } from '@traqula/core';
 import type { BlankTerm, IriTerm, LiteralTerm } from '../Sparql11types';
 
@@ -8,20 +8,20 @@ import type { BlankTerm, IriTerm, LiteralTerm } from '../Sparql11types';
  * Parses an RDF literal, in the form of {value}@{lang} or {value}^^{datatype}.
  * [[129]](https://www.w3.org/TR/sparql11-query/#rRDFLiteral)
  */
-export const rdfLiteral: RuleDef<'rdfLiteral', LiteralTerm> = <const> {
+export const rdfLiteral: SparqlRuleDef<'rdfLiteral', LiteralTerm> = <const> {
   name: 'rdfLiteral',
-  impl: ({ SUBRULE, CONSUME, OPTION, OR, context }) => () => {
-    const value = SUBRULE(string);
+  impl: ({ ACTION, SUBRULE, CONSUME, OPTION, OR }) => (C) => {
+    const value = SUBRULE(string, undefined);
     const languageOrDatatype = OPTION(() => OR<string | NamedNode>([
       { ALT: () => CONSUME(l.terminals.langTag).image.slice(1) },
       {
         ALT: () => {
           CONSUME(l.symbols.hathat);
-          return SUBRULE(iri);
+          return SUBRULE(iri, undefined);
         },
       },
     ]));
-    return context.dataFactory.literal(value, languageOrDatatype);
+    return ACTION(() => C.dataFactory.literal(value, languageOrDatatype));
   },
 };
 
@@ -29,12 +29,12 @@ export const rdfLiteral: RuleDef<'rdfLiteral', LiteralTerm> = <const> {
  * Parses a numeric literal.
  * [[130]](https://www.w3.org/TR/sparql11-query/#rNumericLiteral)
  */
-export const numericLiteral: RuleDef<'numericLiteral', LiteralTerm> = <const> {
+export const numericLiteral: SparqlRuleDef<'numericLiteral', LiteralTerm> = <const> {
   name: 'numericLiteral',
   impl: ({ SUBRULE, OR }) => () => OR([
-    { ALT: () => SUBRULE(numericLiteralUnsigned) },
-    { ALT: () => SUBRULE(numericLiteralPositive) },
-    { ALT: () => SUBRULE(numericLiteralNegative) },
+    { ALT: () => SUBRULE(numericLiteralUnsigned, undefined) },
+    { ALT: () => SUBRULE(numericLiteralPositive, undefined) },
+    { ALT: () => SUBRULE(numericLiteralNegative, undefined) },
   ]),
 };
 
@@ -42,21 +42,21 @@ export const numericLiteral: RuleDef<'numericLiteral', LiteralTerm> = <const> {
  * Parses an unsigned numeric literal.
  * [[131]](https://www.w3.org/TR/sparql11-query/#rNumericLiteralUnsigned)
  */
-export const numericLiteralUnsigned: RuleDef<'numericLiteralUnsigned', LiteralTerm> = <const> {
+export const numericLiteralUnsigned: SparqlRuleDef<'numericLiteralUnsigned', LiteralTerm> = <const> {
   name: 'numericLiteralUnsigned',
-  impl: ({ CONSUME, OR, context }) => () => OR([
-    { ALT: () => context.dataFactory.literal(
-      CONSUME(l.terminals.integer).image,
-      context.dataFactory.namedNode(CommonIRIs.INTEGER),
-    ) },
-    { ALT: () => context.dataFactory.literal(
-      CONSUME(l.terminals.decimal).image,
-      context.dataFactory.namedNode(CommonIRIs.DECIMAL),
-    ) },
-    { ALT: () => context.dataFactory.literal(
-      CONSUME(l.terminals.double).image,
-      context.dataFactory.namedNode(CommonIRIs.DOUBLE),
-    ) },
+  impl: ({ ACTION, CONSUME, OR }) => (C) => OR([
+    { ALT: () => {
+      const val = CONSUME(l.terminals.integer).image;
+      return ACTION(() => C.dataFactory.literal(val, C.dataFactory.namedNode(CommonIRIs.INTEGER)));
+      } },
+    { ALT: () => {
+        const val = CONSUME(l.terminals.decimal).image;
+        return ACTION(() => C.dataFactory.literal(val, C.dataFactory.namedNode(CommonIRIs.DECIMAL)));
+      } },
+    { ALT: () => {
+        const val = CONSUME(l.terminals.double).image;
+        return ACTION(() => C.dataFactory.literal(val, C.dataFactory.namedNode(CommonIRIs.DOUBLE)));
+      } },
   ]),
 };
 
@@ -64,21 +64,21 @@ export const numericLiteralUnsigned: RuleDef<'numericLiteralUnsigned', LiteralTe
  * Parses a positive numeric literal.
  * [[132]](https://www.w3.org/TR/sparql11-query/#rNumericLiteralPositive)
  */
-export const numericLiteralPositive: RuleDef<'numericLiteralPositive', LiteralTerm> = <const> {
+export const numericLiteralPositive: SparqlRuleDef<'numericLiteralPositive', LiteralTerm> = <const> {
   name: 'numericLiteralPositive',
-  impl: ({ CONSUME, OR, context }) => () => OR([
-    { ALT: () => context.dataFactory.literal(
-      CONSUME(l.terminals.interferePositive).image,
-      context.dataFactory.namedNode(CommonIRIs.INTEGER),
-    ) },
-    { ALT: () => context.dataFactory.literal(
-      CONSUME(l.terminals.decimalPositive).image,
-      context.dataFactory.namedNode(CommonIRIs.DECIMAL),
-    ) },
-    { ALT: () => context.dataFactory.literal(
-      CONSUME(l.terminals.doublePositive).image,
-      context.dataFactory.namedNode(CommonIRIs.DOUBLE),
-    ) },
+  impl: ({ ACTION, CONSUME, OR }) => (C) => OR([
+    { ALT: () => {
+      const val = CONSUME(l.terminals.integerPositive).image;
+      return ACTION(() => C.dataFactory.literal(val, C.dataFactory.namedNode(CommonIRIs.INTEGER)));
+      } },
+    { ALT: () => {
+        const val = CONSUME(l.terminals.decimalPositive).image;
+        return ACTION(() => C.dataFactory.literal(val, C.dataFactory.namedNode(CommonIRIs.DECIMAL)));
+      }},
+    { ALT: () => {
+        const val = CONSUME(l.terminals.doublePositive).image;
+        return ACTION(() => C.dataFactory.literal(val, C.dataFactory.namedNode(CommonIRIs.DOUBLE)));
+      } },
   ]),
 };
 
@@ -86,21 +86,21 @@ export const numericLiteralPositive: RuleDef<'numericLiteralPositive', LiteralTe
  * Parses a negative numeric literal.
  * [[133]](https://www.w3.org/TR/sparql11-query/#rNumericLiteralNegative)
  */
-export const numericLiteralNegative: RuleDef<'numericLiteralNegative', LiteralTerm> = <const> {
+export const numericLiteralNegative: SparqlRuleDef<'numericLiteralNegative', LiteralTerm> = <const> {
   name: 'numericLiteralNegative',
-  impl: ({ CONSUME, OR, context }) => () => OR([
-    { ALT: () => context.dataFactory.literal(
-      CONSUME(l.terminals.integerNegative).image,
-      context.dataFactory.namedNode(CommonIRIs.INTEGER),
-    ) },
-    { ALT: () => context.dataFactory.literal(
-      CONSUME(l.terminals.decimalNegative).image,
-      context.dataFactory.namedNode(CommonIRIs.DECIMAL),
-    ) },
-    { ALT: () => context.dataFactory.literal(
-      CONSUME(l.terminals.doubleNegative).image,
-      context.dataFactory.namedNode(CommonIRIs.DOUBLE),
-    ) },
+  impl: ({ ACTION, CONSUME, OR }) => (C) => OR([
+    { ALT: () => {
+      const val = CONSUME(l.terminals.integerNegative).image;
+      return ACTION(() => C.dataFactory.literal(val, C.dataFactory.namedNode(CommonIRIs.INTEGER)));
+      } },
+    { ALT: () => {
+        const val = CONSUME(l.terminals.decimalNegative).image;
+        return ACTION(() => C.dataFactory.literal(val, C.dataFactory.namedNode(CommonIRIs.DECIMAL)));
+      } },
+    { ALT: () => {
+      const val = CONSUME(l.terminals.doubleNegative).image;
+      return ACTION(() => C.dataFactory.literal(val, C.dataFactory.namedNode(CommonIRIs.DOUBLE)));
+    } },
   ]),
 };
 
@@ -108,17 +108,17 @@ export const numericLiteralNegative: RuleDef<'numericLiteralNegative', LiteralTe
  * Parses a boolean literal.
  * [[134]](https://www.w3.org/TR/sparql11-query/#rBooleanLiteral)
  */
-export const booleanLiteral: RuleDef<'booleanLiteral', LiteralTerm> = <const> {
+export const booleanLiteral: SparqlRuleDef<'booleanLiteral', LiteralTerm> = <const> {
   name: 'booleanLiteral',
-  impl: ({ CONSUME, OR, context }) => () => OR([
-    { ALT: () => context.dataFactory.literal(
-      CONSUME(l.true_).image.toLowerCase(),
-      context.dataFactory.namedNode(CommonIRIs.BOOLEAN),
-    ) },
-    { ALT: () => context.dataFactory.literal(
-      CONSUME(l.false_).image.toLowerCase(),
-      context.dataFactory.namedNode(CommonIRIs.BOOLEAN),
-    ) },
+  impl: ({ ACTION, CONSUME, OR }) => (C) => OR([
+    { ALT: () => {
+        const val = CONSUME(l.true_).image.toLowerCase()
+        return ACTION(() => C.dataFactory.literal(val, C.dataFactory.namedNode(CommonIRIs.BOOLEAN)));
+      } },
+    { ALT: () => {
+        const val = CONSUME(l.false_).image.toLowerCase()
+        return ACTION(() => C.dataFactory.literal(val, C.dataFactory.namedNode(CommonIRIs.BOOLEAN)));
+      } },
   ]),
 };
 
@@ -126,7 +126,7 @@ export const booleanLiteral: RuleDef<'booleanLiteral', LiteralTerm> = <const> {
  * Parses a string literal.
  * [[135]](https://www.w3.org/TR/sparql11-query/#rString)
  */
-export const string: RuleDef<'string', string> = <const> {
+export const string: SparqlRuleDef<'string', string> = <const> {
   name: 'string',
   impl: ({ ACTION, CONSUME, OR }) => () => {
     const rawString = OR([
@@ -153,14 +153,14 @@ export const string: RuleDef<'string', string> = <const> {
  * Parses a named node, either as an IRI or as a prefixed name.
  * [[136]](https://www.w3.org/TR/sparql11-query/#riri)
  */
-export const iri: RuleDef<'iri', IriTerm> = <const> {
+export const iri: SparqlRuleDef<'iri', IriTerm> = <const> {
   name: 'iri',
-  impl: ({ ACTION, SUBRULE, CONSUME, OR, context }) => () => OR([
+  impl: ({ ACTION, SUBRULE, CONSUME, OR }) => (C) => OR([
     { ALT: () => {
       const iriVal = CONSUME(l.terminals.iriRef).image.slice(1, -1);
-      return ACTION(() => context.dataFactory.namedNode(resolveIRI(iriVal, context.baseIRI)));
+      return ACTION(() => C.dataFactory.namedNode(resolveIRI(iriVal, C.baseIRI)));
     } },
-    { ALT: () => SUBRULE(prefixedName) },
+    { ALT: () => SUBRULE(prefixedName, undefined) },
   ]),
 };
 
@@ -168,20 +168,20 @@ export const iri: RuleDef<'iri', IriTerm> = <const> {
  * Parses a named node with a prefix. Looks up the prefix in the context and returns the full IRI.
  * [[137]](https://www.w3.org/TR/sparql11-query/#rPrefixedName)
  */
-export const prefixedName: RuleDef<'prefixedName', IriTerm> = <const> {
+export const prefixedName: SparqlRuleDef<'prefixedName', IriTerm> = <const> {
   name: 'prefixedName',
-  impl: ({ ACTION, CONSUME, OR, context }) => () => {
+  impl: ({ ACTION, CONSUME, OR }) => (C) => {
     const fullStr = OR([
       { ALT: () => CONSUME(l.terminals.pNameLn).image },
       { ALT: () => CONSUME(l.terminals.pNameNs).image },
     ]);
     return ACTION(() => {
       const [ prefix, localName ] = fullStr.split(':');
-      const value = context.prefixes[prefix];
+      const value = C.prefixes[prefix];
       if (value === undefined) {
         throw new Error(`Unknown prefix: ${prefix}`);
       }
-      return context.dataFactory.namedNode(resolveIRI(value + localName, context.baseIRI));
+      return C.dataFactory.namedNode(resolveIRI(value + localName, C.baseIRI));
     });
   },
 };
@@ -192,25 +192,25 @@ export const canCreateBlankNodes = Symbol('canCreateBlankNodes');
  * Parses blank note and throws an error if 'canCreateBlankNodes' is not in the current parserMode.
  * [[138]](https://www.w3.org/TR/sparql11-query/#rBlankNode)
  */
-export const blankNode: RuleDef<'blankNode', BlankTerm> = <const> {
+export const blankNode: SparqlRuleDef<'blankNode', BlankTerm> = <const> {
   name: 'blankNode',
-  impl: ({ ACTION, CONSUME, OR, context }) => () => {
+  impl: ({ ACTION, CONSUME, OR }) => (C) => {
     const result = OR([
       {
         ALT: () => {
           const label = CONSUME(l.terminals.blankNodeLabel).image;
-          return ACTION(() => context.dataFactory.blankNode(label.replace('_:', 'e_')));
+          return ACTION(() => C.dataFactory.blankNode(label.replace('_:', 'e_')));
         },
       },
       {
         ALT: () => {
           CONSUME(l.terminals.anon);
-          return ACTION(() => context.dataFactory.blankNode());
+          return ACTION(() => C.dataFactory.blankNode());
         },
       },
     ]);
     ACTION(() => {
-      if (!context.parseMode.has(canCreateBlankNodes)) {
+      if (!C.parseMode.has(canCreateBlankNodes)) {
         throw new Error('Blank nodes are not allowed in this context');
       }
     });

@@ -66,12 +66,6 @@ export interface GraphQuads {
   triples: Triple[];
 }
 
-// Copied types
-export interface SparqlParser {
-  parse: (query: string) => SparqlQuery;
-  _resetBlanks: () => void;
-}
-
 export type VariableTerm = RdfJs.Variable;
 export type IriTerm<IRI extends string = string> = RdfJs.NamedNode<IRI>;
 export type LiteralTerm = RdfJs.Literal;

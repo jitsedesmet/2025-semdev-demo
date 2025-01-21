@@ -1,2 +1,3 @@
 yarn run build
 yarn run test
+yarn run spec:all

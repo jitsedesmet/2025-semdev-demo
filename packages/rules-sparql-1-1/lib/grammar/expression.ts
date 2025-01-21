@@ -1,5 +1,5 @@
 import * as l from '../lexer';
-import type { RuleDef, ImplArgs } from '@traqula/core';
+import type { SparqlRuleDef, ImplArgs } from '@traqula/core';
 import { builtInCall } from './builtIn';
 import {
   var_,
@@ -34,7 +34,7 @@ export interface IArgList {
   args: Expression[];
   distinct: boolean;
 }
-export const argList: RuleDef<'argList', IArgList> = <const> {
+export const argList: SparqlRuleDef<'argList', IArgList> = <const> {
   name: 'argList',
   impl: ({ CONSUME, SUBRULE1, OPTION, OR, MANY_SEP }) => () => OR<IArgList>([
     {
@@ -54,7 +54,7 @@ export const argList: RuleDef<'argList', IArgList> = <const> {
         const distinct = OPTION(() => CONSUME(l.distinct)) && true;
 
         MANY_SEP({
-          DEF: () => args.push(SUBRULE1(expression)),
+          DEF: () => args.push(SUBRULE1(expression, undefined)),
           SEP: l.symbols.comma,
         });
         CONSUME(l.symbols.RParen);
@@ -69,7 +69,7 @@ export const argList: RuleDef<'argList', IArgList> = <const> {
   ]),
 };
 
-export const expressionList: RuleDef<'expressionList', Expression[]> = <const> {
+export const expressionList: SparqlRuleDef<'expressionList', Expression[]> = <const> {
   name: 'expressionList',
   impl: ({ CONSUME, SUBRULE, MANY_SEP, OR }) => () => OR([
     {
@@ -85,7 +85,7 @@ export const expressionList: RuleDef<'expressionList', Expression[]> = <const> {
         MANY_SEP({
           SEP: l.symbols.comma,
           DEF: () => {
-            args.push(SUBRULE(expression));
+            args.push(SUBRULE(expression, undefined));
           },
         });
         CONSUME(l.symbols.RParen);
@@ -98,9 +98,9 @@ export const expressionList: RuleDef<'expressionList', Expression[]> = <const> {
 /**
  * [[110]](https://www.w3.org/TR/sparql11-query/#rExpression)
  */
-export const expression: RuleDef<'expression', Expression> = <const> {
+export const expression: SparqlRuleDef<'expression', Expression> = <const> {
   name: 'expression',
-  impl: ({ SUBRULE }) => () => SUBRULE(conditionalOrExpression),
+  impl: ({ SUBRULE }) => () => SUBRULE(conditionalOrExpression, undefined),
 };
 
 interface LeftDeepBuildArgs<T extends string = string> {
@@ -132,13 +132,13 @@ function constructLeftDeep<T extends string = string>(
 /**
  * [[111]](https://www.w3.org/TR/sparql11-query/#rConditionalOrExpression)
  */
-export const conditionalOrExpression: RuleDef<'conditionalOrExpression', Expression> = <const> {
+export const conditionalOrExpression: SparqlRuleDef<'conditionalOrExpression', Expression> = <const> {
   name: 'conditionalOrExpression',
   impl: ({ ACTION, MANY, CONSUME, SUBRULE1, SUBRULE2 }) => () =>
-    constructLeftDeep(() => SUBRULE1(conditionalAndExpression), () => {
+    constructLeftDeep(() => SUBRULE1(conditionalAndExpression, undefined), () => {
       CONSUME(l.symbols.logicOr);
       return {
-        expr: SUBRULE2(conditionalAndExpression),
+        expr: SUBRULE2(conditionalAndExpression, undefined),
         operator: '||',
       };
     }, ACTION, MANY)
@@ -148,14 +148,14 @@ export const conditionalOrExpression: RuleDef<'conditionalOrExpression', Express
 /**
  * [[112]](https://www.w3.org/TR/sparql11-query/#rConditionalAndExpression)
  */
-export const conditionalAndExpression: RuleDef<'conditionalAndExpression', Expression> = <const> {
+export const conditionalAndExpression: SparqlRuleDef<'conditionalAndExpression', Expression> = <const> {
   name: 'conditionalAndExpression',
   impl: ({ ACTION, MANY, SUBRULE1, SUBRULE2, CONSUME }) => () => constructLeftDeep(
-    () => SUBRULE1(valueLogical),
+    () => SUBRULE1(valueLogical, undefined),
     () => {
       CONSUME(l.symbols.logicAnd);
       return {
-        expr: SUBRULE2(valueLogical),
+        expr: SUBRULE2(valueLogical, undefined),
         operator: '&&',
       };
     },
@@ -167,73 +167,73 @@ export const conditionalAndExpression: RuleDef<'conditionalAndExpression', Expre
 /**
  * [[113]](https://www.w3.org/TR/sparql11-query/#rValueLogical)
  */
-export const valueLogical: RuleDef<'valueLogical', Expression> = <const> {
+export const valueLogical: SparqlRuleDef<'valueLogical', Expression> = <const> {
   name: 'valueLogical',
-  impl: ({ SUBRULE }) => () => SUBRULE(relationalExpression),
+  impl: ({ SUBRULE }) => () => SUBRULE(relationalExpression, undefined),
 };
 
 /**
  * [[114]](https://www.w3.org/TR/sparql11-query/#rRelationalExpression)
  */
-export const relationalExpression: RuleDef<'relationalExpression', Expression> = <const> {
+export const relationalExpression: SparqlRuleDef<'relationalExpression', Expression> = <const> {
   name: 'relationalExpression',
   impl: ({ ACTION, CONSUME, SUBRULE1, SUBRULE2, OPTION, OR, SUBRULE3, SUBRULE4, SUBRULE5, SUBRULE6, SUBRULE7 }) =>
     () => {
-      const args1 = SUBRULE1(numericExpression);
+      const args1 = SUBRULE1(numericExpression, undefined);
       const arg2 = OPTION(() => OR<{ operator: RelationalOperator; args: Expression }>([
         {
           ALT: () => {
             CONSUME(l.symbols.equal);
-            const expr = SUBRULE2(numericExpression);
+            const expr = SUBRULE2(numericExpression, undefined);
             return { operator: '=', args: expr };
           },
         },
         {
           ALT: () => {
             CONSUME(l.symbols.notEqual);
-            const expr = SUBRULE3(numericExpression);
+            const expr = SUBRULE3(numericExpression, undefined);
             return { operator: '!=', args: expr };
           },
         },
         {
           ALT: () => {
             CONSUME(l.symbols.lessThan);
-            const expr = SUBRULE4(numericExpression);
+            const expr = SUBRULE4(numericExpression, undefined);
             return { operator: '<', args: expr };
           },
         },
         {
           ALT: () => {
             CONSUME(l.symbols.greaterThan);
-            const expr = SUBRULE5(numericExpression);
+            const expr = SUBRULE5(numericExpression, undefined);
             return { operator: '>', args: expr };
           },
         },
         {
           ALT: () => {
             CONSUME(l.symbols.lessThanEqual);
-            const expr = SUBRULE6(numericExpression);
+            const expr = SUBRULE6(numericExpression, undefined);
             return { operator: '<=', args: expr };
           },
         },
         {
           ALT: () => {
             CONSUME(l.symbols.greaterThanEqual);
-            const expr = SUBRULE7(numericExpression);
+            const expr = SUBRULE7(numericExpression, undefined);
             return { operator: '>=', args: expr };
           },
         },
         {
           ALT: () => {
             CONSUME(l.in_);
-            const args = SUBRULE1(expressionList);
+            const args = SUBRULE1(expressionList, undefined);
             return { operator: 'in', args };
           },
         },
         {
           ALT: () => {
             CONSUME(l.notIn);
-            const args = SUBRULE2(expressionList);
+            const args = SUBRULE2(expressionList, undefined);
             return { operator: 'notin', args };
           },
         },
@@ -252,26 +252,26 @@ export const relationalExpression: RuleDef<'relationalExpression', Expression> =
 /**
  * [[115]](https://www.w3.org/TR/sparql11-query/#rNumericExpression)
  */
-export const numericExpression: RuleDef<'numericExpression', Expression> = <const> {
+export const numericExpression: SparqlRuleDef<'numericExpression', Expression> = <const> {
   name: 'numericExpression',
-  impl: ({ SUBRULE }) => () => SUBRULE(additiveExpression),
+  impl: ({ SUBRULE }) => () => SUBRULE(additiveExpression, undefined),
 };
 
 /**
  * [[116]](https://www.w3.org/TR/sparql11-query/#rAdditiveExpression)
  */
-export const additiveExpression: RuleDef<'additiveExpression', Expression> = <const> {
+export const additiveExpression: SparqlRuleDef<'additiveExpression', Expression> = <const> {
   name: 'additiveExpression',
   impl: ({ ACTION, SUBRULE, CONSUME, SUBRULE1, SUBRULE2, SUBRULE3, MANY1, MANY2, OR1, OR2, OR3 }) => () =>
     constructLeftDeep(
-      () => SUBRULE1(multiplicativeExpression),
+      () => SUBRULE1(multiplicativeExpression, undefined),
       () => OR1([
         {
           ALT: () => {
             CONSUME(l.symbols.opPlus);
             return {
               operator: '+',
-              expr: SUBRULE2(multiplicativeExpression),
+              expr: SUBRULE2(multiplicativeExpression, undefined),
             };
           },
         },
@@ -280,7 +280,7 @@ export const additiveExpression: RuleDef<'additiveExpression', Expression> = <co
             CONSUME(l.symbols.opMinus);
             return {
               operator: '-',
-              expr: SUBRULE3(multiplicativeExpression),
+              expr: SUBRULE3(multiplicativeExpression, undefined),
             };
           },
         },
@@ -292,7 +292,7 @@ export const additiveExpression: RuleDef<'additiveExpression', Expression> = <co
                 ALT: () => {
                   // Note #6. No spaces are allowed between the sign and a number.
                   // In this rule however, we do not want to care about this.
-                  const integer = SUBRULE(numericLiteralPositive);
+                  const integer = SUBRULE(numericLiteralPositive, undefined);
                   return ACTION(() => {
                     integer.value = integer.value.replace(/^\+/u, '');
                     return {
@@ -304,7 +304,7 @@ export const additiveExpression: RuleDef<'additiveExpression', Expression> = <co
               },
               {
                 ALT: () => {
-                  const integer = SUBRULE(numericLiteralNegative);
+                  const integer = SUBRULE(numericLiteralNegative, undefined);
                   return ACTION(() => {
                     integer.value = integer.value.replace(/^-/u, '');
                     return {
@@ -321,7 +321,7 @@ export const additiveExpression: RuleDef<'additiveExpression', Expression> = <co
                 {
                   ALT: () => {
                     CONSUME(l.symbols.star);
-                    const expr = SUBRULE1(unaryExpression);
+                    const expr = SUBRULE1(unaryExpression, undefined);
                     return {
                       operator: '*',
                       expr,
@@ -331,7 +331,7 @@ export const additiveExpression: RuleDef<'additiveExpression', Expression> = <co
                 {
                   ALT: () => {
                     CONSUME(l.symbols.slash);
-                    const expr = SUBRULE2(unaryExpression);
+                    const expr = SUBRULE2(unaryExpression, undefined);
                     return {
                       operator: '/',
                       expr,
@@ -357,15 +357,15 @@ export const additiveExpression: RuleDef<'additiveExpression', Expression> = <co
 /**
  * [[117]](https://www.w3.org/TR/sparql11-query/#rMultiplicativeExpression)
  */
-export const multiplicativeExpression: RuleDef<'multiplicativeExpression', Expression> = <const> {
+export const multiplicativeExpression: SparqlRuleDef<'multiplicativeExpression', Expression> = <const> {
   name: 'multiplicativeExpression',
   impl: ({ ACTION, CONSUME, MANY, SUBRULE1, SUBRULE2, SUBRULE3, OR }) => () => constructLeftDeep(
-    () => SUBRULE1(unaryExpression),
+    () => SUBRULE1(unaryExpression, undefined),
     () => OR<LeftDeepBuildArgs>([
       {
         ALT: () => {
           CONSUME(l.symbols.star);
-          const expr = SUBRULE2(unaryExpression);
+          const expr = SUBRULE2(unaryExpression, undefined);
           return {
             operator: '*',
             expr,
@@ -375,7 +375,7 @@ export const multiplicativeExpression: RuleDef<'multiplicativeExpression', Expre
       {
         ALT: () => {
           CONSUME(l.symbols.slash);
-          const expr = SUBRULE3(unaryExpression);
+          const expr = SUBRULE3(unaryExpression, undefined);
           return {
             operator: '/',
             expr,
@@ -391,13 +391,13 @@ export const multiplicativeExpression: RuleDef<'multiplicativeExpression', Expre
 /**
  * [[118]](https://www.w3.org/TR/sparql11-query/#rUnaryExpression)
  */
-export const unaryExpression: RuleDef<'unaryExpression', Expression> = <const> {
+export const unaryExpression: SparqlRuleDef<'unaryExpression', Expression> = <const> {
   name: 'unaryExpression',
   impl: ({ CONSUME, SUBRULE1, SUBRULE2, SUBRULE3, SUBRULE4, OR }) => () => OR<Expression>([
     {
       ALT: () => {
         CONSUME(l.symbols.exclamation);
-        const expr = SUBRULE1(primaryExpression);
+        const expr = SUBRULE1(primaryExpression, undefined);
         return {
           type: 'operation',
           operator: '!',
@@ -408,7 +408,7 @@ export const unaryExpression: RuleDef<'unaryExpression', Expression> = <const> {
     {
       ALT: () => {
         CONSUME(l.symbols.opPlus);
-        const expr = SUBRULE2(primaryExpression);
+        const expr = SUBRULE2(primaryExpression, undefined);
         return {
           type: 'operation',
           operator: 'UPLUS',
@@ -419,7 +419,7 @@ export const unaryExpression: RuleDef<'unaryExpression', Expression> = <const> {
     {
       ALT: () => {
         CONSUME(l.symbols.opMinus);
-        const expr = SUBRULE3(primaryExpression);
+        const expr = SUBRULE3(primaryExpression, undefined);
         return {
           type: 'operation',
           operator: 'UMINUS',
@@ -427,34 +427,34 @@ export const unaryExpression: RuleDef<'unaryExpression', Expression> = <const> {
         };
       },
     },
-    { ALT: () => SUBRULE4(primaryExpression) },
+    { ALT: () => SUBRULE4(primaryExpression, undefined) },
   ]),
 };
 
 /**
  * [[119]](https://www.w3.org/TR/sparql11-query/#rPrimaryExpression)
  */
-export const primaryExpression: RuleDef<'primaryExpression', Expression> = <const> {
+export const primaryExpression: SparqlRuleDef<'primaryExpression', Expression> = <const> {
   name: 'primaryExpression',
   impl: ({ SUBRULE, OR }) => () => OR([
-    { ALT: () => SUBRULE(brackettedExpression) },
-    { ALT: () => SUBRULE(builtInCall) },
-    { ALT: () => SUBRULE(iriOrFunction) },
-    { ALT: () => SUBRULE(rdfLiteral) },
-    { ALT: () => SUBRULE(numericLiteral) },
-    { ALT: () => SUBRULE(booleanLiteral) },
-    { ALT: () => SUBRULE(var_) },
+    { ALT: () => SUBRULE(brackettedExpression, undefined) },
+    { ALT: () => SUBRULE(builtInCall, undefined) },
+    { ALT: () => SUBRULE(iriOrFunction, undefined) },
+    { ALT: () => SUBRULE(rdfLiteral, undefined) },
+    { ALT: () => SUBRULE(numericLiteral, undefined) },
+    { ALT: () => SUBRULE(booleanLiteral, undefined) },
+    { ALT: () => SUBRULE(var_, undefined) },
   ]),
 };
 
 /**
  * [[120]](https://www.w3.org/TR/sparql11-query/#rBrackettedExpression)
  */
-export const brackettedExpression: RuleDef<'brackettedExpression', Expression> = <const> {
+export const brackettedExpression: SparqlRuleDef<'brackettedExpression', Expression> = <const> {
   name: 'brackettedExpression',
   impl: ({ SUBRULE, CONSUME }) => () => {
     CONSUME(l.symbols.LParen);
-    const expr = SUBRULE(expression);
+    const expr = SUBRULE(expression, undefined);
     CONSUME(l.symbols.RParen);
 
     return expr;
@@ -464,11 +464,11 @@ export const brackettedExpression: RuleDef<'brackettedExpression', Expression> =
 /**
  * [[128]](https://www.w3.org/TR/sparql11-query/#ririOrFunction)
  */
-export const iriOrFunction: RuleDef<'iriOrFunction', IriTerm | (IArgList & { function: IriTerm })> = <const> {
+export const iriOrFunction: SparqlRuleDef<'iriOrFunction', IriTerm | (IArgList & { function: IriTerm })> = <const> {
   name: 'iriOrFunction',
   impl: ({ SUBRULE, OPTION }) => () => {
-    const iriVal = SUBRULE(iri);
-    const args = OPTION(() => SUBRULE(argList));
+    const iriVal = SUBRULE(iri, undefined);
+    const args = OPTION(() => SUBRULE(argList, undefined));
     return args ?
         {
           ...args,

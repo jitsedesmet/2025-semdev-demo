@@ -1,8 +1,8 @@
 import { ErrorSkipped, } from 'rdf-test-suite';
 import { Parser } from '../lib'
-import {ImplArgs} from "@traqula/core";
+import {ImplArgs, SparqlContext} from "@traqula/core";
 
-export async function parse(query: string,  context: Partial<ImplArgs['context']> = {}) {
+export async function parse(query: string,  context: Partial<SparqlContext> = {}) {
   const parser = new Parser(context);
   parser.parse(query);
 }
