@@ -1,9 +1,9 @@
-import type { TokenType } from 'chevrotain';
+import type {TokenType} from 'chevrotain';
 import * as l from '../../lexer';
-import type { SparqlRuleDef, RuleDefReturn } from '@traqula/core';
-import { unCapitalize } from '@traqula/core';
-import { canParseVars, prologue, triplesTemplate, varOrIri } from '../general';
-import { canCreateBlankNodes, iri } from '../literals';
+import type {RuleDefReturn} from '@traqula/core';
+import {unCapitalize} from '@traqula/core';
+import {prologue, triplesTemplate, varOrIri} from '../general';
+import {canCreateBlankNodes, iri} from '../literals';
 import type {
   ClearDropOperation,
   GraphOrDefault,
@@ -13,10 +13,11 @@ import type {
   IriTerm,
   LoadOperation,
   Quads,
+  SparqlRuleDef,
   Update,
   UpdateOperation,
 } from '../../Sparql11types';
-import { groupGraphPattern } from '../whereClause';
+import {groupGraphPattern} from '../whereClause';
 
 /**
  * [[3]](https://www.w3.org/TR/sparql11-query/#rUpdateUnit)
@@ -221,9 +222,9 @@ export const deleteData: SparqlRuleDef<'deleteData', InsertDeleteOperation> = <c
     CONSUME(l.deleteClause);
     CONSUME(l.dataClause);
 
-    const couldCreateBlankNodes = ACTION(() => C.parseMode.delete(canCreateBlankNodes));
+    const couldCreateBlankNodes = ACTION(() => C.parseMode.delete('canCreateBlankNodes'));
     const del = SUBRULE(quadData, undefined);
-    ACTION(() => couldCreateBlankNodes && C.parseMode.add(canCreateBlankNodes));
+    ACTION(() => couldCreateBlankNodes && C.parseMode.add('canCreateBlankNodes'));
 
     return {
       updateType: 'delete',
@@ -241,9 +242,9 @@ export const deleteWhere: SparqlRuleDef<'deleteWhere', InsertDeleteOperation> = 
     CONSUME(l.deleteClause);
     CONSUME(l.where);
 
-    const couldCreateBlankNodes = ACTION(() => C.parseMode.delete(canCreateBlankNodes));
+    const couldCreateBlankNodes = ACTION(() => C.parseMode.delete('canCreateBlankNodes'));
     const del = SUBRULE(quadPattern, undefined);
-    ACTION(() => couldCreateBlankNodes && C.parseMode.add(canCreateBlankNodes));
+    ACTION(() => couldCreateBlankNodes && C.parseMode.add('canCreateBlankNodes'));
 
     return {
       updateType: 'deletewhere',
@@ -312,9 +313,9 @@ export const deleteClause: SparqlRuleDef<'deleteClause', Quads[]> = <const> {
   impl: ({ ACTION, SUBRULE, CONSUME }) => (C) => {
     CONSUME(l.deleteClause);
 
-    const couldCreateBlankNodes = ACTION(() => C.parseMode.delete(canCreateBlankNodes));
+    const couldCreateBlankNodes = ACTION(() => C.parseMode.delete('canCreateBlankNodes'));
     const del = SUBRULE(quadPattern, undefined);
-    ACTION(() => couldCreateBlankNodes && C.parseMode.add(canCreateBlankNodes));
+    ACTION(() => couldCreateBlankNodes && C.parseMode.add('canCreateBlankNodes'));
 
     return del;
   },
@@ -434,9 +435,9 @@ export const quadData: SparqlRuleDef<'quadData', Quads[]> = <const> {
   impl: ({ ACTION, SUBRULE, CONSUME }) => (C) => {
     CONSUME(l.symbols.LCurly);
 
-    const couldParseVars = ACTION(() => C.parseMode.delete(canParseVars));
+    const couldParseVars = ACTION(() => C.parseMode.delete('canParseVars'));
     const val = SUBRULE(quads, undefined);
-    ACTION(() => couldParseVars && C.parseMode.add(canParseVars));
+    ACTION(() => couldParseVars && C.parseMode.add('canParseVars'));
 
     CONSUME(l.symbols.RCurly);
     return val;

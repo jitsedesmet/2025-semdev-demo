@@ -1,8 +1,7 @@
 import * as l from '../lexer';
-import type { SparqlRuleDef } from '@traqula/core';
 import { CommonIRIs, resolveIRI } from '@traqula/core';
 import { blankNode, booleanLiteral, canCreateBlankNodes, iri, numericLiteral, rdfLiteral } from './literals';
-import type { GraphTerm, Term, Triple, VerbA, IriTerm, VariableTerm, BaseQuery } from '../Sparql11types';
+import type {GraphTerm, Term, Triple, VerbA, IriTerm, VariableTerm, BaseQuery, SparqlRuleDef} from '../Sparql11types';
 import { triplesSameSubject } from './tripleBlock';
 
 /**
@@ -131,7 +130,7 @@ export const verbA: SparqlRuleDef<'VerbA', VerbA> = <const> {
 export const varOrTerm: SparqlRuleDef<'varOrTerm', Term> = <const> {
   name: 'varOrTerm',
   impl: ({ SUBRULE, OR }) => (C) => OR<Term>([
-    { GATE: () => C.parseMode.has(canParseVars), ALT: () => SUBRULE(var_, undefined) },
+    { GATE: () => C.parseMode.has('canParseVars'), ALT: () => SUBRULE(var_, undefined) },
     { ALT: () => SUBRULE(graphTerm, undefined) },
   ]),
 };
@@ -142,12 +141,10 @@ export const varOrTerm: SparqlRuleDef<'varOrTerm', Term> = <const> {
 export const varOrIri: SparqlRuleDef<'varOrIri', IriTerm | VariableTerm> = <const> {
   name: 'varOrIri',
   impl: ({ SUBRULE, OR }) => (C) => OR<IriTerm | VariableTerm>([
-    { GATE: () => C.parseMode.has(canParseVars), ALT: () => SUBRULE(var_, undefined) },
+    { GATE: () => C.parseMode.has('canParseVars'), ALT: () => SUBRULE(var_, undefined) },
     { ALT: () => SUBRULE(iri, undefined) },
   ]),
 };
-
-export const canParseVars = Symbol('canParseVars');
 
 /**
  * [[108]](https://www.w3.org/TR/sparql11-query/#rVar)
@@ -160,7 +157,7 @@ export const var_: SparqlRuleDef<'var', VariableTerm> = <const> {
       { ALT: () => CONSUME(l.terminals.var2).image.slice(1) },
     ]);
     ACTION(() => {
-      if (!C.parseMode.has(canParseVars)) {
+      if (!C.parseMode.has('canParseVars')) {
         throw new Error('Variables are not allowed here');
       }
     });
@@ -178,7 +175,7 @@ export const graphTerm: SparqlRuleDef<'graphTerm', GraphTerm> = <const> {
     { ALT: () => SUBRULE(rdfLiteral, undefined) },
     { ALT: () => SUBRULE(numericLiteral, undefined) },
     { ALT: () => SUBRULE(booleanLiteral, undefined) },
-    { GATE: () => C.parseMode.has(canCreateBlankNodes), ALT: () => SUBRULE(blankNode, undefined) },
+    { GATE: () => C.parseMode.has('canCreateBlankNodes'), ALT: () => SUBRULE(blankNode, undefined) },
     {
       ALT: () => {
         CONSUME(l.terminals.nil);

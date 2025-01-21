@@ -8,8 +8,8 @@
 import type { DirectionalLanguage } from '@rdfjs/types';
 import type { NamedNode } from 'rdf-data-factory';
 import * as l12 from './lexer';
-import type { RuleDefReturn, SparqlRuleDef } from '@traqula/core';
-import {funcExpr1, funcExpr3} from '@traqula/rules-sparql-1-1';
+import type { RuleDefReturn } from '@traqula/core';
+import {funcExpr1, funcExpr3, SparqlRuleDef} from '@traqula/rules-sparql-1-1';
 import { gram as S11, lex as l11 } from '@traqula/rules-sparql-1-1';
 import type * as T11 from '@traqula/rules-sparql-1-1';
 import { CommonIRIs } from '@traqula/core';
@@ -66,7 +66,7 @@ export const reifier: SparqlRuleDef<'reifier', T11.VariableTerm | T11.IriTerm | 
     CONSUME(l12.tilde);
     const reifier = OPTION(() => SUBRULE(varOrReifierId, undefined));
     return ACTION(() => {
-      if (reifier === undefined && !C.parseMode.has(S11.canCreateBlankNodes)) {
+      if (reifier === undefined && !C.parseMode.has('canCreateBlankNodes')) {
         throw new Error('Cannot create blanknodes in current parse mode');
       }
       return reifier ?? C.dataFactory.blankNode();
@@ -182,7 +182,7 @@ function annotationImpl<T extends string>(name: T, allowPaths: boolean): SparqlR
             const block = SUBRULE(
               allowPaths ? annotationBlockPath : annotationBlock,
               { subject: ACTION(() => {
-                  if (currentReifier === undefined && !C.parseMode.has(S11.canCreateBlankNodes)) {
+                  if (currentReifier === undefined && !C.parseMode.has('canCreateBlankNodes')) {
                     throw new Error('Cannot create blanknodes in current parse mode');
                   }
                   node = currentReifier ?? C.dataFactory.blankNode();
@@ -295,7 +295,7 @@ SparqlRuleDef<'reifiedTriple', IGraphNode & { node: T11.BlankTerm | T11.Variable
     CONSUME(l12.reificationClose);
 
     return ACTION(() => {
-      if (reifierVal === undefined && !C.parseMode.has(S11.canCreateBlankNodes)) {
+      if (reifierVal === undefined && !C.parseMode.has('canCreateBlankNodes')) {
         throw new Error('Cannot create blanknodes in current parse mode');
       }
       const reifier = reifierVal ?? C.dataFactory.blankNode();

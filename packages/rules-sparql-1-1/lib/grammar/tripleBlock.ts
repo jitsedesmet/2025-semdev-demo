@@ -1,5 +1,4 @@
 import * as l from '../lexer';
-import type { SparqlRuleDef } from '@traqula/core';
 import { CommonIRIs } from '@traqula/core';
 import { var_, varOrTerm, verb } from './general';
 import { canCreateBlankNodes } from './literals';
@@ -9,7 +8,7 @@ import type {
   IGraphNode,
   IriTerm,
   ITriplesNode,
-  PropertyPath,
+  PropertyPath, SparqlRuleDef,
   Triple,
   VariableTerm,
 } from '../Sparql11types';
@@ -310,7 +309,7 @@ function graphNodeImpl<T extends string>(name: T, allowPaths: boolean): SparqlRu
         },
       },
       {
-        GATE: () => C.parseMode.has(canCreateBlankNodes),
+        GATE: () => C.parseMode.has('canCreateBlankNodes'),
         ALT: () => SUBRULE(allowPaths ? triplesNodePath : triplesNode, undefined),
       },
     ]),

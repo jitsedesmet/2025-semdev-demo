@@ -1,6 +1,6 @@
 import type { IOrAlt } from '@chevrotain/types';
 import * as l from '../lexer';
-import type { ImplArgs, SparqlRuleDef } from '@traqula/core';
+import type { ImplArgs } from '@traqula/core';
 import type { RuleDefExpressionFunctionX } from '../expressionHelpers';
 import {
   baseAggregateFunc,
@@ -19,7 +19,7 @@ import {
 } from '@traqula/core';
 import { expression } from './expression';
 import { string } from './literals';
-import type { AggregateExpression, Expression } from '../Sparql11types';
+import type {AggregateExpression, Expression, SparqlRuleDef} from '../Sparql11types';
 
 export const builtInStr = funcExpr1(l.builtIn.str);
 export const builtInLang = funcExpr1(l.builtIn.lang);
@@ -231,8 +231,6 @@ export const aggregateGroup_concat: SparqlRuleDef<'builtInGroup_concat', Aggrega
   },
 };
 
-export const canParseAggregate = Symbol('canParseAggregate');
-export const inAggregate = Symbol('inAggregate');
 /**
  * [[127]](https://www.w3.org/TR/sparql11-query/#rBuiltInCall)
  */
@@ -241,8 +239,8 @@ export const aggregate: SparqlRuleDef<'aggregate', Expression> = <const> {
   impl: ({ ACTION, SUBRULE, OR }) => (C) => {
     // https://www.w3.org/2013/sparql-errata#errata-query-5 - Or note 15 in SPARQL1.2 spec
     //  An aggregate function is not allowed within an aggregate function.
-    const wasInAggregate = ACTION(() => C.parseMode.has(inAggregate));
-    ACTION(() => C.parseMode.add(inAggregate));
+    const wasInAggregate = ACTION(() => C.parseMode.has('inAggregate'));
+    ACTION(() => C.parseMode.add('inAggregate'));
     const result = OR<Expression>([
       { ALT: () => SUBRULE(aggregateCount, undefined) },
       { ALT: () => SUBRULE(aggregateSum, undefined) },
@@ -252,13 +250,13 @@ export const aggregate: SparqlRuleDef<'aggregate', Expression> = <const> {
       { ALT: () => SUBRULE(aggregateSample, undefined) },
       { ALT: () => SUBRULE(aggregateGroup_concat, undefined) },
     ]);
-    ACTION(() => !wasInAggregate && C.parseMode.delete(inAggregate));
+    ACTION(() => !wasInAggregate && C.parseMode.delete('inAggregate'));
 
     ACTION(() => {
-      if (!C.parseMode.has(canParseAggregate)) {
+      if (!C.parseMode.has('canParseAggregate')) {
         throw new Error('Aggregates are only allowed in SELECT, HAVING, and ORDER BY clauses.');
       }
-      if (C.parseMode.has(inAggregate)) {
+      if (C.parseMode.has('inAggregate')) {
         throw new Error('An aggregate function is not allowed within an aggregate function.');
       }
     });

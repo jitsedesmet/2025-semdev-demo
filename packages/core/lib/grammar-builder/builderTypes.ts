@@ -1,5 +1,5 @@
 import type { ParserMethod } from 'chevrotain';
-import type {RuleDef, SparqlRuleDef} from './ruleDefTypes';
+import type {RuleDef} from './ruleDefTypes';
 
 /**
  * Get union-type of names used in list of ruledefs.

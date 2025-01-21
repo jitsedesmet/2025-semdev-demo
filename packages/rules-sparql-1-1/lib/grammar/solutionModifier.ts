@@ -1,9 +1,8 @@
 import * as l from '../lexer';
-import type { SparqlRuleDef } from '@traqula/core';
-import { builtInCall, canParseAggregate } from './builtIn';
+import { builtInCall } from './builtIn';
 import { brackettedExpression, expression } from './expression';
 import { var_ } from './general';
-import type { Expression, Grouping, Ordering, SelectQuery } from '../Sparql11types';
+import type {Expression, Grouping, Ordering, SelectQuery, SparqlRuleDef} from '../Sparql11types';
 import { constraint, functionCall } from './whereClause';
 
 /**
@@ -96,11 +95,11 @@ export const havingClause: SparqlRuleDef<'havingClause', Expression[]> = <const>
 
     CONSUME(l.having);
     const couldParseAgg = ACTION(() =>
-      C.parseMode.has(canParseAggregate) || !C.parseMode.add(canParseAggregate));
+      C.parseMode.has('canParseAggregate') || !C.parseMode.add('canParseAggregate'));
     AT_LEAST_ONE(() => {
       expressions.push(SUBRULE(havingCondition, undefined));
     });
-    ACTION(() => !couldParseAgg && C.parseMode.delete(canParseAggregate));
+    ACTION(() => !couldParseAgg && C.parseMode.delete('canParseAggregate'));
 
     return expressions;
   },
@@ -124,11 +123,11 @@ export const orderClause: SparqlRuleDef<'orderClause', Ordering[]> = <const> {
 
     CONSUME(l.order);
     const couldParseAgg = ACTION(() =>
-      C.parseMode.has(canParseAggregate) || !C.parseMode.add(canParseAggregate));
+      C.parseMode.has('canParseAggregate') || !C.parseMode.add('canParseAggregate'));
     AT_LEAST_ONE(() => {
       orderings.push(SUBRULE(orderCondition, undefined));
     });
-    ACTION(() => !couldParseAgg && C.parseMode.delete(canParseAggregate));
+    ACTION(() => !couldParseAgg && C.parseMode.delete('canParseAggregate'));
 
     return orderings;
   },

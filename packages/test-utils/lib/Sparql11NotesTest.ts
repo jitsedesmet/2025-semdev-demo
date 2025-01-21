@@ -4,14 +4,10 @@ import {DataFactory} from "rdf-data-factory";
 import {BaseQuad} from "@rdfjs/types";
 
 interface Parser {
-  parse: (query: string) => unknown;
+  parse: (query: string, context?: {prefixes?: Record<string, string>, baseIRI?: string}) => unknown;
 }
 
-type ParserConstructor = (args?: {prefixes?: Record<string, string>, baseIRI?: string}) => Parser;
-
-export function importSparql11NoteTests(constructor: ParserConstructor, dataFactory: DataFactory<BaseQuad>) {
-  const parser = constructor();
-
+export function importSparql11NoteTests(parser: Parser, dataFactory: DataFactory<BaseQuad>) {
   function testErroneousQuery(query: string, errorMsg: string): TestFunction<object> {
     return ({ expect }) => {
       let error: any = null;
@@ -77,11 +73,10 @@ export function importSparql11NoteTests(constructor: ParserConstructor, dataFact
 
   describe('with pre-defined prefixes', () => {
     const prefixes = { a: 'ex:abc#', b: 'ex:def#' };
-    const parser = constructor({ prefixes });
 
     it('should use those prefixes', ({ expect }) => {
       const query = 'SELECT * { a:a b:b "" }';
-      expect(parser.parse(query)).toMatchObject({
+      expect(parser.parse(query, { prefixes })).toMatchObject({
         where: [
           {
             triples: [
@@ -98,7 +93,7 @@ export function importSparql11NoteTests(constructor: ParserConstructor, dataFact
 
     it('should allow temporarily overriding prefixes', ({ expect }) => {
       const query = 'PREFIX a: <ex:xyz#> SELECT * { a:a b:b "" }';
-      expect(parser.parse(query)).toMatchObject({
+      expect(parser.parse(query, { prefixes })).toMatchObject({
         where: [{
           triples: [{
             subject: dataFactory.namedNode('ex:xyz#a'),
@@ -110,7 +105,7 @@ export function importSparql11NoteTests(constructor: ParserConstructor, dataFact
       });
 
       const query2 = 'SELECT * { a:a b:b "" }';
-      expect(parser.parse(query2)).toMatchObject({
+      expect(parser.parse(query2, { prefixes })).toMatchObject({
         where: [{
           triples: [{
             subject: dataFactory.namedNode('ex:abc#a'),
@@ -125,41 +120,26 @@ export function importSparql11NoteTests(constructor: ParserConstructor, dataFact
     it('should not change the original prefixes', ({ expect }) => {
       expect(prefixes).toEqual({ a: 'ex:abc#', b: 'ex:def#' });
     });
-
-    it('should not take over changes to the original prefixes', ({ expect }) => {
-      const query = 'SELECT * { a:a b:b "" }';
-      prefixes.a = 'ex:xyz#';
-      expect(parser.parse(query)).toMatchObject({
-        where: [{
-          triples: [{
-            subject: dataFactory.namedNode('ex:abc#a'),
-            predicate: dataFactory.namedNode('ex:def#b'),
-            object: dataFactory.literal(''),
-          }],
-        },
-        ],
-      });
-    });
   });
 
   describe('with pre-defined base IRI', () => {
-    const parser = constructor({ baseIRI: 'http://ex.org/' });
+    const context = { baseIRI: 'http://ex.org/' };
 
     it('contains the base', ({expect}) => {
       const query = 'SELECT * { ?s ?p ?o }';
-      expect(parser.parse(query)).toMatchObject({
+      expect(parser.parse(query, context)).toMatchObject({
         base: 'http://ex.org/'
       });
     })
 
     it('using prefixed as relative iri', ({expect}) => {
-      const parser = constructor({ baseIRI: 'http://ex.org/apl' });
+      const context = { baseIRI: 'http://ex.org/apl' };
       const query = `
 CONSTRUCT
 FROM <data.ttl>
 WHERE { ?s ?p ?o }
 `;
-      expect(parser.parse(query)).toMatchObject({
+      expect(parser.parse(query, context)).toMatchObject({
         from: {
           default: [
             dataFactory.namedNode('http://ex.org/data.ttl'),
@@ -177,24 +157,24 @@ WHERE { ?s ?p ?o }
         object: dataFactory.literal(''),
       };
 
-      expect(parser.parse(query)).toMatchObject({
+      expect(parser.parse(query, context)).toMatchObject({
         where: [{ triples: [ result ]}],
       });
     });
 
     it('should work after a previous query failed', ({ expect }) => {
       const badQuery = 'SELECT * { <> <#b> "" } invalid!';
-      expect(() => parser.parse(badQuery)).toThrow(Error);
+      expect(() => parser.parse(badQuery, context)).toThrow(Error);
 
       const goodQuery = 'SELECT * { <> <#b> "" }';
 
-      const parser = constructor({ baseIRI: 'http://ex2.org/' });
+      const context = { baseIRI: 'http://ex2.org/' };
       const result = {
         subject: dataFactory.namedNode('http://ex2.org/'),
         predicate: dataFactory.namedNode('http://ex2.org/#b'),
         object: dataFactory.literal(''),
       };
-      const data = parser.parse(goodQuery);
+      const data = parser.parse(goodQuery, context);
       expect(data).toMatchObject({
         where: [{ triples: [ result ]}],
       });

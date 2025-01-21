@@ -1,7 +1,6 @@
 import * as l from '../../lexer';
 import { Wildcard } from '@traqula/core';
-import type { SparqlRuleDef, ImplArgs } from '@traqula/core';
-import { canParseAggregate } from '../builtIn';
+import type { ImplArgs } from '@traqula/core';
 import { datasetClause, type IDatasetClause } from '../dataSetClause';
 import { expression } from '../expression';
 import { prologue, triplesTemplate, var_, varOrIri } from '../general';
@@ -16,7 +15,7 @@ import type {
   IriTerm,
   Pattern,
   Query,
-  SelectQuery,
+  SelectQuery, SparqlRuleDef,
   Triple,
   ValuePatternRow,
   Variable,
@@ -247,7 +246,7 @@ export const selectClause: SparqlRuleDef<'selectClause', ISelectClause> = <const
   impl: ({ ACTION, AT_LEAST_ONE, SUBRULE, CONSUME, SUBRULE1, SUBRULE2, OPTION, OR1, OR2, OR3 }) => (C) => {
     CONSUME(l.select);
     const couldParseAgg = ACTION(() =>
-      C.parseMode.has(canParseAggregate) || !C.parseMode.add(canParseAggregate));
+      C.parseMode.has('canParseAggregate') || !C.parseMode.add('canParseAggregate'));
 
     const distinctOrReduced = OPTION(() => OR1<Partial<{ distinct: true; reduced: true }>>([
       { ALT: () => {
@@ -299,7 +298,7 @@ export const selectClause: SparqlRuleDef<'selectClause', ISelectClause> = <const
         return result;
       } },
     ]);
-    ACTION(() => !couldParseAgg && C.parseMode.delete(canParseAggregate));
+    ACTION(() => !couldParseAgg && C.parseMode.delete('canParseAggregate'));
     return ACTION(() => ({
       ...distinctOrReduced,
       variables,

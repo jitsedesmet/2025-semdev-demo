@@ -1,8 +1,7 @@
 import type { NamedNode } from 'rdf-data-factory';
 import * as l from '../lexer';
-import type { SparqlRuleDef } from '@traqula/core';
 import { CommonIRIs, resolveIRI } from '@traqula/core';
-import type { BlankTerm, IriTerm, LiteralTerm } from '../Sparql11types';
+import type {BlankTerm, IriTerm, LiteralTerm, SparqlRuleDef} from '../Sparql11types';
 
 /**
  * Parses an RDF literal, in the form of {value}@{lang} or {value}^^{datatype}.
@@ -210,7 +209,7 @@ export const blankNode: SparqlRuleDef<'blankNode', BlankTerm> = <const> {
       },
     ]);
     ACTION(() => {
-      if (!C.parseMode.has(canCreateBlankNodes)) {
+      if (!C.parseMode.has('canCreateBlankNodes')) {
         throw new Error('Blank nodes are not allowed in this context');
       }
     });

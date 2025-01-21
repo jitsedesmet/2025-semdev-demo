@@ -5,16 +5,14 @@ import {DataFactory} from "rdf-data-factory";
 import {BaseQuad} from "@rdfjs/types";
 
 describe('a SPARQL 1.1 parser', () => {
-  const parser = new Parser({ prefixes: { ex: 'http://example.org/' }});
-  beforeEach(() => {
-    parser._resetBlanks();
-  });
+  const parser = new Parser();
+  const context = { prefixes: { ex: 'http://example.org/' }};
 
   describe('positive paths', () => {
     for (const { name, statics } of [...positiveTest('paths')]) {
       it(`can parse ${name}`, async({expect}) => {
         const { query, result } = await statics();
-        const res: unknown = parser.parsePath(query);
+        const res: unknown = parser.parsePath(query, context);
         expect(res).toEqualParsedQuery(result);
       });
     }
@@ -24,13 +22,13 @@ describe('a SPARQL 1.1 parser', () => {
     for (const { name, statics } of [...positiveTest('sparql-1-1')]) {
       it(`can parse ${name}`, async({expect}) => {
         const { query, result } = await statics();
-        const res: unknown = parser.parse(query);
+        const res: unknown = parser.parse(query,context);
         expect(res).toEqualParsedQuery(result);
       });
     }
   });
 
   describe('specific sparql 1.1 tests', () => {
-    importSparql11NoteTests(args => new Parser(args), new DataFactory<BaseQuad>());
+    importSparql11NoteTests(parser, new DataFactory<BaseQuad>());
   });
 });

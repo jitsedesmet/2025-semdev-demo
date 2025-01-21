@@ -1,5 +1,4 @@
 import * as l from '../lexer';
-import type { SparqlRuleDef } from '@traqula/core';
 import { deGroupSingle, isVariable } from '../utils';
 import { builtInCall } from './builtIn';
 import { argList, brackettedExpression, expression } from './expression';
@@ -20,7 +19,7 @@ import type {
   MinusPattern,
   OptionalPattern,
   Pattern,
-  ServicePattern,
+  ServicePattern, SparqlRuleDef,
   UnionPattern,
   ValuePatternRow,
   ValuesPattern,

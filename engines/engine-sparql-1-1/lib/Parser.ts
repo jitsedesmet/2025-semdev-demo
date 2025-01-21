@@ -1,17 +1,8 @@
-import { DataFactory } from 'rdf-data-factory';
-import {Builder, SparqlContext} from '@traqula/core';
-import type { ImplArgs, SparqlRuleDef } from '@traqula/core';
-import { gram, lex as l } from '@traqula/rules-sparql-1-1';
-import type {
-  IriTerm,
-  PropertyPath,
-  Query,
-  SparqlQuery,
-  Update,
-} from '@traqula/rules-sparql-1-1';
-import { queryUnitParserBuilder } from './queryUnitParser';
-import { updateParserBuilder } from './updateUnitParser';
-import type * as RDF from '@rdfjs/types';
+import {Builder} from '@traqula/core';
+import type {Query, SparqlQuery, Update,} from '@traqula/rules-sparql-1-1';
+import {gram, lex as l, SparqlParser, SparqlRuleDef} from '@traqula/rules-sparql-1-1';
+import {queryUnitParserBuilder} from './queryUnitParser';
+import {updateParserBuilder} from './updateUnitParser';
 
 // Create merge of
 // ```
@@ -115,56 +106,11 @@ export const sparql11ParserBuilder = Builder.createBuilder(queryUnitParserBuilde
   .deleteRule('updateUnit')
   .addRule(queryOrUpdate);
 
-export class Parser {
-  private readonly parser: {
-    queryOrUpdate: (input: string, context: SparqlContext, arg: undefined) => SparqlQuery;
-    path: (input: string, context: SparqlContext, arg: undefined) => PropertyPath | IriTerm;
-  };
-  private config: SparqlContext;
-  private readonly initialConfig: SparqlContext;
-
-  public constructor(context: Partial<SparqlContext> = {}) {
-    this.parser = sparql11ParserBuilder.consumeToParser({
-      tokenVocabulary: l.sparql11Tokens.build(),
-    });
-    this.initialConfig = {
-      dataFactory: context.dataFactory ?? new DataFactory({ blankNodePrefix: 'g_' }),
-      baseIRI: context.baseIRI,
-      prefixes: { ...context.prefixes },
-      parseMode: context.parseMode ? new Set(context.parseMode) : new Set([ gram.canParseVars, gram.canCreateBlankNodes ]),
-      skipValidation: context.skipValidation ?? false,
+export class Parser extends SparqlParser<SparqlQuery> {
+    public constructor() {
+      const parser = sparql11ParserBuilder.consumeToParser({
+        tokenVocabulary: l.sparql11Tokens.build(),
+      });
+      super(parser);
     }
-    this.reset();
-  }
-
-  private reset() {
-    this.config = {
-      dataFactory: this.initialConfig.dataFactory,
-      baseIRI: this.initialConfig.baseIRI,
-      prefixes: { ...this.initialConfig.prefixes },
-      parseMode: new Set(this.initialConfig.parseMode),
-      skipValidation: this.initialConfig.skipValidation,
-    }
-  }
-
-  public _resetBlanks(): void {
-    this.config.dataFactory.resetBlankNodeCounter();
-  }
-
-  public parse(query: string): SparqlQuery {
-    this.reset()
-    return this.parser.queryOrUpdate(query, this.config, undefined);
-  }
-
-  public parsePath(query: string): (PropertyPath & { prefixes: object }) | IriTerm {
-    this.reset()
-    const result = this.parser.path(query, this.config, undefined);
-    if ('type' in result) {
-      return {
-        ...result,
-        prefixes: {},
-      };
-    }
-    return result;
-  }
 }

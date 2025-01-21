@@ -1,5 +1,6 @@
 import {describe, it} from 'vitest';
-import {Builder, SparqlContext, SparqlRuleDef} from '../../lib';
+import {Builder} from '../../lib';
+import {SparqlContext, SparqlRuleDef} from "@traqula/rules-sparql-1-1";
 
 const RuleA: SparqlRuleDef<'apple', 'apple'> = <any> undefined;
 const RuleB: SparqlRuleDef<'banana', 'banana'> = <any> undefined;

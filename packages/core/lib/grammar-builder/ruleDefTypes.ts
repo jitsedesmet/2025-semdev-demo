@@ -1,33 +1,14 @@
 import type {
-  EmbeddedActionsParser,
-  ISeparatedIterationResult,
   AtLeastOneSepMethodOpts,
   DSLMethodOpts,
   DSLMethodOptsWithErr,
+  EmbeddedActionsParser,
   GrammarAction,
   IOrAlt,
   ManySepMethodOpts,
   OrMethodOpts,
 } from '@chevrotain/types';
-import type * as RDF from '@rdfjs/types';
-import type { ConsumeMethodOpts, IToken, TokenType } from 'chevrotain';
-import type { DataFactory } from 'rdf-data-factory';
-
-export type SparqlRuleDef<
-  /**
-   * Name of grammar rule, should be a strict subtype of string like 'myGrammarRule'.
-   */
-  NameType extends string = string,
-  /**
-   * Type that will be returned after a correct parse of this rule.
-   * This type will be the return type of calling SUBRULE with this grammar rule.
-   */
-  ReturnType = unknown,
-  /**
-   * Function arguments that can be given to convey the state of the current parse operation.
-   */
-  ParamType = undefined,
-> = RuleDef<SparqlContext, NameType, ReturnType, ParamType>;
+import type {ConsumeMethodOpts, IToken, TokenType} from 'chevrotain';
 
 /**
  * Get the return-type of a RuleDef
@@ -60,34 +41,11 @@ export type RuleDef<
   impl: (def: ImplArgs) => (context: Context, params: ParamType) => ReturnType;
 };
 
-export interface SparqlContext {
-  /**
-   * Data-factory to be used when constructing rdf primitives.
-   */
-  dataFactory: DataFactory<RDF.BaseQuad>;
-  /**
-   * Current scoped prefixes. Used for resolving prefixed names.
-   */
-  prefixes: Record<string, string>;
-  /**
-   * The base IRI for the query. Used for resolving relative IRIs.
-   */
-  baseIRI: string | undefined;
-  /**
-   * Can be used to disable the validation that used variables in a select clause are in scope.
-   */
-  skipValidation: boolean;
-  /**
-   * Set of queryModes. Primarily used for note 8, 14.
-   */
-  parseMode: Set<symbol>;
-}
-
 /**
  * Type expected by grammar rules in the main `impl` function.
  */
 export interface ImplArgs extends CstDef {
-  cache: WeakMap<SparqlRuleDef, unknown>;
+  cache: WeakMap<RuleDef, unknown>;
 }
 
 /**
