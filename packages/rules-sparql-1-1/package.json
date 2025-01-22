@@ -38,8 +38,8 @@
     "build:transpile": " node \"../../node_modules/esbuild/bin/esbuild\" --format=cjs --bundle --log-level=error --outfile=lib/index.cjs lib/index.ts"
   },
   "dependencies": {
-    "chevrotain": "^11.0.3",
     "@traqula/core": "^0.0.0",
+    "chevrotain": "^11.0.3",
     "rdf-data-factory": "^2.0.1"
   },
   "devDependencies": {
