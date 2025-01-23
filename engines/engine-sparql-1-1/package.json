@@ -1,5 +1,6 @@
 {
   "name": "@traqula/engine-sparql-1-1",
+  "type": "module",
   "version": "0.0.0",
   "description": "SPARQL 1.1 parser",
   "lsd:module": true,
@@ -13,19 +14,18 @@
     "url": "https://github.com/comunica/traqula/issues"
   },
   "sideEffects": false,
-  "type": "module",
-  "main": "lib/index.js",
   "exports": {
     "import": "./lib/index.js",
     "require": "./lib/index.cjs"
   },
+  "main": "lib/index.js",
   "publishConfig": {
     "access": "public"
   },
   "files": [
+    "lib/**/*.cjs",
     "lib/**/*.d.ts",
     "lib/**/*.js",
-    "lib/**/*.cjs",
     "lib/**/*.js.map"
   ],
   "engines": {

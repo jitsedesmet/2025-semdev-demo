@@ -1,6 +1,6 @@
 import * as l from '../lexer';
+import type { IriTerm, SparqlRuleDef } from '../Sparql11types';
 import { iri } from './literals';
-import type {IriTerm, SparqlRuleDef} from '../Sparql11types';
 
 /**
  * [[13]](https://www.w3.org/TR/sparql11-query/#rDatasetClause)

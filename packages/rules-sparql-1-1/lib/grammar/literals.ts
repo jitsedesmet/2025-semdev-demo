@@ -1,7 +1,7 @@
+import { CommonIRIs, resolveIRI } from '@traqula/core';
 import type { NamedNode } from 'rdf-data-factory';
 import * as l from '../lexer';
-import { CommonIRIs, resolveIRI } from '@traqula/core';
-import type {BlankTerm, IriTerm, LiteralTerm, SparqlRuleDef} from '../Sparql11types';
+import type { BlankTerm, IriTerm, LiteralTerm, SparqlRuleDef } from '../Sparql11types';
 
 /**
  * Parses an RDF literal, in the form of {value}@{lang} or {value}^^{datatype}.
@@ -43,19 +43,19 @@ export const numericLiteral: SparqlRuleDef<'numericLiteral', LiteralTerm> = <con
  */
 export const numericLiteralUnsigned: SparqlRuleDef<'numericLiteralUnsigned', LiteralTerm> = <const> {
   name: 'numericLiteralUnsigned',
-  impl: ({ ACTION, CONSUME, OR }) => (C) => OR([
+  impl: ({ ACTION, CONSUME, OR }) => C => OR([
     { ALT: () => {
       const val = CONSUME(l.terminals.integer).image;
       return ACTION(() => C.dataFactory.literal(val, C.dataFactory.namedNode(CommonIRIs.INTEGER)));
-      } },
+    } },
     { ALT: () => {
-        const val = CONSUME(l.terminals.decimal).image;
-        return ACTION(() => C.dataFactory.literal(val, C.dataFactory.namedNode(CommonIRIs.DECIMAL)));
-      } },
+      const val = CONSUME(l.terminals.decimal).image;
+      return ACTION(() => C.dataFactory.literal(val, C.dataFactory.namedNode(CommonIRIs.DECIMAL)));
+    } },
     { ALT: () => {
-        const val = CONSUME(l.terminals.double).image;
-        return ACTION(() => C.dataFactory.literal(val, C.dataFactory.namedNode(CommonIRIs.DOUBLE)));
-      } },
+      const val = CONSUME(l.terminals.double).image;
+      return ACTION(() => C.dataFactory.literal(val, C.dataFactory.namedNode(CommonIRIs.DOUBLE)));
+    } },
   ]),
 };
 
@@ -65,19 +65,19 @@ export const numericLiteralUnsigned: SparqlRuleDef<'numericLiteralUnsigned', Lit
  */
 export const numericLiteralPositive: SparqlRuleDef<'numericLiteralPositive', LiteralTerm> = <const> {
   name: 'numericLiteralPositive',
-  impl: ({ ACTION, CONSUME, OR }) => (C) => OR([
+  impl: ({ ACTION, CONSUME, OR }) => C => OR([
     { ALT: () => {
       const val = CONSUME(l.terminals.integerPositive).image;
       return ACTION(() => C.dataFactory.literal(val, C.dataFactory.namedNode(CommonIRIs.INTEGER)));
-      } },
+    } },
     { ALT: () => {
-        const val = CONSUME(l.terminals.decimalPositive).image;
-        return ACTION(() => C.dataFactory.literal(val, C.dataFactory.namedNode(CommonIRIs.DECIMAL)));
-      }},
+      const val = CONSUME(l.terminals.decimalPositive).image;
+      return ACTION(() => C.dataFactory.literal(val, C.dataFactory.namedNode(CommonIRIs.DECIMAL)));
+    } },
     { ALT: () => {
-        const val = CONSUME(l.terminals.doublePositive).image;
-        return ACTION(() => C.dataFactory.literal(val, C.dataFactory.namedNode(CommonIRIs.DOUBLE)));
-      } },
+      const val = CONSUME(l.terminals.doublePositive).image;
+      return ACTION(() => C.dataFactory.literal(val, C.dataFactory.namedNode(CommonIRIs.DOUBLE)));
+    } },
   ]),
 };
 
@@ -87,15 +87,15 @@ export const numericLiteralPositive: SparqlRuleDef<'numericLiteralPositive', Lit
  */
 export const numericLiteralNegative: SparqlRuleDef<'numericLiteralNegative', LiteralTerm> = <const> {
   name: 'numericLiteralNegative',
-  impl: ({ ACTION, CONSUME, OR }) => (C) => OR([
+  impl: ({ ACTION, CONSUME, OR }) => C => OR([
     { ALT: () => {
       const val = CONSUME(l.terminals.integerNegative).image;
       return ACTION(() => C.dataFactory.literal(val, C.dataFactory.namedNode(CommonIRIs.INTEGER)));
-      } },
+    } },
     { ALT: () => {
-        const val = CONSUME(l.terminals.decimalNegative).image;
-        return ACTION(() => C.dataFactory.literal(val, C.dataFactory.namedNode(CommonIRIs.DECIMAL)));
-      } },
+      const val = CONSUME(l.terminals.decimalNegative).image;
+      return ACTION(() => C.dataFactory.literal(val, C.dataFactory.namedNode(CommonIRIs.DECIMAL)));
+    } },
     { ALT: () => {
       const val = CONSUME(l.terminals.doubleNegative).image;
       return ACTION(() => C.dataFactory.literal(val, C.dataFactory.namedNode(CommonIRIs.DOUBLE)));
@@ -109,15 +109,15 @@ export const numericLiteralNegative: SparqlRuleDef<'numericLiteralNegative', Lit
  */
 export const booleanLiteral: SparqlRuleDef<'booleanLiteral', LiteralTerm> = <const> {
   name: 'booleanLiteral',
-  impl: ({ ACTION, CONSUME, OR }) => (C) => OR([
+  impl: ({ ACTION, CONSUME, OR }) => C => OR([
     { ALT: () => {
-        const val = CONSUME(l.true_).image.toLowerCase()
-        return ACTION(() => C.dataFactory.literal(val, C.dataFactory.namedNode(CommonIRIs.BOOLEAN)));
-      } },
+      const val = CONSUME(l.true_).image.toLowerCase();
+      return ACTION(() => C.dataFactory.literal(val, C.dataFactory.namedNode(CommonIRIs.BOOLEAN)));
+    } },
     { ALT: () => {
-        const val = CONSUME(l.false_).image.toLowerCase()
-        return ACTION(() => C.dataFactory.literal(val, C.dataFactory.namedNode(CommonIRIs.BOOLEAN)));
-      } },
+      const val = CONSUME(l.false_).image.toLowerCase();
+      return ACTION(() => C.dataFactory.literal(val, C.dataFactory.namedNode(CommonIRIs.BOOLEAN)));
+    } },
   ]),
 };
 
@@ -154,7 +154,7 @@ export const string: SparqlRuleDef<'string', string> = <const> {
  */
 export const iri: SparqlRuleDef<'iri', IriTerm> = <const> {
   name: 'iri',
-  impl: ({ ACTION, SUBRULE, CONSUME, OR }) => (C) => OR([
+  impl: ({ ACTION, SUBRULE, CONSUME, OR }) => C => OR([
     { ALT: () => {
       const iriVal = CONSUME(l.terminals.iriRef).image.slice(1, -1);
       return ACTION(() => C.dataFactory.namedNode(resolveIRI(iriVal, C.baseIRI)));

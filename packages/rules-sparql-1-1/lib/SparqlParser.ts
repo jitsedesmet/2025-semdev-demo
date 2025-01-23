@@ -1,5 +1,5 @@
-import {DataFactory} from "rdf-data-factory";
-import {IriTerm, PropertyPath, SparqlContext} from "./Sparql11types";
+import { DataFactory } from 'rdf-data-factory';
+import type { IriTerm, PropertyPath, SparqlContext } from './Sparql11types';
 
 interface Parser<ParseRet> {
   queryOrUpdate: (input: string, context: SparqlContext, arg: undefined) => ParseRet;
@@ -17,7 +17,7 @@ function completeParseContext(context: Partial<SparqlContext>): SparqlContext {
 }
 
 export class SparqlParser<ParseRet> {
-  public constructor(private parser: Parser<ParseRet>) { }
+  public constructor(private readonly parser: Parser<ParseRet>) {}
 
   public parse(query: string, context: Partial<SparqlContext> = {}): ParseRet {
     return this.parser.queryOrUpdate(query, completeParseContext(context), undefined);

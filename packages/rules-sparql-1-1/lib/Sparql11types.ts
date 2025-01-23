@@ -1,7 +1,7 @@
 import type * as RdfJs from '@rdfjs/types';
 import type * as RDF from '@rdfjs/types';
-import type {BlankNode, DataFactory} from 'rdf-data-factory';
-import type {CommonIRIs, RuleDef} from '@traqula/core';
+import type { CommonIRIs, RuleDef } from '@traqula/core';
+import type { BlankNode, DataFactory } from 'rdf-data-factory';
 
 export type GraphTerm = IriTerm | BlankTerm | LiteralTerm;
 export type Term = GraphTerm | VariableTerm;

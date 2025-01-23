@@ -1,7 +1,7 @@
 /* eslint-disable require-unicode-regexp */
 import { LexerBuilder } from '@traqula/core';
-import { lex as l11 } from '@traqula/rules-sparql-1-1';
 import { createToken } from '@traqula/core';
+import { lex as l11 } from '@traqula/rules-sparql-1-1';
 
 export const tilde = createToken({ name: 'Tilde', pattern: '~', label: '~' });
 export const annotationOpen = createToken({ name: 'AnnotationOpen', pattern: '{|', label: `Annotation Open: {|` });
@@ -31,7 +31,7 @@ export const builtinOBJECT = createToken({ name: 'BuiltInObject', pattern: /obje
 
 export const LANG_DIR = createToken({
   name: 'LANG_DIR',
-  pattern: /@[A-Za-z]+(?:-[\dA-Za-z]+)*(?:--[A-Za-z]+)?/,
+  pattern: /@[a-z]+(?:-[\da-z]+)*(?:--[a-z]+)?/i,
   label: 'LANG_DIR',
 });
 

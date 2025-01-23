@@ -1,17 +1,18 @@
-import * as l from '../lexer';
 import { CommonIRIs } from '@traqula/core';
-import { var_, varOrTerm, verb } from './general';
-import { canCreateBlankNodes } from './literals';
-import { path } from './propertyPaths';
+import * as l from '../lexer';
 import type {
-  BgpPattern, BlankTerm,
+  BgpPattern,
+  BlankTerm,
   IGraphNode,
   IriTerm,
   ITriplesNode,
-  PropertyPath, SparqlRuleDef,
+  PropertyPath,
+  SparqlRuleDef,
   Triple,
   VariableTerm,
 } from '../Sparql11types';
+import { var_, varOrTerm, verb } from './general';
+import { path } from './propertyPaths';
 
 /**
  * [[55]](https://www.w3.org/TR/sparql11-query/#rTriplesBlock)
@@ -42,13 +43,13 @@ function triplesSameSubjectImpl<T extends string>(name: T, allowPaths: boolean):
       {
         ALT: () => {
           const subject = SUBRULE(varOrTerm, undefined);
-          return SUBRULE(allowPaths ? propertyListPathNotEmpty : propertyListNotEmpty, {subject});
+          return SUBRULE(allowPaths ? propertyListPathNotEmpty : propertyListNotEmpty, { subject });
         },
       },
       {
         ALT: () => {
           const subjectNode = SUBRULE(allowPaths ? triplesNodePath : triplesNode, undefined);
-          const restNode = SUBRULE(allowPaths ? propertyListPath : propertyList, { subject: subjectNode.node});
+          const restNode = SUBRULE(allowPaths ? propertyListPath : propertyList, { subject: subjectNode.node });
           return ACTION(() => [
             ...restNode,
             ...subjectNode.triples,
@@ -103,7 +104,7 @@ function propertyListNotEmptyImplementation<T extends string>(
             SUBRULE1(verb, undefined);
           const triples = SUBRULE1(
             allowPaths ? objectListPath : objectList,
-            ACTION(() => ({ subject: arg.subject, predicate})),
+            ACTION(() => ({ subject: arg.subject, predicate })),
           );
 
           ACTION(() => result.push(...triples));
@@ -111,8 +112,8 @@ function propertyListNotEmptyImplementation<T extends string>(
           MANY2(() => {
             CONSUME(l.symbols.semi);
             parsedSemi = true;
-          })
-        }
+          });
+        },
       });
       return result;
     },
@@ -215,12 +216,10 @@ function blankNodePropertyListImpl<T extends string>(name: T, allowPaths: boolea
       );
       CONSUME(l.symbols.RSquare);
 
-      return ACTION(() => {
-        return {
-          node: blankNode,
-          triples: propList,
-        };
-      });
+      return ACTION(() => ({
+        node: blankNode,
+        triples: propList,
+      }));
     },
   };
 }
@@ -298,7 +297,7 @@ export const collectionPath = collectionImpl('collectionPath', true);
 function graphNodeImpl<T extends string>(name: T, allowPaths: boolean): SparqlRuleDef<T, IGraphNode> {
   return {
     name,
-    impl: ({ SUBRULE, OR }) => (C) => OR<IGraphNode>([
+    impl: ({ SUBRULE, OR }) => C => OR<IGraphNode>([
       {
         ALT: () => {
           const val = SUBRULE(varOrTerm, undefined);

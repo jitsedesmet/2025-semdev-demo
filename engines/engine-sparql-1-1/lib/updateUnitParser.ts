@@ -12,7 +12,7 @@ export const updateParserBuilder = Builder.createBuilder(updateNoModifyParserBui
     gram.deleteClause,
     gram.insertClause,
     gram.usingClause,
-    gram.groupGraphPattern
+    gram.groupGraphPattern,
   )
   // This substitutes all of propertyListNotEmpty
   .merge(objectListBuilder, <const> [])

@@ -1,7 +1,7 @@
-import * as l from '../lexer';
 import { CommonIRIs, resolveIRI } from '@traqula/core';
-import { blankNode, booleanLiteral, canCreateBlankNodes, iri, numericLiteral, rdfLiteral } from './literals';
-import type {GraphTerm, Term, Triple, VerbA, IriTerm, VariableTerm, BaseQuery, SparqlRuleDef} from '../Sparql11types';
+import * as l from '../lexer';
+import type { GraphTerm, Term, Triple, VerbA, IriTerm, VariableTerm, BaseQuery, SparqlRuleDef } from '../Sparql11types';
+import { blankNode, booleanLiteral, iri, numericLiteral, rdfLiteral } from './literals';
 import { triplesSameSubject } from './tripleBlock';
 
 /**
@@ -74,7 +74,6 @@ export const prefixDecl: SparqlRuleDef<'prefixDecl', [string, string]> = <const>
   },
 };
 
-
 /**
  * [[52]](https://www.w3.org/TR/sparql11-query/#rTriplesTemplate)
  */
@@ -88,7 +87,7 @@ export const triplesTemplate: SparqlRuleDef<'triplesTemplate', Triple[]> = <cons
       GATE: () => parsedDot,
       DEF: () => {
         parsedDot = false;
-        const template = SUBRULE(triplesSameSubject, undefined)
+        const template = SUBRULE(triplesSameSubject, undefined);
         ACTION(() => {
           triples.push(...template);
         });
@@ -96,7 +95,7 @@ export const triplesTemplate: SparqlRuleDef<'triplesTemplate', Triple[]> = <cons
           CONSUME(l.symbols.dot);
           parsedDot = true;
         });
-      }
+      },
     });
 
     return triples;
@@ -129,7 +128,7 @@ export const verbA: SparqlRuleDef<'VerbA', VerbA> = <const> {
  */
 export const varOrTerm: SparqlRuleDef<'varOrTerm', Term> = <const> {
   name: 'varOrTerm',
-  impl: ({ SUBRULE, OR }) => (C) => OR<Term>([
+  impl: ({ SUBRULE, OR }) => C => OR<Term>([
     { GATE: () => C.parseMode.has('canParseVars'), ALT: () => SUBRULE(var_, undefined) },
     { ALT: () => SUBRULE(graphTerm, undefined) },
   ]),
@@ -140,7 +139,7 @@ export const varOrTerm: SparqlRuleDef<'varOrTerm', Term> = <const> {
  */
 export const varOrIri: SparqlRuleDef<'varOrIri', IriTerm | VariableTerm> = <const> {
   name: 'varOrIri',
-  impl: ({ SUBRULE, OR }) => (C) => OR<IriTerm | VariableTerm>([
+  impl: ({ SUBRULE, OR }) => C => OR<IriTerm | VariableTerm>([
     { GATE: () => C.parseMode.has('canParseVars'), ALT: () => SUBRULE(var_, undefined) },
     { ALT: () => SUBRULE(iri, undefined) },
   ]),
@@ -170,7 +169,7 @@ export const var_: SparqlRuleDef<'var', VariableTerm> = <const> {
  */
 export const graphTerm: SparqlRuleDef<'graphTerm', GraphTerm> = <const> {
   name: 'graphTerm',
-  impl: ({ ACTION, SUBRULE, CONSUME, OR }) => (C) => OR<GraphTerm>([
+  impl: ({ ACTION, SUBRULE, CONSUME, OR }) => C => OR<GraphTerm>([
     { ALT: () => SUBRULE(iri, undefined) },
     { ALT: () => SUBRULE(rdfLiteral, undefined) },
     { ALT: () => SUBRULE(numericLiteral, undefined) },

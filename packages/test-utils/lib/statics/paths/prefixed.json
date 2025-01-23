@@ -5,8 +5,8 @@
       "value": "http://example.org/a"
     },
     {
-    "termType": "NamedNode",
-    "value": "http://example.org/b"
+      "termType": "NamedNode",
+      "value": "http://example.org/b"
     }
   ],
   "pathType": "|",

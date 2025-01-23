@@ -1,8 +1,8 @@
 import * as l from '../lexer';
+import type { Expression, Grouping, Ordering, SelectQuery, SparqlRuleDef } from '../Sparql11types';
 import { builtInCall } from './builtIn';
 import { brackettedExpression, expression } from './expression';
 import { var_ } from './general';
-import type {Expression, Grouping, Ordering, SelectQuery, SparqlRuleDef} from '../Sparql11types';
 import { constraint, functionCall } from './whereClause';
 
 /**

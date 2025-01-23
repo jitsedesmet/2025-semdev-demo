@@ -1,7 +1,6 @@
 /* eslint-disable require-unicode-regexp */
 
-import { LexerBuilder } from '@traqula/core';
-import { createToken } from '@traqula/core';
+import { LexerBuilder, createToken } from '@traqula/core';
 
 export enum BuildInCalls {
   Str = 'builtInStr',

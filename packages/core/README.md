@@ -19,11 +19,11 @@ yarn add @traqula/core
 
 ## Usage
 
-Each parser contains two steps: 
+Each parser contains two steps:
 1. a lexer
 2. a grammar + abstract syntax tree generation step.
 
-Sometimes grammar definitions and abstract syntax tree generation is split into separate steps. 
+Sometimes grammar definitions and abstract syntax tree generation is split into separate steps.
 In this library, we choose to keep the two together.
 
 ### Lexer Builder
@@ -87,14 +87,14 @@ export const booleanLiteral: RuleDef<'booleanLiteral', LiteralTerm> = <const> {
 The `impl` member of `RuleDef` is a function that receives:
 1. essential functions to create a grammar rule (capitalized members),
 2. a context object that can be used by the rules,
-3. a cache object ([WeakMap](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)) that can be used to cache the creation of long lists in the parser. 
+3. a cache object ([WeakMap](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)) that can be used to cache the creation of long lists in the parser.
 
 As a warning, we advise against unpacking the context entry in the function definition itself.
 Doing so will cause the unpacked entries to be captured in the closure which will cause unwanted behaviour since the context entry can be reset between runs.
 
 The result of an `impl` call is a function called a `rule`.
 Rules can be [parameterized](https://chevrotain.io/docs/features/parameterized_rules.html), although I have not found a scenario where that is usefully.
-Personally I create a function that can be used to create multiple `RuleDef` objects.  
+Personally I create a function that can be used to create multiple `RuleDef` objects.
 The result of a rule should match the type provided in the `RuleDef` definition, and is the result of a call of `SUBRULE` with that rule.
 
 ### Patching rules
@@ -112,4 +112,4 @@ const myBuilder = Builder
 ```
 
 When `selectOrDescribe` calls what it thinks to be `selectRule`,
-it will instead call `selectRuleAlternative` since it overwrote the function `selectRule` with the same name. 
+it will instead call `selectRuleAlternative` since it overwrote the function `selectRule` with the same name.

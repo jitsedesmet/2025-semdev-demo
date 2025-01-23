@@ -1,6 +1,6 @@
+import { Wildcard } from '@traqula/core';
 import { BlankNode, DefaultGraph, NamedNode, Quad, Variable } from 'rdf-data-factory';
 import { expect } from 'vitest';
-import { Wildcard } from '@traqula/core';
 
 expect.extend({
   toEqualParsedQuery(received, expected) {

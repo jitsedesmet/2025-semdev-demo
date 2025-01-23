@@ -2,13 +2,12 @@ import type {
   AtLeastOneSepMethodOpts,
   DSLMethodOpts,
   DSLMethodOptsWithErr,
-  EmbeddedActionsParser,
   GrammarAction,
   IOrAlt,
   ManySepMethodOpts,
   OrMethodOpts,
 } from '@chevrotain/types';
-import type {ConsumeMethodOpts, IToken, TokenType} from 'chevrotain';
+import type { ConsumeMethodOpts, IToken, TokenType } from 'chevrotain';
 
 /**
  * Get the return-type of a RuleDef

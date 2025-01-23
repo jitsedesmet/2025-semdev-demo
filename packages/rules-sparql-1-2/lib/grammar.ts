@@ -6,13 +6,13 @@
  */
 
 import type { DirectionalLanguage } from '@rdfjs/types';
+import type { RuleDefReturn } from '@traqula/core';
+import { CommonIRIs } from '@traqula/core';
+import { funcExpr1, funcExpr3, gram as S11, lex as l11 } from '@traqula/rules-sparql-1-1';
+import type { SparqlRuleDef } from '@traqula/rules-sparql-1-1';
+import type * as T11 from '@traqula/rules-sparql-1-1';
 import type { NamedNode } from 'rdf-data-factory';
 import * as l12 from './lexer';
-import type { RuleDefReturn } from '@traqula/core';
-import {funcExpr1, funcExpr3, SparqlRuleDef} from '@traqula/rules-sparql-1-1';
-import { gram as S11, lex as l11 } from '@traqula/rules-sparql-1-1';
-import type * as T11 from '@traqula/rules-sparql-1-1';
-import { CommonIRIs } from '@traqula/core';
 import type {
   BaseQuadTerm,
   Expression,
@@ -51,7 +51,7 @@ export const reifiedTripleBlockPath = reifiedTripleBlockImpl('reifiedTripleBlock
 export const dataBlockValue:
 SparqlRuleDef<'dataBlockValue', RuleDefReturn<typeof S11.dataBlockValue> | BaseQuadTerm> = <const> {
   name: 'dataBlockValue',
-  impl: $ => (C) => $.OR2<RuleDefReturn<typeof S11.dataBlockValue> | BaseQuadTerm>([
+  impl: $ => C => $.OR2<RuleDefReturn<typeof S11.dataBlockValue> | BaseQuadTerm>([
     { ALT: () => S11.dataBlockValue.impl($)(C, undefined) },
     { ALT: () => $.SUBRULE(tripleTermData, undefined) },
   ]),
@@ -89,7 +89,7 @@ export const varOrReifierId: SparqlRuleDef<'varOrReifierId', T11.VariableTerm | 
 function triplesSameSubjectImpl<T extends string>(name: T, allowPaths: boolean): SparqlRuleDef<T, Triple[]> {
   return <const> {
     name,
-    impl: $ => (C) => $.OR2([
+    impl: $ => C => $.OR2([
       { ALT: () => allowPaths ? S11.triplesSameSubjectPath.impl($)(C, undefined) : S11.triplesSameSubject.impl($)(C, undefined) },
       { ALT: () => $.SUBRULE(allowPaths ? reifiedTripleBlockPath : reifiedTripleBlock, undefined) },
     ]),
@@ -117,7 +117,7 @@ function objectImpl<T extends string>(name: T, allowPaths: boolean): SparqlRuleD
       // <annotationNode, reifies, parsedSubjectAndObject>
 
       return ACTION(() => {
-        const {subject, predicate} = arg;
+        const { subject, predicate } = arg;
         if ('type' in predicate && predicate.type === 'path' && annotationVal.length > 0) {
           throw new Error('Note 17 violation');
         }
@@ -182,19 +182,19 @@ function annotationImpl<T extends string>(name: T, allowPaths: boolean): SparqlR
             const block = SUBRULE(
               allowPaths ? annotationBlockPath : annotationBlock,
               { subject: ACTION(() => {
-                  if (currentReifier === undefined && !C.parseMode.has('canCreateBlankNodes')) {
-                    throw new Error('Cannot create blanknodes in current parse mode');
-                  }
-                  node = currentReifier ?? C.dataFactory.blankNode();
-                  return node;
-                }) },
+                if (currentReifier === undefined && !C.parseMode.has('canCreateBlankNodes')) {
+                  throw new Error('Cannot create blanknodes in current parse mode');
+                }
+                node = currentReifier ?? C.dataFactory.blankNode();
+                return node;
+              }) },
             );
             ACTION(() => {
               annotations.push({
                 node,
                 triples: block,
               });
-              currentReifier = undefined
+              currentReifier = undefined;
             });
           } },
         ]);
@@ -242,7 +242,7 @@ export const annotationBlock = annotationBlockImpl('annotationBlock', false);
  */
 export const graphNode: SparqlRuleDef<'graphNode', IGraphNode> = <const> {
   name: 'graphNode',
-  impl: $ => (C) => $.OR2 <IGraphNode>([
+  impl: $ => C => $.OR2 <IGraphNode>([
     { ALT: () => S11.graphNode.impl($)(C, undefined) },
     { ALT: () => $.SUBRULE(reifiedTriple, undefined) },
   ]),
@@ -253,7 +253,7 @@ export const graphNode: SparqlRuleDef<'graphNode', IGraphNode> = <const> {
  */
 export const graphNodePath: SparqlRuleDef<'graphNodePath', IGraphNode> = <const> {
   name: 'graphNodePath',
-  impl: $ => (C) => $.OR2<IGraphNode>([
+  impl: $ => C => $.OR2<IGraphNode>([
     { ALT: () => S11.graphNodePath.impl($)(C, undefined) },
     { ALT: () => $.SUBRULE(reifiedTriple, undefined) },
   ]),
@@ -265,7 +265,7 @@ export const graphNodePath: SparqlRuleDef<'graphNodePath', IGraphNode> = <const>
  */
 export const varOrTerm: SparqlRuleDef<'varOrTerm', Term> = <const> {
   name: 'varOrTerm',
-  impl: ({ ACTION, SUBRULE, OR, CONSUME }) => (C) => OR<Term>([
+  impl: ({ ACTION, SUBRULE, OR, CONSUME }) => C => OR<Term>([
     { ALT: () => SUBRULE(S11.var_, undefined) },
     { ALT: () => SUBRULE(S11.iri, undefined) },
     { ALT: () => SUBRULE(rdfLiteral, undefined) },
@@ -337,7 +337,7 @@ export const reifiedTripleObject:
 SparqlRuleDef<'reifiedTripleObject', RuleDefReturn<typeof reifiedTripleSubject>> =
   <const> {
     name: 'reifiedTripleObject',
-    impl: $ => (C) => $.OR2([
+    impl: $ => C => $.OR2([
       { ALT: () => reifiedTripleSubject.impl($)(C, undefined) },
       { ALT: () => ({ node: $.SUBRULE(tripleTerm, undefined), triples: []}) },
     ]),
@@ -380,7 +380,7 @@ SparqlRuleDef<'tripleTermSubject', T11.VariableTerm | T11.IriTerm | T11.LiteralT
 export const tripleTermObject:
 SparqlRuleDef<'tripleTermObject', RuleDefReturn<typeof tripleTermSubject> | BaseQuadTerm> = <const> {
   name: 'tripleTermObject',
-  impl: $ => (C) => $.OR2<T11.VariableTerm | T11.IriTerm | T11.LiteralTerm | T11.BlankTerm | BaseQuadTerm>([
+  impl: $ => C => $.OR2<T11.VariableTerm | T11.IriTerm | T11.LiteralTerm | T11.BlankTerm | BaseQuadTerm>([
     { ALT: () => tripleTermSubject.impl($)(C, undefined) },
     { ALT: () => $.SUBRULE(tripleTerm, undefined) },
   ]),
@@ -427,7 +427,7 @@ export const tripleTermDataSubject: SparqlRuleDef<'tripleTermDataSubject', T11.I
 export const tripleTermDataObject:
 SparqlRuleDef<'tripleTermDataObject', RuleDefReturn<typeof tripleTermDataSubject> | BaseQuadTerm> = <const> {
   name: 'tripleTermDataObject',
-  impl: $ => (C) => $.OR2<T11.IriTerm | T11.LiteralTerm | BaseQuadTerm>([
+  impl: $ => C => $.OR2<T11.IriTerm | T11.LiteralTerm | BaseQuadTerm>([
     { ALT: () => tripleTermDataSubject.impl($)(C, undefined) },
     { ALT: () => $.SUBRULE(tripleTermData, undefined) },
   ]),
@@ -439,7 +439,7 @@ SparqlRuleDef<'tripleTermDataObject', RuleDefReturn<typeof tripleTermDataSubject
  */
 export const primaryExpression: SparqlRuleDef<'primaryExpression', Expression> = <const> {
   name: 'primaryExpression',
-  impl: $ => (C) => $.OR2<Expression>([
+  impl: $ => C => $.OR2<Expression>([
     { ALT: () => S11.primaryExpression.impl($)(C, undefined) },
     { ALT: () => $.SUBRULE(exprTripleTerm, undefined) },
   ]),
@@ -483,7 +483,7 @@ SparqlRuleDef<'exprTripleTermSubject', T11.IriTerm | T11.VariableTerm | T11.Lite
 export const exprTripleTermObject:
 SparqlRuleDef<'exprTripleTermObject', RuleDefReturn<typeof exprTripleTermSubject> | BaseQuadTerm> = <const> {
   name: 'exprTripleTermObject',
-  impl: $ => (C) =>
+  impl: $ => C =>
     $.OR2<T11.IriTerm | T11.VariableTerm | T11.LiteralTerm | BaseQuadTerm>([
       { ALT: () => exprTripleTermSubject.impl($)(C, undefined) },
       { ALT: () => $.SUBRULE(exprTripleTerm, undefined) },
@@ -506,7 +506,7 @@ export const builtinObject = funcExpr1(l12.builtinOBJECT);
  */
 export const builtInCall: typeof S11.builtInCall = <const> {
   name: 'builtInCall',
-  impl: $ => (C) => $.OR2<T11.Expression>([
+  impl: $ => C => $.OR2<T11.Expression>([
     { ALT: () => S11.builtInCall.impl($)(C, undefined) },
     { ALT: () => $.SUBRULE(builtinLangDir, undefined) },
     { ALT: () => $.SUBRULE(builtinLangStrDir, undefined) },

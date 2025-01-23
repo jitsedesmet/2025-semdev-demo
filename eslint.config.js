@@ -26,6 +26,7 @@ export default config([
         'error',
         { checkArguments: false },
       ],
+      'test/consistent-test-it': 'off',
 
       // TODO: check if these can be enabled
       'ts/naming-convention': 'off',
@@ -74,7 +75,7 @@ export default config([
   //   },
   // },
   // {
-    // Spec test engines
+  // Spec test engines
   //   files: [
   //     '**/spec/*.js',
   //   ],

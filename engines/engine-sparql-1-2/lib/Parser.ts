@@ -4,6 +4,7 @@ import {gram as S12, lex as l12} from '@traqula/rules-sparql-1-2';
 import {sparql11ParserBuilder} from '@traqula/engine-sparql-1-1';
 
 export const sparql12ParserBuilder = Builder.createBuilder(sparql11ParserBuilder)
+  .addRuleRedundant(g11.object)
   .addMany(
     S12.reifiedTripleBlock,
     S12.reifiedTripleBlockPath,

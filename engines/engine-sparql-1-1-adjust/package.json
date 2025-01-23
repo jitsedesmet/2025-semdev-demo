@@ -18,9 +18,9 @@
     "access": "public"
   },
   "files": [
+    "lib/**/*.cjs",
     "lib/**/*.d.ts",
     "lib/**/*.js",
-    "lib/**/*.cjs",
     "lib/**/*.js.map"
   ],
   "engines": {

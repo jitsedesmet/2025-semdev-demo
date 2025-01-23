@@ -1,8 +1,8 @@
 import type { TokenType } from 'chevrotain';
 import * as l from '../lexer';
+import type { IriTerm, IriTermOrElt, NegatedPropertySet, PropertyPath, SparqlRuleDef } from '../Sparql11types';
 import { verbA } from './general';
 import { iri } from './literals';
-import type {IriTerm, IriTermOrElt, NegatedPropertySet, PropertyPath, SparqlRuleDef} from '../Sparql11types';
 
 /**
  * [[88]](https://www.w3.org/TR/sparql11-query/#rPath)

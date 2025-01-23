@@ -1,11 +1,10 @@
+import { Wildcard, unCapitalize } from '@traqula/core';
 import type { TokenType } from 'chevrotain';
-import * as l from './lexer';
-import { Wildcard } from '@traqula/core';
 import { expression, expressionList } from './grammar/expression';
 import { var_ } from './grammar/general';
-import type {Expression, Pattern, SparqlRuleDef, VariableTerm} from './Sparql11types';
 import { groupGraphPattern } from './grammar/whereClause';
-import { unCapitalize } from '@traqula/core';
+import * as l from './lexer';
+import type { Expression, Pattern, SparqlRuleDef, VariableTerm } from './Sparql11types';
 import { deGroupSingle } from './utils';
 
 export interface IExpressionFunctionX<U extends (Expression | Pattern)[]> {
@@ -188,9 +187,9 @@ RuleDefExpressionFunctionX<Uncapitalize<T>, [Expression, Expression] | [Expressi
 
 export function funcExpr3or4<T extends string>(func: TokenType & { name: T }):
 RuleDefExpressionFunctionX<
-    Uncapitalize<T>,
+  Uncapitalize<T>,
     [Expression, Expression, Expression] | [Expression, Expression, Expression, Expression]
-  > {
+> {
   return {
     name: unCapitalize(func.name),
     impl: ({ CONSUME, SUBRULE1, SUBRULE2, SUBRULE3, CONSUME1, OPTION, CONSUME2, SUBRULE4, CONSUME3 }) => () => {
@@ -217,9 +216,9 @@ RuleDefExpressionFunctionX<
 
 export function funcGroupGraphPattern<T extends string>(func: TokenType & { name: T }):
 RuleDefExpressionFunctionX<
-    Uncapitalize<T>,
-    Pattern[]
-  > {
+  Uncapitalize<T>,
+  Pattern[]
+> {
   return {
     name: unCapitalize(func.name),
     impl: ({ ACTION, SUBRULE, CONSUME }) => () => {

@@ -1,8 +1,8 @@
 {
-  "private": true,
-  "packageManager": "yarn@1.22.22",
   "name": "traqula",
   "type": "module",
+  "private": true,
+  "packageManager": "yarn@1.22.22",
   "repository": "git+https://github.com/comunica/traqula/",
   "workspaces": [
     "engines/*",

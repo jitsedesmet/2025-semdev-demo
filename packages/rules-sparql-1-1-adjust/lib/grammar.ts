@@ -1,5 +1,5 @@
-import type {Expression, SparqlRuleDef} from "@traqula/rules-sparql-1-1";
-import {funcExpr2, gram} from '@traqula/rules-sparql-1-1';
+import type { Expression, SparqlRuleDef } from '@traqula/rules-sparql-1-1';
+import { funcExpr2, gram } from '@traqula/rules-sparql-1-1';
 import { BuiltInAdjust } from './lexer';
 
 export const builtInAdjust = funcExpr2(BuiltInAdjust);

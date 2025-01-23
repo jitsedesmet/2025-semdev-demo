@@ -1,9 +1,7 @@
-import type {TokenType} from 'chevrotain';
+import type { RuleDefReturn } from '@traqula/core';
+import { unCapitalize } from '@traqula/core';
+import type { TokenType } from 'chevrotain';
 import * as l from '../../lexer';
-import type {RuleDefReturn} from '@traqula/core';
-import {unCapitalize} from '@traqula/core';
-import {prologue, triplesTemplate, varOrIri} from '../general';
-import {canCreateBlankNodes, iri} from '../literals';
 import type {
   ClearDropOperation,
   GraphOrDefault,
@@ -17,7 +15,9 @@ import type {
   Update,
   UpdateOperation,
 } from '../../Sparql11types';
-import {groupGraphPattern} from '../whereClause';
+import { prologue, triplesTemplate, varOrIri } from '../general';
+import { iri } from '../literals';
+import { groupGraphPattern } from '../whereClause';
 
 /**
  * [[3]](https://www.w3.org/TR/sparql11-query/#rUpdateUnit)

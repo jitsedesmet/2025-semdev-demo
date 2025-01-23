@@ -1,10 +1,6 @@
-import * as l from '../../lexer';
 import { Wildcard } from '@traqula/core';
 import type { ImplArgs } from '@traqula/core';
-import { datasetClause, type IDatasetClause } from '../dataSetClause';
-import { expression } from '../expression';
-import { prologue, triplesTemplate, var_, varOrIri } from '../general';
-import { solutionModifier } from '../solutionModifier';
+import * as l from '../../lexer';
 import type {
   AggregateExpression,
   AskQuery,
@@ -15,13 +11,18 @@ import type {
   IriTerm,
   Pattern,
   Query,
-  SelectQuery, SparqlRuleDef,
+  SelectQuery,
+  SparqlRuleDef,
   Triple,
   ValuePatternRow,
   Variable,
   VariableExpression,
   VariableTerm,
 } from '../../Sparql11types';
+import { datasetClause, type IDatasetClause } from '../dataSetClause';
+import { expression } from '../expression';
+import { prologue, triplesTemplate, var_, varOrIri } from '../general';
+import { solutionModifier } from '../solutionModifier';
 import { triplesSameSubject } from '../tripleBlock';
 import { dataBlock, whereClause } from '../whereClause';
 
@@ -182,7 +183,7 @@ export const selectQuery: SparqlRuleDef<'selectQuery', Omit<SelectQuery, Handled
         }
       }
       // Check if id of each AS-selected column is not yet bound by subquery
-      const subqueries = <Omit<SelectQuery, "prefixes">[]> where.filter(pattern => pattern.type === 'query');
+      const subqueries = <Omit<SelectQuery, 'prefixes'>[]> where.filter(pattern => pattern.type === 'query');
       if (subqueries.length > 0) {
         const selectedVarIds: string[] = [];
         for (const selectedVar of variables) {

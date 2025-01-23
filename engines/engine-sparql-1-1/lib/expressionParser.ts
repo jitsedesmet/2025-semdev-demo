@@ -1,6 +1,5 @@
-import {Builder, type RuleNamesFromList} from '@traqula/core';
-import {gram, SparqlContext} from '@traqula/rules-sparql-1-1';
-
+import { Builder } from '@traqula/core';
+import { gram } from '@traqula/rules-sparql-1-1';
 
 const rulesNoBuiltIn = <const> [
   gram.expression,

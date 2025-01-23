@@ -1,10 +1,10 @@
-import {describe, it} from "vitest";
-import type {TestFunction} from "vitest";
-import {DataFactory} from "rdf-data-factory";
-import {BaseQuad} from "@rdfjs/types";
+import type { BaseQuad } from '@rdfjs/types';
+import type { DataFactory } from 'rdf-data-factory';
+import { describe, it } from 'vitest';
+import type { TestFunction } from 'vitest';
 
 interface Parser {
-  parse: (query: string, context?: {prefixes?: Record<string, string>, baseIRI?: string}) => unknown;
+  parse: (query: string, context?: { prefixes?: Record<string, string>; baseIRI?: string }) => unknown;
 }
 
 export function importSparql11NoteTests(parser: Parser, dataFactory: DataFactory<BaseQuad>) {
@@ -21,7 +21,6 @@ export function importSparql11NoteTests(parser: Parser, dataFactory: DataFactory
       // Expect(error.message).toContain(errorMsg);
     };
   }
-
 
   it('should throw an error on an invalid query', testErroneousQuery('invalid', 'Parse error on line 1'));
 
@@ -125,14 +124,14 @@ export function importSparql11NoteTests(parser: Parser, dataFactory: DataFactory
   describe('with pre-defined base IRI', () => {
     const context = { baseIRI: 'http://ex.org/' };
 
-    it('contains the base', ({expect}) => {
+    it('contains the base', ({ expect }) => {
       const query = 'SELECT * { ?s ?p ?o }';
       expect(parser.parse(query, context)).toMatchObject({
-        base: 'http://ex.org/'
+        base: 'http://ex.org/',
       });
-    })
+    });
 
-    it('using prefixed as relative iri', ({expect}) => {
+    it('using prefixed as relative iri', ({ expect }) => {
       const context = { baseIRI: 'http://ex.org/apl' };
       const query = `
 CONSTRUCT
@@ -143,11 +142,10 @@ WHERE { ?s ?p ?o }
         from: {
           default: [
             dataFactory.namedNode('http://ex.org/data.ttl'),
-          ]
-        }
-      })
-
-    })
+          ],
+        },
+      });
+    });
 
     it('should use the base IRI', ({ expect }) => {
       const query = 'SELECT * { <> <#b> "" }';

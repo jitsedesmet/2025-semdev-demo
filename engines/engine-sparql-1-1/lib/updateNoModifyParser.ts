@@ -54,4 +54,3 @@ export const updateNoModifyParserBuilder = Builder
   .merge(triplesTemplateParserBuilder, <const> [])
   .addRule(gram.quadPattern)
   .addRule(gram.quadsNotTriples);
-

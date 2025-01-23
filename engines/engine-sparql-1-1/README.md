@@ -2,7 +2,6 @@
 
 TRAQULA Sparql 1.1 is a [SPARQL 1.1](https://www.w3.org/TR/sparql11-query/#grammar) query parser for TypeScript.
 
-
 ## Installation
 
 ```bash
@@ -20,8 +19,7 @@ yarn add @traqula/engine-sparql-1-1
 Either through ESM import:
 
 ```javascript
-import {Parser} from '@traqula/engine-sparql-1-1';
-```
+``
 
 _or_ CJS require:
 
@@ -39,7 +37,7 @@ const abstractSyntaxTree = parser.parse('SELECT * { ?s ?p ?o }');
 ```
 
 The package also contains multiple parserBuilders.
-These builders can be used either to consume to a parser, 
+These builders can be used either to consume to a parser,
 or to usage as a starting point for your own grammar.
 
 ### Consuming parserBuilder to parser
@@ -66,7 +64,7 @@ const parser: {
 ### Constructing a new grammar from an existing one
 
 The builders can also be used to construct new parsers.
-As an example the `triplesBlockParserBuilder` is created by merging the `objectListBuilder` with some new rules. 
+As an example the `triplesBlockParserBuilder` is created by merging the `objectListBuilder` with some new rules.
 
 ## Configuration
 
@@ -76,4 +74,3 @@ Optionally, the following parameters can be set in the `Parser` constructor:
 * `baseIRI`:  An initial default base IRI. _(Default: none)_
 * `prefixes`: An initial map of prefixes
 * `skipValidation`: Can be used to disable the validation that used variables in a select clause are in scope.
-

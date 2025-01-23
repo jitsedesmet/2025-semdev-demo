@@ -6,9 +6,9 @@
       "es2021",
       "dom"
     ],
-    "types": ["vitest/globals"],
     "module": "ES2020",
     "moduleResolution": "Bundler",
+    "types": ["vitest/globals"],
 
     "strict": true,
     "strictFunctionTypes": true,
@@ -28,7 +28,7 @@
     "engines/*/spec/**/*.ts",
     "engines/*/test/**/*.ts",
     "packages/*/lib/**/*.ts",
-    "packages/*/test/**/*.ts",
+    "packages/*/test/**/*.ts"
   ],
   "exclude": [
     "node_modules"

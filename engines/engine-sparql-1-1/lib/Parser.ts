@@ -1,8 +1,8 @@
-import {Builder} from '@traqula/core';
-import type {Query, SparqlQuery, Update,} from '@traqula/rules-sparql-1-1';
-import {gram, lex as l, SparqlParser, SparqlRuleDef} from '@traqula/rules-sparql-1-1';
-import {queryUnitParserBuilder} from './queryUnitParser';
-import {updateParserBuilder} from './updateUnitParser';
+import { Builder } from '@traqula/core';
+import type { Query, SparqlQuery, Update, SparqlRuleDef } from '@traqula/rules-sparql-1-1';
+import { gram, lex as l, SparqlParser } from '@traqula/rules-sparql-1-1';
+import { queryUnitParserBuilder } from './queryUnitParser';
+import { updateParserBuilder } from './updateUnitParser';
 
 // Create merge of
 // ```
@@ -43,7 +43,7 @@ const queryOrUpdate: SparqlRuleDef<'queryOrUpdate', Query | Update | Pick<Update
           ...prologueValues,
           type: 'update',
           updates: [],
-        }
+        };
         MANY({
           GATE: () => parsedPrologue,
           DEF: () => {
@@ -59,13 +59,13 @@ const queryOrUpdate: SparqlRuleDef<'queryOrUpdate', Query | Update | Pick<Update
               ACTION(() => {
                 updateResult.base = prologueValues.base ?? updateResult.base;
                 updateResult.prefixes = prologueValues.prefixes ?
-                  { ...updateResult.prefixes, ...prologueValues.prefixes } :
+                    { ...updateResult.prefixes, ...prologueValues.prefixes } :
                   updateResult.prefixes;
               });
 
               parsedPrologue = true;
-            })
-          }
+            });
+          },
         });
 
         ACTION(() => {
@@ -75,7 +75,7 @@ const queryOrUpdate: SparqlRuleDef<'queryOrUpdate', Query | Update | Pick<Update
               if ('updateType' in updateOperation && updateOperation.updateType === 'insert') {
                 for (const quad of updateOperation.insert) {
                   for (const triple of quad.triples) {
-                    for (const position of <const> ['subject', 'object']) {
+                    for (const position of <const> [ 'subject', 'object' ]) {
                       if (triple[position].termType === 'BlankNode') {
                         callback(triple[position].value);
                       }
@@ -83,8 +83,8 @@ const queryOrUpdate: SparqlRuleDef<'queryOrUpdate', Query | Update | Pick<Update
                   }
                 }
               }
-            }
-            iterBlankNodes(label => {
+            };
+            iterBlankNodes((label) => {
               if (blankLabelsUsedInInsertData.has(label)) {
                 throw new Error('Detected reuse blank node across different INSERT DATA clauses');
               }
@@ -107,10 +107,10 @@ export const sparql11ParserBuilder = Builder.createBuilder(queryUnitParserBuilde
   .addRule(queryOrUpdate);
 
 export class Parser extends SparqlParser<SparqlQuery> {
-    public constructor() {
-      const parser = sparql11ParserBuilder.consumeToParser({
-        tokenVocabulary: l.sparql11Tokens.build(),
-      });
-      super(parser);
-    }
+  public constructor() {
+    const parser = sparql11ParserBuilder.consumeToParser({
+      tokenVocabulary: l.sparql11Tokens.build(),
+    });
+    super(parser);
+  }
 }

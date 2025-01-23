@@ -1,10 +1,4 @@
 import * as l from '../lexer';
-import { deGroupSingle, isVariable } from '../utils';
-import { builtInCall } from './builtIn';
-import { argList, brackettedExpression, expression } from './expression';
-import { var_, varOrIri } from './general';
-import { booleanLiteral, iri, numericLiteral, rdfLiteral } from './literals';
-import { subSelect } from './queryUnit/queryUnit';
 import type {
   BindPattern,
   BlankTerm,
@@ -19,12 +13,19 @@ import type {
   MinusPattern,
   OptionalPattern,
   Pattern,
-  ServicePattern, SparqlRuleDef,
+  ServicePattern,
+  SparqlRuleDef,
   UnionPattern,
   ValuePatternRow,
   ValuesPattern,
   VariableTerm,
 } from '../Sparql11types';
+import { deGroupSingle, isVariable } from '../utils';
+import { builtInCall } from './builtIn';
+import { argList, brackettedExpression, expression } from './expression';
+import { var_, varOrIri } from './general';
+import { booleanLiteral, iri, numericLiteral, rdfLiteral } from './literals';
+import { subSelect } from './queryUnit/queryUnit';
 import { triplesBlock } from './tripleBlock';
 
 /**

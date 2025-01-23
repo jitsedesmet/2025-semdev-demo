@@ -1,7 +1,8 @@
-import {Builder, LexerBuilder} from '@traqula/core';
-import {gram, lex} from '@traqula/rules-sparql-1-1-adjust';
-import {Expression, gram as g11, lex as l11, SparqlParser, SparqlQuery} from '@traqula/rules-sparql-1-1';
-import {sparql11ParserBuilder} from '@traqula/engine-sparql-1-1';
+import { Builder, LexerBuilder } from '@traqula/core';
+import { sparql11ParserBuilder } from '@traqula/engine-sparql-1-1';
+import type { Expression, gram as g11, SparqlQuery } from '@traqula/rules-sparql-1-1';
+import { lex as l11, SparqlParser } from '@traqula/rules-sparql-1-1';
+import { gram, lex } from '@traqula/rules-sparql-1-1-adjust';
 
 const builtInPatch: typeof g11.builtInCall = {
   name: 'builtInCall',
@@ -15,7 +16,6 @@ export const adjustBuilder = Builder.createBuilder(sparql11ParserBuilder)
   .addRule(gram.builtInAdjust)
   .addRule(gram.existingBuildInCall)
   .patchRule(builtInPatch);
-
 
 export class Parser extends SparqlParser<SparqlQuery> {
   public constructor() {
