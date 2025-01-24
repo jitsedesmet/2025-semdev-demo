@@ -375,27 +375,28 @@ export const minusGraphPattern: SparqlRuleDef<'minusGraphPattern', MinusPattern>
 /**
  * [[67]](https://www.w3.org/TR/sparql11-query/#rGroupOrUnionGraphPattern)
  */
-export const groupOrUnionGraphPattern: SparqlRuleDef<'groupOrUnionGraphPattern', GroupPattern | UnionPattern> = <const> {
-  name: 'groupOrUnionGraphPattern',
-  impl: ({ AT_LEAST_ONE_SEP, SUBRULE }) => () => {
-    const groups: GroupPattern[] = [];
+export const groupOrUnionGraphPattern: SparqlRuleDef<'groupOrUnionGraphPattern', GroupPattern | UnionPattern> =
+  <const> {
+    name: 'groupOrUnionGraphPattern',
+    impl: ({ AT_LEAST_ONE_SEP, SUBRULE }) => () => {
+      const groups: GroupPattern[] = [];
 
-    AT_LEAST_ONE_SEP({
-      DEF: () => {
-        const group = SUBRULE(groupGraphPattern, undefined);
-        groups.push(group);
-      },
-      SEP: l.union,
-    });
+      AT_LEAST_ONE_SEP({
+        DEF: () => {
+          const group = SUBRULE(groupGraphPattern, undefined);
+          groups.push(group);
+        },
+        SEP: l.union,
+      });
 
-    return groups.length === 1 ?
-      groups[0] :
-        {
-          type: 'union',
-          patterns: groups.map(group => deGroupSingle(group)),
-        };
-  },
-};
+      return groups.length === 1 ?
+        groups[0] :
+          {
+            type: 'union',
+            patterns: groups.map(group => deGroupSingle(group)),
+          };
+    },
+  };
 
 /**
  * [[68]](https://www.w3.org/TR/sparql11-query/#rFilter)

@@ -39,8 +39,9 @@ export class Builder<Context, Names extends string, RuleDefs extends RuleDefMap<
     Context = Rules[0] extends RuleDef<infer context> ? context : never,
     Names extends string = RuleNamesFromList<Rules>,
     RuleDefs extends RuleDefMap<Names> = RuleListToObject<Rules>,
-  >(start: Rules | Builder<Context, Names, RuleDefs>,
-): Builder<Context, Names, RuleDefs> {
+  >(
+    start: Rules | Builder<Context, Names, RuleDefs>,
+  ): Builder<Context, Names, RuleDefs> {
     if (start instanceof Builder) {
       return new Builder({ ...start.rules });
     }
@@ -57,8 +58,12 @@ export class Builder<Context, Names extends string, RuleDefs extends RuleDefMap<
    * Change the implementation of an existing grammar rule.
    */
   public patchRule<U extends Names, RET, ARGS>(patch: RuleDef<Context, U, RET, ARGS>):
-  Builder<Context, Names, {[Key in Names]: Key extends U ? RuleDef<Context, Key, RET, ARGS> : (RuleDefs[Key] extends RuleDef<Context, Key> ? RuleDefs[Key] : never) }> {
-    const self = <Builder<Context, Names, {[Key in Names]: Key extends U ? RuleDef<Context, Key, RET, ARGS> : (RuleDefs[Key] extends RuleDef<Context, Key> ? RuleDefs[Key] : never) }>>
+  Builder<Context, Names, {[Key in Names]: Key extends U ?
+    RuleDef<Context, Key, RET, ARGS> :
+      (RuleDefs[Key] extends RuleDef<Context, Key> ? RuleDefs[Key] : never)
+  } > {
+    const self = <Builder<Context, Names, {[Key in Names]: Key extends U ?
+      RuleDef<Context, Key, RET, ARGS> : (RuleDefs[Key] extends RuleDef<Context, Key> ? RuleDefs[Key] : never) }>>
       <unknown> this;
     self.rules[patch.name] = <any> patch;
     return self;
@@ -68,8 +73,13 @@ export class Builder<Context, Names extends string, RuleDefs extends RuleDefMap<
    * Add a rule to the grammar. If the rule already exists, but the implementation differs, an error will be thrown.
    */
   public addRuleRedundant<U extends string, RET, ARGS>(rule: RuleDef<Context, U, RET, ARGS>):
-  Builder<Context, Names | U, {[K in Names | U]: K extends U ? RuleDef<Context, K, RET, ARGS> : (K extends Names ? (RuleDefs[K] extends RuleDef<Context, K> ? RuleDefs[K] : never) : never) }> {
-    const self = <Builder<Context, Names | U, {[K in Names | U]: K extends U ? RuleDef<Context, K, RET, ARGS> : (K extends Names ? (RuleDefs[K] extends RuleDef<Context, K> ? RuleDefs[K] : never) : never) }>>
+  Builder<Context, Names | U, {[K in Names | U]: K extends U ?
+    RuleDef<Context, K, RET, ARGS> :
+      (K extends Names ? (RuleDefs[K] extends RuleDef<Context, K> ? RuleDefs[K] : never) : never)
+  }> {
+    const self = <Builder<Context, Names | U, {[K in Names | U]: K extends U ?
+      RuleDef<Context, K, RET, ARGS> :
+        (K extends Names ? (RuleDefs[K] extends RuleDef<Context, K> ? RuleDefs[K] : never) : never) }>>
       <unknown> this;
     const rules = <Record<string, RuleDef<Context>>> self.rules;
     if (rules[rule.name] !== undefined && rules[rule.name] !== rule) {
@@ -84,7 +94,9 @@ export class Builder<Context, Names extends string, RuleDefs extends RuleDefMap<
    */
   public addRule<U extends string, RET, ARGS>(
     rule: CheckOverlap<U, Names, RuleDef<Context, U, RET, ARGS>>,
-  ): Builder<Context, Names | U, {[K in Names | U]: K extends U ? RuleDef<Context, K, RET, ARGS> : (K extends Names ? (RuleDefs[K] extends RuleDef<Context, K> ? RuleDefs[K] : never) : never) }> {
+  ): Builder<Context, Names | U, {[K in Names | U]: K extends U ?
+    RuleDef<Context, K, RET, ARGS> :
+      (K extends Names ? (RuleDefs[K] extends RuleDef<Context, K> ? RuleDefs[K] : never) : never) }> {
     return this.addRuleRedundant(rule);
   }
 
@@ -109,20 +121,28 @@ export class Builder<Context, Names extends string, RuleDefs extends RuleDefMap<
    * Delete a grammar rule by its name.
    */
   public deleteRule<U extends Names>(ruleName: U):
-  Builder<Context, Exclude<Names, U>, {[K in Exclude<Names, U>]: RuleDefs[K] extends RuleDef<Context, K> ? RuleDefs[K] : never }> {
+  Builder<Context, Exclude<Names, U>, {[K in Exclude<Names, U>]:
+    RuleDefs[K] extends RuleDef<Context, K> ? RuleDefs[K] : never }> {
     delete this.rules[ruleName];
-    return <Builder<Context, Exclude<Names, U>, {[K in Exclude<Names, U>]: RuleDefs[K] extends RuleDef<Context, K> ? RuleDefs[K] : never }>>
+    return <Builder<Context, Exclude<Names, U>, {[K in Exclude<Names, U>]:
+      RuleDefs[K] extends RuleDef<Context, K> ? RuleDefs[K] : never }>>
       <unknown> this;
   }
 
   /**
    * Merge this grammar builder with another.
    * It is best to merge the bigger grammar with the smaller one.
-   * If the two builders both have a grammar rule with the same name, no error will be thrown case they map to the same ruledef object.
+   * If the two builders both have a grammar rule with the same name,
+   * no error will be thrown case they map to the same ruledef object.
    * If they map to a different object, an error will be thrown.
-   * To fix this problem, the overridingRules array should contain a rule with the same conflicting name, this rule implementation will be used.
+   * To fix this problem, the overridingRules array should contain a rule with the same conflicting name,
+   * this rule implementation will be used.
    */
-  public merge<OtherNames extends string, OtherRules extends RuleDefMap<OtherNames>, OW extends readonly RuleDef<Context>[]>(
+  public merge<
+    OtherNames extends string,
+    OtherRules extends RuleDefMap<OtherNames>,
+    OW extends readonly RuleDef<Context>[],
+  >(
     builder: Builder<Context, OtherNames, OtherRules>,
     overridingRules: OW,
   ):
@@ -202,7 +222,7 @@ export class Builder<Context, Names extends string, RuleDefs extends RuleDefMap<
           },
         );
         // Test for invalid unicode surrogate pairs
-        if (/[\uD800-\uDBFF]([^\uDC00-\uDFFF]|$)/u.test(input)) {
+        if (/[\uD800-\uDBFF](?:[^\uDC00-\uDFFF]|$)/u.test(input)) {
           throw new Error(`Invalid unicode codepoint of surrogate pair without corresponding codepoint`);
         }
 
@@ -226,7 +246,8 @@ ${parser.errors.map(x => `${x.token.startLine}: ${x.message}`).join('\n')}`);
   public consume({ tokenVocabulary, config = {}}: {
     tokenVocabulary: TokenVocabulary;
     config?: IParserConfig;
-  }): EmbeddedActionsParser & ParseMethodsFromRules<Context, Names, RuleDefs> & { setContext: (context: Context) => void } {
+  }): EmbeddedActionsParser & ParseMethodsFromRules<Context, Names, RuleDefs> &
+    { setContext: (context: Context) => void } {
     const rules = this.rules;
     class MyParser extends EmbeddedActionsParser {
       private context: Context | undefined;
@@ -263,7 +284,10 @@ ${parser.errors.map(x => `${x.token.startLine}: ${x.message}`).join('\n')}`);
       }
 
       private getSelfRef(): CstDef {
-        const subRuleImpl = (chevrotainSubrule: typeof this.SUBRULE): CstDef['SUBRULE'] => ((cstDef, arg) => chevrotainSubrule(<any> this[<keyof (typeof this)> cstDef.name], <any> { ARGS: [ this.context, arg ]})) satisfies CstDef['SUBRULE'];
+        const subRuleImpl = (chevrotainSubrule: typeof this.SUBRULE): CstDef['SUBRULE'] =>
+          ((cstDef, arg) =>
+            chevrotainSubrule(<any> this[<keyof (typeof this)> cstDef.name], <any> { ARGS: [ this.context, arg ]})
+          ) satisfies CstDef['SUBRULE'];
         return {
           CONSUME: (tokenType, option) => this.CONSUME(tokenType, option),
           CONSUME1: (tokenType, option) => this.CONSUME1(tokenType, option),
@@ -336,13 +360,8 @@ ${parser.errors.map(x => `${x.token.startLine}: ${x.message}`).join('\n')}`);
           AT_LEAST_ONE_SEP8: options => this.AT_LEAST_ONE_SEP8(options),
           AT_LEAST_ONE_SEP9: options => this.AT_LEAST_ONE_SEP9(options),
           ACTION: func => this.ACTION(func),
-          BACKTRACK: (cstDef, ...args) => {
-            try {
-              return this.BACKTRACK(<any> this[<keyof (typeof this)> cstDef.name], <any> { ARGS: args });
-            } catch (error: unknown) {
-              throw error;
-            }
-          },
+          BACKTRACK: (cstDef, ...args) =>
+            this.BACKTRACK(<any> this[<keyof (typeof this)> cstDef.name], <any> { ARGS: args }),
           SUBRULE: subRuleImpl((rule, args) => this.SUBRULE(rule, args)),
           SUBRULE1: subRuleImpl((rule, args) => this.SUBRULE1(rule, args)),
           SUBRULE2: subRuleImpl((rule, args) => this.SUBRULE2(rule, args)),
@@ -356,6 +375,7 @@ ${parser.errors.map(x => `${x.token.startLine}: ${x.message}`).join('\n')}`);
         };
       }
     }
-    return <EmbeddedActionsParser & ParseMethodsFromRules<Context, Names, RuleDefs> & { setContext: (context: Context) => void }><unknown> new MyParser();
+    return <EmbeddedActionsParser & ParseMethodsFromRules<Context, Names, RuleDefs> &
+      { setContext: (context: Context) => void }><unknown> new MyParser();
   }
 }

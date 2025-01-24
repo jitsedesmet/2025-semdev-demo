@@ -1,6 +1,5 @@
 /* eslint-disable require-unicode-regexp */
-import { LexerBuilder } from '@traqula/core';
-import { createToken } from '@traqula/core';
+import { LexerBuilder, createToken } from '@traqula/core';
 
 export const named = createToken({ name: 'NamedGraph', pattern: /named/i, label: 'NAMED' });
 export const default_ = createToken({ name: 'DefaultGraph', pattern: /default/i, label: 'DEFAULT' });

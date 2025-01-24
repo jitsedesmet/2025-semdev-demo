@@ -71,7 +71,7 @@ const queryOrUpdate: SparqlRuleDef<'queryOrUpdate', Query | Update | Pick<Update
         ACTION(() => {
           const blankLabelsUsedInInsertData = new Set<string>();
           for (const updateOperation of updateResult.updates) {
-            const iterBlankNodes = (callback: (blankNodeLabel: string) => void) => {
+            const iterBlankNodes = (callback: (blankNodeLabel: string) => void): void => {
               if ('updateType' in updateOperation && updateOperation.updateType === 'insert') {
                 for (const quad of updateOperation.insert) {
                   for (const triple of quad.triples) {

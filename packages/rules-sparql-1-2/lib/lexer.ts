@@ -1,6 +1,5 @@
 /* eslint-disable require-unicode-regexp */
-import { LexerBuilder } from '@traqula/core';
-import { createToken } from '@traqula/core';
+import { LexerBuilder, createToken } from '@traqula/core';
 import { lex as l11 } from '@traqula/rules-sparql-1-1';
 
 export const tilde = createToken({ name: 'Tilde', pattern: '~', label: '~' });

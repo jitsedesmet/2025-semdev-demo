@@ -32,9 +32,11 @@ export type RuleListToObject<
 ) : RuleDefMap<Names> & Agg;
 
 export type ParserFromRules<Context, Names extends string, RuleDefs extends RuleDefMap<Names>> = {
-  [K in Names]: RuleDefs[K] extends RuleDef<Context, K, infer RET, infer ARGS> ? (input: string, context: Context, args: ARGS) => RET : never
+  [K in Names]: RuleDefs[K] extends RuleDef<Context, K, infer RET, infer ARGS> ?
+      (input: string, context: Context, args: ARGS) => RET : never
 };
 
 export type ParseMethodsFromRules<Context, Names extends string, RuleDefs extends RuleDefMap<Names>> = {
-  [K in Names]: RuleDefs[K] extends RuleDef<Context, K, infer RET, infer ARGS> ? ParserMethod<[Context, ARGS], RET> : never
+  [K in Names]: RuleDefs[K] extends RuleDef<Context, K, infer RET, infer ARGS> ?
+    ParserMethod<[Context, ARGS], RET> : never
 };

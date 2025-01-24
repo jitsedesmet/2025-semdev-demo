@@ -11,6 +11,7 @@ export class Wildcard {
   }
 
   public toJSON(): object {
+    // eslint-disable-next-line unused-imports/no-unused-vars
     const { value, ...rest } = this;
     return rest;
   }

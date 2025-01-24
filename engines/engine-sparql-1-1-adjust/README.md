@@ -19,12 +19,13 @@ yarn add @traqula/engine-sparql-1-1
 
 Either through ESM import:
 
-```javascript
-``
+```typescript
+import { Parser } from '@traqula/engine-sparql-1-1-adjust';
+```
 
 _or_ CJS require:
 
-```javascript
+```typescript
 const Sparql11AdjustParser = require('@traqula/engine-sparql-1-1-adjust').Parser;
 ```
 

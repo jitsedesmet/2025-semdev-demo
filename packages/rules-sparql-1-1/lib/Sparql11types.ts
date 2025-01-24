@@ -1,4 +1,3 @@
-import type * as RdfJs from '@rdfjs/types';
 import type * as RDF from '@rdfjs/types';
 import type { CommonIRIs, RuleDef } from '@traqula/core';
 import type { BlankNode, DataFactory } from 'rdf-data-factory';
@@ -10,7 +9,7 @@ export type VerbA = IriTerm<CommonIRIs.TYPE>;
 export interface Wildcard {
   readonly termType: 'Wildcard';
   readonly value: '*';
-  equals: (other: RdfJs.Term | null | undefined) => boolean;
+  equals: (other: RDF.Term | null | undefined) => boolean;
 }
 
 export type Triple = {
@@ -67,10 +66,10 @@ export interface GraphQuads {
   triples: Triple[];
 }
 
-export type VariableTerm = RdfJs.Variable;
-export type IriTerm<IRI extends string = string> = RdfJs.NamedNode<IRI>;
-export type LiteralTerm = RdfJs.Literal;
-export type BlankTerm = RdfJs.BlankNode;
+export type VariableTerm = RDF.Variable;
+export type IriTerm<IRI extends string = string> = RDF.NamedNode<IRI>;
+export type LiteralTerm = RDF.Literal;
+export type BlankTerm = RDF.BlankNode;
 
 export type PropertyPath = NegatedPropertySet | {
   type: 'path';

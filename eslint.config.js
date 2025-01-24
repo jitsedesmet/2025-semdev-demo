@@ -1,5 +1,6 @@
 // eslint-disable-next-line import/no-nodejs-modules
 import path from 'node:path';
+
 // eslint-disable-next-line import/no-nodejs-modules
 import { fileURLToPath } from 'node:url';
 import config from '@rubensworks/eslint-config';
@@ -19,16 +20,16 @@ export default config([
   },
   {
     rules: {
-      // Default
-      'unicorn/consistent-destructuring': 'off',
-      'unicorn/no-array-callback-reference': 'off',
       'unicorn/no-useless-undefined': [
         'error',
         { checkArguments: false },
       ],
       'test/consistent-test-it': 'off',
 
-      // TODO: check if these can be enabled
+      // Default
+      'unicorn/consistent-destructuring': 'off',
+      'unicorn/no-array-callback-reference': 'off',
+
       'ts/naming-convention': 'off',
       'ts/no-unsafe-return': 'off',
       'ts/no-unsafe-argument': 'off',
@@ -50,11 +51,6 @@ export default config([
     // Specific rules for NodeJS-specific files
     files: [
       '**/test/**/*.ts',
-      '**/__mocks__/*.js',
-      'packages/actor-dereference-file/**/*.ts',
-      'packages/actor-http-native/**/*.ts',
-      'packages/logger-bunyan/**/*.ts',
-      'packages/packager/**/*.ts',
     ],
     rules: {
       'import/no-nodejs-modules': 'off',
@@ -62,52 +58,27 @@ export default config([
       'ts/no-var-requires': 'off',
     },
   },
-  // {
-  //   // Some test files import 'jest-rdf' which triggers this
-  //   // Some jest tests import '../../lib' which triggers this
-  //   files: [
-  //     '**/test/*-test.ts',
-  //     '**/test/*-util.ts',
-  //     'packages/jest/test/matchers/*-test.ts',
-  //   ],
-  //   rules: {
-  //     'import/no-unassigned-import': 'off',
-  //   },
-  // },
-  // {
-  // Spec test engines
-  //   files: [
-  //     '**/spec/*.js',
-  //   ],
-  //   rules: {
-  //     'import/extensions': 'off',
-  //     'ts/no-var-requires': 'off',
-  //     'ts/no-require-imports': 'off',
-  //     'import/no-extraneous-dependencies': 'off',
-  //   },
-  // },
-  // {
-  //   files: [
-  //     'eslint.config.js',
-  //   ],
-  //   rules: {
-  //     'ts/no-var-requires': 'off',
-  //     'ts/no-require-imports': 'off',
-  //   },
-  // },
   {
-    ignores: [
-      // The engine bundles are auto-generated code
-      'engines/*/engine-default.js',
-      'engines/*/engine-browser.js',
-      'engines/*/comunica-browser.js',
-      // The performance combination files are auto-generated
-      'performance/*/combinations/**',
-      // TODO: Remove this once solid-client-authn supports node 18.
-      'engines/query-sparql/test/QuerySparql-solid-test.ts',
-      // Dev-only files that are not checked in
-      '**/bintest/**',
-      '**/componentsjs-error-state.json',
+    // Some test files import 'vitest' which triggers this
+    // Some jest tests import '../../lib' which triggers this
+    files: [
+      '**/*.test.ts',
+      '**/*.bench.ts',
+      '**/*.util.ts',
     ],
+    rules: {
+      'import/no-extraneous-dependencies': 'off',
+    },
   },
-], { disableJest: false });
+  {
+    files: [
+      '**/*.md',
+      '**/*.md/*.ts',
+    ],
+    rules: {
+      'unused-imports/no-unused-imports-ts': 'off',
+      'ts/no-require-imports': 'off',
+      'ts/no-var-requires': 'off',
+    },
+  },
+], { disableJest: true });

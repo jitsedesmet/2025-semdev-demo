@@ -4,6 +4,7 @@ coverage
 out
 .yarn
 .rdf-test-suite-cache
+.eslintcache
 
 engines/*/lib/**/*.cjs
 engines/*/lib/**/*.js

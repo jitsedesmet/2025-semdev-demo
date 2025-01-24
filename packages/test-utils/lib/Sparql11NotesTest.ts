@@ -7,8 +7,8 @@ interface Parser {
   parse: (query: string, context?: { prefixes?: Record<string, string>; baseIRI?: string }) => unknown;
 }
 
-export function importSparql11NoteTests(parser: Parser, dataFactory: DataFactory<BaseQuad>) {
-  function testErroneousQuery(query: string, errorMsg: string): TestFunction<object> {
+export function importSparql11NoteTests(parser: Parser, dataFactory: DataFactory<BaseQuad>): void {
+  function testErroneousQuery(query: string, _errorMsg: string): TestFunction<object> {
     return ({ expect }) => {
       let error: any = null;
       try {

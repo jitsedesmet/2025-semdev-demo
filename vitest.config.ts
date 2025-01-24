@@ -1,12 +1,12 @@
 /// <reference types="vitest" />
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vite';
 
 export default defineConfig({
   test: {
     coverage: {
       enabled: true,
       include: [
-        'packages/*/lib/**/*.js'
+        'packages/*/lib/**/*.js',
       ],
     },
     include: [
@@ -16,8 +16,8 @@ export default defineConfig({
     typecheck: {
       enabled: true,
       include: [
-        'packages/*/test/**/*.types.ts',
-      ]
+        'packages/*/test/**/*.types.test.ts',
+      ],
     },
   },
-})
+});

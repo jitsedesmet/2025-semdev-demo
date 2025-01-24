@@ -23,7 +23,8 @@ export class SparqlParser<ParseRet> {
     return this.parser.queryOrUpdate(query, completeParseContext(context), undefined);
   }
 
-  public parsePath(query: string, context: Partial<SparqlContext> = {}): (PropertyPath & { prefixes: object }) | IriTerm {
+  public parsePath(query: string, context: Partial<SparqlContext> = {}):
+    (PropertyPath & { prefixes: object }) | IriTerm {
     const result = this.parser.path(query, completeParseContext(context), undefined);
     if ('type' in result) {
       return {

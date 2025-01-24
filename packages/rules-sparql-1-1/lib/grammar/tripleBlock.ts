@@ -66,7 +66,8 @@ export const triplesSameSubjectPath = triplesSameSubjectImpl('triplesSameSubject
  * [[76]](https://www.w3.org/TR/sparql11-query/#rPropertyList)
  * [[82]](https://www.w3.org/TR/sparql11-query/#rPropertyListPath)
  */
-function propertyListImpl<T extends string>(name: T, allowPaths: boolean): SparqlRuleDef<T, Triple[], Pick<Triple, 'subject'>> {
+function propertyListImpl<T extends string>(name: T, allowPaths: boolean):
+SparqlRuleDef<T, Triple[], Pick<Triple, 'subject'>> {
   return {
     name,
     impl: ({ SUBRULE, OPTION }) => (_, arg) =>
@@ -142,7 +143,8 @@ export const verbSimple: SparqlRuleDef<'verbSimple', VariableTerm> = <const> {
  * [[79]](https://www.w3.org/TR/sparql11-query/#rObjectList)
  * [[86]](https://www.w3.org/TR/sparql11-query/#rObjectListPath)
  */
-function objectListImpl<T extends string>(name: T, allowPaths: boolean): SparqlRuleDef<T, Triple[], Pick<Triple, 'subject' | 'predicate'>> {
+function objectListImpl<T extends string>(name: T, allowPaths: boolean):
+SparqlRuleDef<T, Triple[], Pick<Triple, 'subject' | 'predicate'>> {
   return <const> {
     name,
     impl: ({ ACTION, SUBRULE, AT_LEAST_ONE_SEP }) => (_, arg) => {
@@ -161,7 +163,8 @@ function objectListImpl<T extends string>(name: T, allowPaths: boolean): SparqlR
 export const objectList = objectListImpl('objectList', false);
 export const objectListPath = objectListImpl('objectListPath', true);
 
-function objectImpl<T extends string>(name: T, allowPaths: boolean): SparqlRuleDef<T, Triple[], Pick<Triple, 'subject' | 'predicate'>> {
+function objectImpl<T extends string>(name: T, allowPaths: boolean):
+SparqlRuleDef<T, Triple[], Pick<Triple, 'subject' | 'predicate'>> {
   return {
     name,
     impl: ({ ACTION, SUBRULE }) => (_, arg) => {

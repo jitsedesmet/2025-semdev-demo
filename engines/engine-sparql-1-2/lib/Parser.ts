@@ -1,7 +1,8 @@
-import {Builder} from '@traqula/core';
-import {gram as g11, SparqlParser, SparqlQuery} from '@traqula/rules-sparql-1-1';
-import {gram as S12, lex as l12} from '@traqula/rules-sparql-1-2';
-import {sparql11ParserBuilder} from '@traqula/engine-sparql-1-1';
+import { Builder } from '@traqula/core';
+import { sparql11ParserBuilder } from '@traqula/engine-sparql-1-1';
+import type { SparqlQuery } from '@traqula/rules-sparql-1-1';
+import { gram as g11, SparqlParser } from '@traqula/rules-sparql-1-1';
+import { gram as S12, lex as l12 } from '@traqula/rules-sparql-1-2';
 
 export const sparql12ParserBuilder = Builder.createBuilder(sparql11ParserBuilder)
   .addRuleRedundant(g11.object)
