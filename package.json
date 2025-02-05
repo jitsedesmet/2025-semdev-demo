@@ -16,6 +16,7 @@
     "build:transpile-spec": "lerna run build:transpile-spec",
     "clean": "git clean -dfx",
     "depcheck": "lerna exec --concurrency 1 -- depcheck --ignores=\"vitest\"",
+    "doc": "typedoc",
     "lint": "eslint . --cache",
     "postinstall": "yarn husky && yarn run build",
     "publish": "yarn run build",
@@ -35,6 +36,7 @@
     "lerna": "8.1.4",
     "manual-git-changelog": "^1.0.2",
     "rdf-test-suite": "^2.0.0",
+    "typedoc": "^0.27.6",
     "typescript": "^5.7.3",
     "vite": "^6.0.11",
     "vitest": "^3.0.4"
