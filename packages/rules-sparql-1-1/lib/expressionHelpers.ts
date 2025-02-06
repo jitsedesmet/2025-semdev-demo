@@ -1,20 +1,21 @@
-import { Wildcard, unCapitalize } from '@traqula/core';
+import { unCapitalize } from '@traqula/core';
 import type { TokenType } from 'chevrotain';
 import { expression, expressionList } from './grammar/expression';
 import { var_ } from './grammar/general';
 import { groupGraphPattern } from './grammar/whereClause';
 import * as l from './lexer';
-import type { Expression, Pattern, SparqlRuleDef, VariableTerm } from './Sparql11types';
+import type { Expression, OperationExpression, Pattern, SparqlGrammarRule, VariableTerm } from './Sparql11types';
 import { deGroupSingle } from './utils';
+import { Wildcard } from './Wildcard';
 
-export interface IExpressionFunctionX<U extends (Expression | Pattern)[]> {
+export interface IExpressionFunctionX<U extends Expression[] | [Pattern]> extends OperationExpression {
   type: 'operation';
   operator: string;
   args: U;
 }
 
-export type RuleDefExpressionFunctionX<T extends string, U extends (Expression | Pattern)[]>
-  = SparqlRuleDef<T, IExpressionFunctionX<U>>;
+export type RuleDefExpressionFunctionX<T extends string, U extends Expression[] | [Pattern]>
+  = SparqlGrammarRule<T, IExpressionFunctionX<U>>;
 
 function formatOperator(operator: string): string {
   return operator.toLowerCase().replaceAll(' ', '');
@@ -217,7 +218,7 @@ RuleDefExpressionFunctionX<
 export function funcGroupGraphPattern<T extends string>(func: TokenType & { name: T }):
 RuleDefExpressionFunctionX<
   Uncapitalize<T>,
-  Pattern[]
+  [ Pattern ]
 > {
   return {
     name: unCapitalize(func.name),
@@ -241,7 +242,7 @@ export interface IExpressionAggregator {
   separator?: string;
 }
 
-export type RuleDefExpressionAggregatorX<T extends string> = SparqlRuleDef<T, IExpressionAggregator>;
+export type RuleDefExpressionAggregatorX<T extends string> = SparqlGrammarRule<T, IExpressionAggregator>;
 
 export function baseAggregateFunc<T extends string>(func: TokenType & { name: T }):
 RuleDefExpressionAggregatorX<Uncapitalize<T>> {

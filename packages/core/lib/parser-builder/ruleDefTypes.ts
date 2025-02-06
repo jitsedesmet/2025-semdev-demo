@@ -12,12 +12,12 @@ import type { ConsumeMethodOpts, IToken, TokenType } from 'chevrotain';
 /**
  * Get the return-type of a RuleDef
  */
-export type RuleDefReturn<T extends RuleDef> = T extends RuleDef<any, string, infer Ret> ? Ret : never;
+export type RuleDefReturn<T extends ParserRule> = T extends ParserRule<any, string, infer Ret> ? Ret : never;
 
 /**
  * Type used to declare grammar rules.
  */
-export type RuleDef<
+export type ParserRule<
   /**
    * Context object available in rule implementation.
    */
@@ -44,21 +44,21 @@ export type RuleDef<
  * Type expected by grammar rules in the main `impl` function.
  */
 export interface ImplArgs extends CstDef {
-  cache: WeakMap<RuleDef, unknown>;
+  cache: WeakMap<ParserRule, unknown>;
 }
 
 /**
  * Type definition used by {@link CstDef.SUBRULE} and family.
  */
 type SubRuleFunc = <T extends string, U = unknown, ARGS = any>(
-  cstDef: RuleDef<any, T, U, ARGS>,
+  cstDef: ParserRule<any, T, U, ARGS>,
   argument: ARGS
 ) => U;
 /**
  * Type definition used by {@link CstDef.BACKTRACK}.
  */
 type BacktrackFunc = <T extends string, U = unknown, ARGS = any>(
-  cstDef: RuleDef<any, T, U, ARGS>,
+  cstDef: ParserRule<any, T, U, ARGS>,
   argument: ARGS
 ) => () => boolean;
 

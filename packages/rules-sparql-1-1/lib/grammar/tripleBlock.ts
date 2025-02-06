@@ -1,4 +1,4 @@
-import { CommonIRIs } from '@traqula/core';
+import { CommonIRIs } from '../grammar-helpers/utils';
 import * as l from '../lexer';
 import type {
   BgpPattern,
@@ -7,36 +7,62 @@ import type {
   IriTerm,
   ITriplesNode,
   PropertyPath,
-  SparqlRuleDef,
+  SparqlGrammarRule,
+  SparqlRule,
   Triple,
   VariableTerm,
 } from '../Sparql11types';
 import { var_, varOrTerm, verb } from './general';
 import { path } from './propertyPaths';
 
+function triplesDotSeperated(subRule: SparqlGrammarRule<any, Triple[]>): SparqlGrammarRule<any, Triple[]>['impl'] {
+  return ({ ACTION, AT_LEAST_ONE, SUBRULE, CONSUME, OPTION }) => () => {
+    const triples: Triple[] = [];
+
+    let parsedDot = true;
+    AT_LEAST_ONE({
+      GATE: () => parsedDot,
+      DEF: () => {
+        parsedDot = false;
+        const template = SUBRULE(subRule, undefined);
+        ACTION(() => {
+          triples.push(...template);
+        });
+        OPTION(() => {
+          CONSUME(l.symbols.dot);
+          parsedDot = true;
+        });
+      },
+    });
+    return triples;
+  };
+}
+
 /**
  * [[55]](https://www.w3.org/TR/sparql11-query/#rTriplesBlock)
  */
-export const triplesBlock: SparqlRuleDef<'triplesBlock', BgpPattern> = <const> {
+export const triplesBlock: SparqlRule<'triplesBlock', BgpPattern> = <const> {
   name: 'triplesBlock',
-  impl: ({ ACTION, SUBRULE, CONSUME, OPTION1, OPTION2 }) => () => {
-    const triples = SUBRULE(triplesSameSubjectPath, undefined);
-    const pattern = OPTION1(() => {
-      CONSUME(l.symbols.dot);
-      return OPTION2(() => SUBRULE(triplesBlock, undefined));
-    });
-    return ACTION(() => ({
-      type: 'bgp',
-      triples: [ ...triples, ...(pattern?.triples ?? []) ],
-    }));
-  },
+  impl: implArgs => C => ({
+    type: 'bgp',
+    triples: triplesDotSeperated(triplesSameSubjectPath)(implArgs)(C, undefined),
+  }),
+  gImpl: ({ SUBRULE }) => ast => ast.triples.map((triple) => {
+    const { subject, predicate, object } = triple;
+    return [ subject, predicate, object ].map((part) => {
+      if ('type' in part) {
+        return SUBRULE(path, part, undefined);
+      }
+      return SUBRULE(varOrTerm, part, undefined);
+    }).join(' ');
+  }).join(' . '),
 };
 
 /**
  * [[75]](https://www.w3.org/TR/sparql11-query/#rTriplesSameSubject)
  * [[81]](https://www.w3.org/TR/sparql11-query/#rTriplesSameSubjectPath)
  */
-function triplesSameSubjectImpl<T extends string>(name: T, allowPaths: boolean): SparqlRuleDef<T, Triple[]> {
+function triplesSameSubjectImpl<T extends string>(name: T, allowPaths: boolean): SparqlGrammarRule<T, Triple[]> {
   return <const> {
     name,
     impl: ({ ACTION, SUBRULE, OR }) => () => OR<Triple[]>([
@@ -63,11 +89,19 @@ export const triplesSameSubject = triplesSameSubjectImpl('triplesSameSubject', f
 export const triplesSameSubjectPath = triplesSameSubjectImpl('triplesSameSubjectPath', true);
 
 /**
+ * [[52]](https://www.w3.org/TR/sparql11-query/#rTriplesTemplate)
+ */
+export const triplesTemplate: SparqlGrammarRule<'triplesTemplate', Triple[]> = <const> {
+  name: 'triplesTemplate',
+  impl: triplesDotSeperated(triplesSameSubject),
+};
+
+/**
  * [[76]](https://www.w3.org/TR/sparql11-query/#rPropertyList)
  * [[82]](https://www.w3.org/TR/sparql11-query/#rPropertyListPath)
  */
 function propertyListImpl<T extends string>(name: T, allowPaths: boolean):
-SparqlRuleDef<T, Triple[], Pick<Triple, 'subject'>> {
+SparqlGrammarRule<T, Triple[], Pick<Triple, 'subject'>> {
   return {
     name,
     impl: ({ SUBRULE, OPTION }) => (_, arg) =>
@@ -86,7 +120,7 @@ export const propertyListPath = propertyListImpl('propertyListPath', true);
 function propertyListNotEmptyImplementation<T extends string>(
   name: T,
   allowPaths: boolean,
-): SparqlRuleDef<T, Triple[], Pick<Triple, 'subject'>> {
+): SparqlGrammarRule<T, Triple[], Pick<Triple, 'subject'>> {
   return {
     name,
     impl: ({ ACTION, CONSUME, AT_LEAST_ONE, SUBRULE1, MANY2, OR1 }) => (_, arg) => {
@@ -126,7 +160,7 @@ export const propertyListPathNotEmpty = propertyListNotEmptyImplementation('prop
 /**
  * [[84]](https://www.w3.org/TR/sparql11-query/#rVerbPath)
  */
-export const verbPath: SparqlRuleDef<'verbPath', PropertyPath | IriTerm> = <const> {
+export const verbPath: SparqlGrammarRule<'verbPath', PropertyPath | IriTerm> = <const> {
   name: 'verbPath',
   impl: ({ SUBRULE }) => () => SUBRULE(path, undefined),
 };
@@ -134,7 +168,7 @@ export const verbPath: SparqlRuleDef<'verbPath', PropertyPath | IriTerm> = <cons
 /**
  * [[85]](https://www.w3.org/TR/sparql11-query/#rVerbSimple)
  */
-export const verbSimple: SparqlRuleDef<'verbSimple', VariableTerm> = <const> {
+export const verbSimple: SparqlGrammarRule<'verbSimple', VariableTerm> = <const> {
   name: 'verbSimple',
   impl: ({ SUBRULE }) => () => SUBRULE(var_, undefined),
 };
@@ -144,7 +178,7 @@ export const verbSimple: SparqlRuleDef<'verbSimple', VariableTerm> = <const> {
  * [[86]](https://www.w3.org/TR/sparql11-query/#rObjectListPath)
  */
 function objectListImpl<T extends string>(name: T, allowPaths: boolean):
-SparqlRuleDef<T, Triple[], Pick<Triple, 'subject' | 'predicate'>> {
+SparqlGrammarRule<T, Triple[], Pick<Triple, 'subject' | 'predicate'>> {
   return <const> {
     name,
     impl: ({ ACTION, SUBRULE, AT_LEAST_ONE_SEP }) => (_, arg) => {
@@ -164,7 +198,7 @@ export const objectList = objectListImpl('objectList', false);
 export const objectListPath = objectListImpl('objectListPath', true);
 
 function objectImpl<T extends string>(name: T, allowPaths: boolean):
-SparqlRuleDef<T, Triple[], Pick<Triple, 'subject' | 'predicate'>> {
+SparqlGrammarRule<T, Triple[], Pick<Triple, 'subject' | 'predicate'>> {
   return {
     name,
     impl: ({ ACTION, SUBRULE }) => (_, arg) => {
@@ -188,14 +222,14 @@ export const objectPath = objectImpl('objectPath', true);
  * [[98]](https://www.w3.org/TR/sparql11-query/#rTriplesNode)
  * [[100]](https://www.w3.org/TR/sparql11-query/#rTriplesNodePath)
  */
-export const triplesNode: SparqlRuleDef<'triplesNode', ITriplesNode> = <const> {
+export const triplesNode: SparqlGrammarRule<'triplesNode', ITriplesNode> = <const> {
   name: 'triplesNode',
   impl: ({ SUBRULE, OR }) => () => OR<ITriplesNode>([
     { ALT: () => SUBRULE(collection, undefined) },
     { ALT: () => SUBRULE(blankNodePropertyList, undefined) },
   ]),
 };
-export const triplesNodePath: SparqlRuleDef<'triplesNodePath', ITriplesNode> = <const> {
+export const triplesNodePath: SparqlGrammarRule<'triplesNodePath', ITriplesNode> = <const> {
   name: 'triplesNodePath',
   impl: ({ SUBRULE, OR }) => () => OR<ITriplesNode>([
     { ALT: () => SUBRULE(collectionPath, undefined) },
@@ -207,7 +241,7 @@ export const triplesNodePath: SparqlRuleDef<'triplesNodePath', ITriplesNode> = <
  * [[99]](https://www.w3.org/TR/sparql11-query/#rBlankNodePropertyList)
  * [[101]](https://www.w3.org/TR/sparql11-query/#rBlankNodePropertyListPath)
  */
-function blankNodePropertyListImpl<T extends string>(name: T, allowPaths: boolean): SparqlRuleDef<T, ITriplesNode> {
+function blankNodePropertyListImpl<T extends string>(name: T, allowPaths: boolean): SparqlGrammarRule<T, ITriplesNode> {
   return {
     name,
     impl: ({ ACTION, SUBRULE, CONSUME }) => (C) => {
@@ -233,7 +267,7 @@ export const blankNodePropertyListPath = blankNodePropertyListImpl('blankNodePro
  * [[102]](https://www.w3.org/TR/sparql11-query/#rCollection)
  * [[103]](https://www.w3.org/TR/sparql11-query/#rCollectionPath)
  */
-function collectionImpl<T extends string>(name: T, allowPaths: boolean): SparqlRuleDef<T, ITriplesNode> {
+function collectionImpl<T extends string>(name: T, allowPaths: boolean): SparqlGrammarRule<T, ITriplesNode> {
   return {
     name,
     impl: ({ ACTION, AT_LEAST_ONE, SUBRULE, CONSUME }) => (C) => {
@@ -297,7 +331,7 @@ export const collectionPath = collectionImpl('collectionPath', true);
  * [[103]](https://www.w3.org/TR/sparql11-query/#rGraphNode)
  * [[105]](https://www.w3.org/TR/sparql11-query/#rGraphNodePath)
  */
-function graphNodeImpl<T extends string>(name: T, allowPaths: boolean): SparqlRuleDef<T, IGraphNode> {
+function graphNodeImpl<T extends string>(name: T, allowPaths: boolean): SparqlGrammarRule<T, IGraphNode> {
   return {
     name,
     impl: ({ SUBRULE, OR }) => C => OR<IGraphNode>([

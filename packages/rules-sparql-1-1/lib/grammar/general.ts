@@ -1,13 +1,21 @@
-import { CommonIRIs, resolveIRI } from '@traqula/core';
+import { CommonIRIs, resolveIRI } from '../grammar-helpers/utils';
 import * as l from '../lexer';
-import type { GraphTerm, Term, Triple, VerbA, IriTerm, VariableTerm, BaseQuery, SparqlRuleDef } from '../Sparql11types';
+import type {
+  GraphTerm,
+  Term,
+  VerbA,
+  IriTerm,
+  VariableTerm,
+  BaseQuery,
+  SparqlGrammarRule,
+  SparqlRule,
+} from '../Sparql11types';
 import { blankNode, booleanLiteral, iri, numericLiteral, rdfLiteral } from './literals';
-import { triplesSameSubject } from './tripleBlock';
 
 /**
  * [[4]](https://www.w3.org/TR/sparql11-query/#rPrologue)
  */
-export const prologue: SparqlRuleDef<'prologue', Pick<BaseQuery, 'base' | 'prefixes'>> = <const> {
+export const prologue: SparqlRule<'prologue', Pick<BaseQuery, 'base' | 'prefixes'>> = <const> {
   name: 'prologue',
   impl: ({ ACTION, SUBRULE, MANY, OR }) => (C) => {
     const result: Pick<BaseQuery, 'base' | 'prefixes'> = ACTION(() => ({
@@ -37,13 +45,24 @@ export const prologue: SparqlRuleDef<'prologue', Pick<BaseQuery, 'base' | 'prefi
     });
     return result;
   },
+  gImpl: () => (ast) => {
+    const rules: string[] = [];
+    if (ast.base) {
+      rules.push(`BASE <${ast.base}>`);
+    }
+    // eslint-disable-next-line ts/no-unnecessary-type-assertion
+    for (const [ key, value ] of <[string, string][]> Object.entries(ast.prefixes)) {
+      rules.push(`PREFIX ${key}: <${value}>`);
+    }
+    return rules.join(' ');
+  },
 };
 
 /**
  * Registers base IRI in the context and returns it.
  * [[5]](https://www.w3.org/TR/sparql11-query/#rBaseDecl)
  */
-export const baseDecl: SparqlRuleDef<'baseDecl', string> = <const> {
+export const baseDecl: SparqlGrammarRule<'baseDecl', string> = <const> {
   name: 'baseDecl',
   impl: ({ CONSUME, ACTION }) => (C) => {
     CONSUME(l.baseDecl);
@@ -59,7 +78,7 @@ export const baseDecl: SparqlRuleDef<'baseDecl', string> = <const> {
  * Registers prefix in the context and returns registered key-value-pair.
  * [[6]](https://www.w3.org/TR/sparql11-query/#rPrefixDecl)
  */
-export const prefixDecl: SparqlRuleDef<'prefixDecl', [string, string]> = <const> {
+export const prefixDecl: SparqlGrammarRule<'prefixDecl', [string, string]> = <const> {
   name: 'prefixDecl',
   impl: ({ CONSUME, ACTION }) => (C) => {
     CONSUME(l.prefixDecl);
@@ -75,37 +94,9 @@ export const prefixDecl: SparqlRuleDef<'prefixDecl', [string, string]> = <const>
 };
 
 /**
- * [[52]](https://www.w3.org/TR/sparql11-query/#rTriplesTemplate)
- */
-export const triplesTemplate: SparqlRuleDef<'triplesTemplate', Triple[]> = <const> {
-  name: 'triplesTemplate',
-  impl: ({ ACTION, AT_LEAST_ONE, SUBRULE, CONSUME, OPTION }) => () => {
-    const triples: Triple[] = [];
-
-    let parsedDot = true;
-    AT_LEAST_ONE({
-      GATE: () => parsedDot,
-      DEF: () => {
-        parsedDot = false;
-        const template = SUBRULE(triplesSameSubject, undefined);
-        ACTION(() => {
-          triples.push(...template);
-        });
-        OPTION(() => {
-          CONSUME(l.symbols.dot);
-          parsedDot = true;
-        });
-      },
-    });
-
-    return triples;
-  },
-};
-
-/**
  * [[78]](https://www.w3.org/TR/sparql11-query/#rVerb)
  */
-export const verb: SparqlRuleDef<'verb', VariableTerm | IriTerm> = <const> {
+export const verb: SparqlGrammarRule<'verb', VariableTerm | IriTerm> = <const> {
   name: 'verb',
   impl: ({ SUBRULE, OR }) => () => OR([
     { ALT: () => SUBRULE(varOrIri, undefined) },
@@ -115,7 +106,7 @@ export const verb: SparqlRuleDef<'verb', VariableTerm | IriTerm> = <const> {
   ]),
 };
 
-export const verbA: SparqlRuleDef<'VerbA', VerbA> = <const> {
+export const verbA: SparqlGrammarRule<'VerbA', VerbA> = <const> {
   name: 'VerbA',
   impl: ({ ACTION, CONSUME }) => (C) => {
     CONSUME(l.a);
@@ -126,18 +117,30 @@ export const verbA: SparqlRuleDef<'VerbA', VerbA> = <const> {
 /**
  * [[106]](https://www.w3.org/TR/sparql11-query/#rVarOrTerm)
  */
-export const varOrTerm: SparqlRuleDef<'varOrTerm', Term> = <const> {
+export const varOrTerm: SparqlRule<'varOrTerm', Term> = <const> {
   name: 'varOrTerm',
   impl: ({ SUBRULE, OR }) => C => OR<Term>([
     { GATE: () => C.parseMode.has('canParseVars'), ALT: () => SUBRULE(var_, undefined) },
     { ALT: () => SUBRULE(graphTerm, undefined) },
   ]),
+  gImpl: ({ SUBRULE }) => (ast) => {
+    if (ast.termType === 'Variable') {
+      return SUBRULE(var_, ast, undefined);
+    }
+    if (ast.termType === 'NamedNode') {
+      return SUBRULE(iri, <IriTerm> ast, undefined);
+    }
+    if (ast.termType === 'BlankNode') {
+      return SUBRULE(blankNode, ast, undefined);
+    }
+    return SUBRULE(rdfLiteral, ast, undefined);
+  },
 };
 
 /**
  * [[107]](https://www.w3.org/TR/sparql11-query/#rVarOrIri)
  */
-export const varOrIri: SparqlRuleDef<'varOrIri', IriTerm | VariableTerm> = <const> {
+export const varOrIri: SparqlGrammarRule<'varOrIri', IriTerm | VariableTerm> = <const> {
   name: 'varOrIri',
   impl: ({ SUBRULE, OR }) => C => OR<IriTerm | VariableTerm>([
     { GATE: () => C.parseMode.has('canParseVars'), ALT: () => SUBRULE(var_, undefined) },
@@ -148,7 +151,7 @@ export const varOrIri: SparqlRuleDef<'varOrIri', IriTerm | VariableTerm> = <cons
 /**
  * [[108]](https://www.w3.org/TR/sparql11-query/#rVar)
  */
-export const var_: SparqlRuleDef<'var', VariableTerm> = <const> {
+export const var_: SparqlRule<'var', VariableTerm> = <const> {
   name: 'var',
   impl: ({ ACTION, CONSUME, OR }) => (C) => {
     const varVal = OR([
@@ -162,12 +165,13 @@ export const var_: SparqlRuleDef<'var', VariableTerm> = <const> {
     });
     return ACTION(() => C.dataFactory.variable(varVal));
   },
+  gImpl: () => ast => `?${ast.value}`,
 };
 
 /**
  * [[109]](https://www.w3.org/TR/sparql11-query/#rGraphTerm)
  */
-export const graphTerm: SparqlRuleDef<'graphTerm', GraphTerm> = <const> {
+export const graphTerm: SparqlRule<'graphTerm', GraphTerm> = <const> {
   name: 'graphTerm',
   impl: ({ ACTION, SUBRULE, CONSUME, OR }) => C => OR<GraphTerm>([
     { ALT: () => SUBRULE(iri, undefined) },
@@ -182,4 +186,14 @@ export const graphTerm: SparqlRuleDef<'graphTerm', GraphTerm> = <const> {
       },
     },
   ]),
+  gImpl: ({ SUBRULE }) => (ast) => {
+    switch (ast.termType) {
+      case 'BlankNode':
+        return SUBRULE(blankNode, ast, undefined);
+      case 'NamedNode':
+        return SUBRULE(iri, ast, undefined);
+      case 'Literal':
+        return SUBRULE(rdfLiteral, ast, undefined);
+    }
+  },
 };

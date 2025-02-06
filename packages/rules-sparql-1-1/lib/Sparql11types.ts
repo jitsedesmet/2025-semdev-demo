@@ -1,16 +1,12 @@
 import type * as RDF from '@rdfjs/types';
-import type { CommonIRIs, RuleDef } from '@traqula/core';
+import type { ParserRule, GeneratorRule } from '@traqula/core';
 import type { BlankNode, DataFactory } from 'rdf-data-factory';
+import type { CommonIRIs } from './grammar-helpers/utils';
+import type { Wildcard } from './Wildcard';
 
 export type GraphTerm = IriTerm | BlankTerm | LiteralTerm;
 export type Term = GraphTerm | VariableTerm;
 export type VerbA = IriTerm<CommonIRIs.TYPE>;
-
-export interface Wildcard {
-  readonly termType: 'Wildcard';
-  readonly value: '*';
-  equals: (other: RDF.Term | null | undefined) => boolean;
-}
 
 export type Triple = {
   subject: Term;
@@ -86,11 +82,6 @@ export interface SelectQuery extends BaseQuery {
   variables: Variable[] | [Wildcard];
   distinct?: true | undefined;
   reduced?: true | undefined;
-  group?: Grouping[] | undefined;
-  having?: Expression[] | undefined;
-  order?: Ordering[] | undefined;
-  limit?: number | undefined;
-  offset?: number | undefined;
 }
 
 export interface Grouping {
@@ -126,33 +117,30 @@ export interface Update {
 
 export type UpdateOperation = InsertDeleteOperation | ManagementOperation;
 
-export type InsertDeleteOperation =
-  | {
-    updateType: 'insert';
-    graph?: GraphOrDefault;
-    insert: Quads[];
-  }
-  | {
-    updateType: 'delete';
-    graph?: GraphOrDefault;
-    delete: Quads[];
-  }
-  | {
-    updateType: 'insertdelete';
-    graph?: IriTerm;
-    insert: Quads[];
-    delete: Quads[];
-    using?: {
-      default: IriTerm[];
-      named: IriTerm[];
-    };
-    where: Pattern[];
-  }
-  | {
-    updateType: 'deletewhere';
-    graph?: GraphOrDefault;
-    delete: Quads[];
+export type InsertDeleteOperation = InsertOperation | DeleteOperation | ModifyOperation | DeleteWhereOperation;
+export interface InsertOperation {
+  updateType: 'insert';
+  insert: Quads[];
+}
+export interface DeleteOperation {
+  updateType: 'delete';
+  delete: Quads[];
+}
+export interface ModifyOperation {
+  updateType: 'insertdelete';
+  insert: Quads[];
+  delete: Quads[];
+  graph?: IriTerm;
+  using?: {
+    default: IriTerm[];
+    named: IriTerm[];
   };
+  where: Pattern[];
+}
+export interface DeleteWhereOperation {
+  updateType: 'deletewhere';
+  delete: Quads[];
+}
 
 export type Quads = BgpPattern | GraphQuads;
 
@@ -222,6 +210,11 @@ export interface BaseQuery {
     | undefined;
   where?: Pattern[] | undefined;
   values?: ValuePatternRow[] | undefined;
+  having?: Expression[] | undefined;
+  group?: Grouping[] | undefined;
+  order?: Ordering[] | undefined;
+  limit?: number | undefined;
+  offset?: number | undefined;
 }
 
 export type IriTermOrElt = IriTerm | {
@@ -233,7 +226,7 @@ export type IriTermOrElt = IriTerm | {
 export interface NegatedPropertySet {
   type: 'path';
   pathType: '!';
-  items: IriTermOrElt[] | [{
+  items: [IriTermOrElt] | [{
     type: 'path';
     pathType: '|';
     items: (IriTermOrElt)[];
@@ -307,7 +300,8 @@ export interface BaseExpression {
 export interface OperationExpression extends BaseExpression {
   type: 'operation';
   operator: string;
-  args: (Expression | Pattern)[];
+  // Can be a pattern in case of exists and not exists
+  args: (Expression)[] | [Pattern];
 }
 
 export interface AggregateExpression extends BaseExpression {
@@ -317,7 +311,7 @@ export interface AggregateExpression extends BaseExpression {
   separator?: string | undefined;
 }
 
-export type SparqlRuleDef<
+export type SparqlRule<
   /**
    * Name of grammar rule, should be a strict subtype of string like 'myGrammarRule'.
    */
@@ -331,7 +325,24 @@ export type SparqlRuleDef<
    * Function arguments that can be given to convey the state of the current parse operation.
    */
   ParamType = undefined,
-> = RuleDef<SparqlContext, NameType, ReturnType, ParamType>;
+> = ParserRule<SparqlContext, NameType, ReturnType, ParamType>
+  & GeneratorRule<undefined, NameType, ReturnType, ParamType>;
+
+export type SparqlGrammarRule<
+  /**
+   * Name of grammar rule, should be a strict subtype of string like 'myGrammarRule'.
+   */
+  NameType extends string = string,
+  /**
+   * Type that will be returned after a correct parse of this rule.
+   * This type will be the return type of calling SUBRULE with this grammar rule.
+   */
+  ReturnType = unknown,
+  /**
+   * Function arguments that can be given to convey the state of the current parse operation.
+   */
+  ParamType = undefined,
+> = ParserRule<SparqlContext, NameType, ReturnType, ParamType>;
 
 export interface SparqlContext {
   /**

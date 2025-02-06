@@ -1,5 +1,5 @@
 import { Builder } from '@traqula/core';
-import type { Query, SparqlQuery, Update, SparqlRuleDef } from '@traqula/rules-sparql-1-1';
+import type { Query, SparqlQuery, Update, SparqlGrammarRule } from '@traqula/rules-sparql-1-1';
 import { gram, lex as l, SparqlParser } from '@traqula/rules-sparql-1-1';
 import { queryUnitParserBuilder } from './queryUnitParser';
 import { updateParserBuilder } from './updateUnitParser';
@@ -14,7 +14,7 @@ import { updateParserBuilder } from './updateUnitParser';
 // ```
 // Prologue ( Update1 ( ';' Update )? )?
 // ```
-const queryOrUpdate: SparqlRuleDef<'queryOrUpdate', Query | Update | Pick<Update, 'base' | 'prefixes'>> = {
+const queryOrUpdate: SparqlGrammarRule<'queryOrUpdate', Query | Update | Pick<Update, 'base' | 'prefixes'>> = {
   name: 'queryOrUpdate',
   impl: ({ ACTION, SUBRULE, SUBRULE2, OR1, OR2, CONSUME, OPTION1, MANY }) => () => {
     const prologueValues = SUBRULE(gram.prologue, undefined);
@@ -38,16 +38,16 @@ const queryOrUpdate: SparqlRuleDef<'queryOrUpdate', Query | Update | Pick<Update
         // Prologue ( Update1 ( ';' Update )? )?
         // Is equivalent to:
 
-        let parsedPrologue = true;
+        let parsedSemi = true;
         const updateResult: Update = {
           ...prologueValues,
           type: 'update',
           updates: [],
         };
         MANY({
-          GATE: () => parsedPrologue,
+          GATE: () => parsedSemi,
           DEF: () => {
-            parsedPrologue = false;
+            parsedSemi = false;
             const updateOperation = SUBRULE(gram.update1, undefined);
 
             updateResult.updates.push(updateOperation);
@@ -63,7 +63,7 @@ const queryOrUpdate: SparqlRuleDef<'queryOrUpdate', Query | Update | Pick<Update
                   updateResult.prefixes;
               });
 
-              parsedPrologue = true;
+              parsedSemi = true;
             });
           },
         });
