@@ -29,7 +29,7 @@ export const path: SparqlRule<'path', PropertyPath | IriTerm> = <const> {
       }
       // Postfix
       if (ast.pathType === '*' || ast.pathType === '+' || ast.pathType === '?') {
-        return `${SUBRULE(path, ast.items[0], undefined)}${ast.pathType}`;
+        return `( ${SUBRULE(path, ast.items[0], undefined)} )${ast.pathType}`;
       }
     }
     return SUBRULE(iri, <IriTerm> ast, undefined);

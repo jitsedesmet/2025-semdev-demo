@@ -532,7 +532,7 @@ export const valuesClause: SparqlRule<'valuesClause', ValuePatternRow[] | undefi
   }),
   gImpl: ({ SUBRULE }) => (ast) => {
     if (ast) {
-      return `VALUES ${SUBRULE(inlineDataFull, ast, undefined)}`;
+      return `${SUBRULE(inlineDataFull, ast, undefined)}`;
     }
     return '';
   },
@@ -550,7 +550,9 @@ export const constructTemplate: SparqlRule<'constructTemplate', Triple[] | undef
     return triples;
   },
   gImpl: ({ SUBRULE }) => ast =>
-    `{ ${ast ? SUBRULE(triplesBlock, { type: 'bgp', triples: ast }, undefined) : ''} }`,
+    `{
+${ast ? SUBRULE(triplesBlock, { type: 'bgp', triples: ast }, undefined) : ''}
+}`,
 };
 
 /**

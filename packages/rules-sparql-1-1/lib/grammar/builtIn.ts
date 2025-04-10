@@ -264,7 +264,7 @@ export const aggregate: SparqlRule<'aggregate', AggregateExpression> = <const> {
     return result;
   },
   gImpl: ({ SUBRULE }) => (ast) => {
-    const builder = [ ast.expression, '(' ];
+    const builder = [ ast.aggregation, '(' ];
     if (ast.distinct) {
       builder.push('DISTINCT');
     }
@@ -273,7 +273,7 @@ export const aggregate: SparqlRule<'aggregate', AggregateExpression> = <const> {
     } else {
       builder.push(SUBRULE(expression, ast.expression, undefined));
     }
-    if (ast.separator && ast.separator !== ' ') {
+    if (ast.separator !== undefined && ast.separator !== ' ') {
       builder.push(';', 'SEPARATOR', '=', SUBRULE(string, ast.separator, undefined));
     }
     builder.push(')');
