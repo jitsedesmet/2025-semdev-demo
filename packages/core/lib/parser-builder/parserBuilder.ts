@@ -35,7 +35,7 @@ export class ParserBuilder<Context, Names extends string, RuleDefs extends Parse
    * Create a builder from some initial grammar rules or an existing builder.
    * If a builder is provided, a new copy will be created.
    */
-  public static createBuilder<
+  public static create<
     Rules extends readonly ParserRule[] = readonly ParserRule[],
     Context = Rules[0] extends ParserRule<infer context> ? context : never,
     Names extends string = ParseNamesFromList<Rules>,

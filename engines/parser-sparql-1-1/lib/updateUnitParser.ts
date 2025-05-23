@@ -5,7 +5,7 @@ import { objectListBuilder } from './objectListParser';
 import { subSelectParserBuilder } from './subSelectParser';
 import { updateNoModifyParserBuilder } from './updateNoModifyParser';
 
-export const updateParserBuilder = ParserBuilder.createBuilder(updateNoModifyParserBuilder)
+export const updateParserBuilder = ParserBuilder.create(updateNoModifyParserBuilder)
   .patchRule(gram.update1)
   .addMany(
     gram.modify,

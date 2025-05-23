@@ -11,7 +11,7 @@ const rules = <const> [
   gram.valuesClause,
 ];
 
-export const subSelectParserBuilder = ParserBuilder.createBuilder(rules)
+export const subSelectParserBuilder = ParserBuilder.create(rules)
   .merge(expressionParserBuilder, <const> [])
   .patchRule(gram.builtInCall)
   .addMany(

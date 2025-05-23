@@ -2,7 +2,7 @@ import { ParserBuilder } from '@traqula/core';
 import { gram } from '@traqula/rules-sparql-1-1';
 import { objectListBuilder } from './objectListParser';
 
-export const triplesBlockParserBuilder = ParserBuilder.createBuilder(<const> [
+export const triplesBlockParserBuilder = ParserBuilder.create(<const> [
   gram.triplesBlock,
   gram.triplesSameSubjectPath,
   // VarOrTerm is included in the required ObjectList rule

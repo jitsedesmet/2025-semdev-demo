@@ -5,7 +5,7 @@ import { gram as g12 } from '@traqula/rules-sparql-1-2';
 import type { types as T12 } from '@traqula/rules-sparql-1-2';
 
 const sparql12GeneratorBuilder =
-  GeneratorBuilder.createBuilder(sparql11GeneratorBuilder).typePatch<{
+  GeneratorBuilder.create(sparql11GeneratorBuilder).typePatch<{
     [g11.query.name]: T12.Query;
     [g11.selectQuery.name]: Omit<T12.SelectQuery, g11.HandledByBase>;
     [g11.constructQuery.name]: Omit<T12.ConstructQuery, g11.HandledByBase>;

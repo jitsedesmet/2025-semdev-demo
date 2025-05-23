@@ -16,7 +16,7 @@ const rules = <const> [
   gram.prefixDecl,
 ];
 
-export const queryUnitParserBuilder = ParserBuilder.createBuilder(rules)
+export const queryUnitParserBuilder = ParserBuilder.create(rules)
   // Select Query
   .merge(subSelectParserBuilder, <const> [])
   .addRule(gram.datasetClause)

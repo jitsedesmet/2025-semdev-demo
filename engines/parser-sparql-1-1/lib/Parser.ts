@@ -99,7 +99,7 @@ const queryOrUpdate: SparqlGrammarRule<'queryOrUpdate', Query | Update | Pick<Up
   },
 };
 
-export const sparql11ParserBuilder = ParserBuilder.createBuilder(queryUnitParserBuilder)
+export const sparql11ParserBuilder = ParserBuilder.create(queryUnitParserBuilder)
   .merge(updateParserBuilder, <const> [])
   .deleteRule('queryUnit')
   .deleteRule('query')

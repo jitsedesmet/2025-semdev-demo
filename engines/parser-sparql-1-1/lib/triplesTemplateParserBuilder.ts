@@ -30,4 +30,4 @@ const rules = <const> [
   gram.graphNode,
 ];
 
-export const triplesTemplateParserBuilder = ParserBuilder.createBuilder(rules);
+export const triplesTemplateParserBuilder = ParserBuilder.create(rules);

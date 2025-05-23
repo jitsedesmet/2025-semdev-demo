@@ -12,7 +12,7 @@ const builtInPatch: typeof g11.builtInCall = {
   ]),
 };
 
-export const adjustBuilder = ParserBuilder.createBuilder(sparql11ParserBuilder)
+export const adjustBuilder = ParserBuilder.create(sparql11ParserBuilder)
   .addRule(gram.builtInAdjust)
   .addRule(gram.existingBuildInCall)
   .patchRule(builtInPatch);

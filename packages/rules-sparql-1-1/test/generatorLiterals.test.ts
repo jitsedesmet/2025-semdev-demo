@@ -11,7 +11,7 @@ describe('generatorLiterals', () => {
 
   function testLiteralParse(input: LiteralTerm, expected: string): void {
     it(`${input.value} -> ${expected}`, ({ expect }) => {
-      const generator = GeneratorBuilder.createBuilder(<const> [ gram.rdfLiteral, gram.string ]).build();
+      const generator = GeneratorBuilder.create(<const> [ gram.rdfLiteral, gram.string ]).build();
       expect(generator.rdfLiteral(input, undefined, undefined)).toBe(expected);
     });
   }

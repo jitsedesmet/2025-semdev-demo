@@ -48,7 +48,7 @@ const builtInPatch: typeof gram.builtInCall = {
   impl: ({ OR, SUBRULE }) => () => OR(gram.builtInCallList(SUBRULE).slice(0, -2)),
 };
 
-export const expressionParserBuilder = ParserBuilder.createBuilder(rulesNoBuiltIn)
+export const expressionParserBuilder = ParserBuilder.create(rulesNoBuiltIn)
   .addMany(
     gram.builtInContains,
     gram.builtInStrstarts,

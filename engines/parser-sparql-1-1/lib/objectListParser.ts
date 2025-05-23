@@ -28,4 +28,4 @@ const rules = <const> [
   gram.numericLiteralNegative,
 ];
 
-export const objectListBuilder = ParserBuilder.createBuilder(rules);
+export const objectListBuilder = ParserBuilder.create(rules);

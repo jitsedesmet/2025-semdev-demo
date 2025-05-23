@@ -10,7 +10,7 @@ import {
 import type { types as T12 } from '@traqula/rules-sparql-1-2';
 import { gram as S12, lex as l12 } from '@traqula/rules-sparql-1-2';
 
-export const sparql12ParserBuilder = ParserBuilder.createBuilder(sparql11ParserBuilder)
+export const sparql12ParserBuilder = ParserBuilder.create(sparql11ParserBuilder)
   .addRuleRedundant(g11.object)
   .typePatch<{
     /// GeneralFile

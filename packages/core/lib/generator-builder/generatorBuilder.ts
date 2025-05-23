@@ -19,16 +19,16 @@ export class GeneratorBuilder<Context, Names extends string, RuleDefs extends Ge
    * Create a GeneratorBuilder from some initial grammar rules or an existing GeneratorBuilder.
    * If a GeneratorBuilder is provided, a new copy will be created.
    */
-  public static createBuilder<Context, Names extends string, RuleDefs extends GenRuleMap<Names>>(
+  public static create<Context, Names extends string, RuleDefs extends GenRuleMap<Names>>(
     args: GeneratorBuilder<Context, Names, RuleDefs>
   ): GeneratorBuilder<Context, Names, RuleDefs>;
-  public static createBuilder<
+  public static create<
     Rules extends readonly GeneratorRule[] = readonly GeneratorRule[],
     Context = Rules[0] extends GeneratorRule<infer context> ? context : never,
     Names extends string = GenNamesFromList<Rules>,
     RuleDefs extends GenRuleMap<Names> = GenRulesToObject<Rules>,
   >(rules: Rules): GeneratorBuilder<Context, Names, RuleDefs>;
-  public static createBuilder<
+  public static create<
     Rules extends readonly GeneratorRule[] = readonly GeneratorRule[],
     Context = Rules[0] extends GeneratorRule<infer context> ? context : never,
     Names extends string = GenNamesFromList<Rules>,

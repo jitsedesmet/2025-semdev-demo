@@ -51,7 +51,7 @@ const rulesNoUpdate1 = <const>[
  * Top enable MODIFY, you need to path the update1 rule.
  */
 export const updateNoModifyParserBuilder = ParserBuilder
-  .createBuilder(rulesNoUpdate1)
+  .create(rulesNoUpdate1)
   .addRule(update1Patch)
   .merge(triplesTemplateParserBuilder, <const> [])
   .addRule(gram.quadPattern)

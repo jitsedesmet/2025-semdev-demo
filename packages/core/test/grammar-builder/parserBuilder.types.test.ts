@@ -22,16 +22,16 @@ const RuleC: ParserRule<Context, 'coconut', 'coconut'> = {
 describe('parserBuilder', () => {
   describe('types', () => {
     it('builder constructor', () => {
-      expectTypeOf(ParserBuilder.createBuilder(<const> [ RuleA ]))
+      expectTypeOf(ParserBuilder.create(<const> [ RuleA ]))
         .branded.toEqualTypeOf<ParserBuilder<Context, 'apple', { apple: typeof RuleA }>>();
-      expectTypeOf(ParserBuilder.createBuilder(<const> [ RuleB ]))
+      expectTypeOf(ParserBuilder.create(<const> [ RuleB ]))
         .branded.toEqualTypeOf<ParserBuilder<Context, 'banana', { banana: typeof RuleB }>>();
-      expectTypeOf(ParserBuilder.createBuilder(<const> [ RuleA, RuleB ]))
+      expectTypeOf(ParserBuilder.create(<const> [ RuleA, RuleB ]))
         .branded
         .toEqualTypeOf<ParserBuilder<Context, 'apple' | 'banana', { apple: typeof RuleA; banana: typeof RuleB }>>();
 
       // AddRule
-      expectTypeOf(ParserBuilder.createBuilder(<const> [ RuleA, RuleB ]).addRule(RuleC))
+      expectTypeOf(ParserBuilder.create(<const> [ RuleA, RuleB ]).addRule(RuleC))
         .branded.toEqualTypeOf<ParserBuilder<
         Context,
 'apple' | 'banana' | 'coconut',
@@ -40,14 +40,14 @@ describe('parserBuilder', () => {
 
       // Merge
       expectTypeOf(
-        ParserBuilder.createBuilder(<const> [ RuleA ])
-          .merge(ParserBuilder.createBuilder(<const> [ RuleB ]), <const> []),
+        ParserBuilder.create(<const> [ RuleA ])
+          .merge(ParserBuilder.create(<const> [ RuleB ]), <const> []),
       ).branded
         .toEqualTypeOf<ParserBuilder<Context, 'apple' | 'banana', { apple: typeof RuleA; banana: typeof RuleB }>>();
 
       expectTypeOf(
-        ParserBuilder.createBuilder(<const> [ RuleA, RuleB ])
-          .merge(ParserBuilder.createBuilder(<const> [ RuleB, RuleC ]), <const> []),
+        ParserBuilder.create(<const> [ RuleA, RuleB ])
+          .merge(ParserBuilder.create(<const> [ RuleB, RuleC ]), <const> []),
       ).branded
         .toEqualTypeOf<ParserBuilder<
           Context,
