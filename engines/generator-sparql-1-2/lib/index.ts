@@ -41,7 +41,7 @@ const sparql12GeneratorBuilder =
     [g11.expression.name]: T12.Expression;
     [g11.iriOrFunction.name]:
       T12.IriTerm | (Patch<g11.IArgList, { args: T12.Expression[] }> & { function: T12.IriTerm });
-    [g11.prologue.name]: Pick<T12.BaseQuery, 'base' | 'prefixes'>;
+    [g11.prologue.name]: Pick<T12.BaseQuery, 'base' | 'prefixes' | 'version'>;
 
     [g11.varOrTerm.name]: T12.Term;
     // [g11.var_.name]: unchanged;
@@ -74,12 +74,13 @@ const sparql12GeneratorBuilder =
     .addRule(g12.tripleTerm)
     .patchRule(g12.varOrTerm)
     .deleteRule(g11.graphTerm.name)
-    .patchRule(g12.dataBlockValue);
+    .patchRule(g12.dataBlockValue)
+    .patchRule(g12.prologue);
 
 export class Generator {
   private readonly generator = sparql12GeneratorBuilder.build();
 
-  public generate(ast: T12.Query | T12.Update | Pick<T12.Update, 'base' | 'prefixes'>): string {
+  public generate(ast: T12.Query | T12.Update | Pick<T12.Update, 'base' | 'prefixes' | 'version'>): string {
     if ('type' in ast) {
       if (ast.type === 'update') {
         return this.generator.update(ast, undefined, undefined);

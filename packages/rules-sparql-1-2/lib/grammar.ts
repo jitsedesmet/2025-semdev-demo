@@ -12,12 +12,86 @@ import type * as T11 from '@traqula/rules-sparql-1-1';
 import type { NamedNode } from 'rdf-data-factory';
 import * as l12 from './lexer';
 import type {
+  BaseQuery,
   BaseQuadTerm,
   Expression,
   IGraphNode,
   Term,
   Triple,
 } from './sparql12Types';
+
+/**
+ *[[7]](https://www.w3.org/TR/sparql12-query/#rVersionDecl)
+ */
+export const versionDecl: T11.SparqlGrammarRule<'versionDecl', string> = {
+  name: 'versionDecl',
+  impl: ({ SUBRULE, CONSUME }) => () => {
+    CONSUME(l12.version);
+    return SUBRULE(versionSpecifier, undefined);
+  },
+};
+
+/**
+ * [[8]](https://www.w3.org/TR/sparql12-query/#rVersionSpecifier)
+ */
+export const versionSpecifier: T11.SparqlGrammarRule<'versionSpecifier', string> = {
+  name: 'versionSpecifier',
+  impl: ({ CONSUME, OR }) => () => OR([
+    { ALT: () => CONSUME(l11.terminals.stringLiteral1).image.slice(1, -1) },
+    { ALT: () => CONSUME(l11.terminals.stringLiteral2).image.slice(1, -1) },
+  ]),
+};
+
+/**
+ * OVERRIDING RULE: {@link S11.string}.
+ * [[67]](https://www.w3.org/TR/sparql12-query/#rDataBlockValue)
+ */
+export const prologue: T11.SparqlRule<'prologue', Pick<BaseQuery, 'base' | 'prefixes' | 'version'>> = {
+  name: 'prologue',
+  impl: ({ ACTION, SUBRULE, MANY, OR }) => (C) => {
+    const result: Pick<BaseQuery, 'base' | 'prefixes' | 'version'> = ACTION(() => ({
+      version: undefined,
+      prefixes: {},
+      ...(C.baseIRI && { base: C.baseIRI }),
+    }));
+    MANY(() => {
+      OR([
+        { ALT: () => {
+          const base = SUBRULE(S11.baseDecl, undefined);
+          ACTION(() => result.base = base);
+        } },
+        { ALT: () => {
+          // TODO: the [spec](https://www.w3.org/TR/sparql11-query/#iriRefs) says you cannot redefine prefixes.
+          //  We might need to check this.
+          const pref = SUBRULE(S11.prefixDecl, undefined);
+          ACTION(() => {
+            const [ name, value ] = pref;
+            result.prefixes[name] = value;
+          });
+        } },
+        { ALT: () => {
+          const version = SUBRULE(versionDecl, undefined);
+          ACTION(() => result.version = version);
+        } },
+      ]);
+    });
+    return result;
+  },
+  gImpl: ({ SUBRULE }) => (ast) => {
+    const rules: string[] = [];
+    if (ast.base) {
+      rules.push(`BASE <${ast.base}>`);
+    }
+    // eslint-disable-next-line ts/no-unnecessary-type-assertion
+    for (const [ key, value ] of <[string, string][]> Object.entries(ast.prefixes)) {
+      rules.push(`PREFIX ${key}: <${value}>`);
+    }
+    if (ast.version) {
+      rules.push(`VERSION ${SUBRULE(S11.string, ast.version, undefined)}`);
+    }
+    return rules.join('\n');
+  },
+};
 
 function reifiedTripleBlockImpl<T extends string>(name: T, allowPath: boolean): T11.SparqlGrammarRule<T, Triple[]> {
   return <const> {

@@ -14,7 +14,7 @@ export const sparql12ParserBuilder = ParserBuilder.create(sparql11ParserBuilder)
   .addRuleRedundant(g11.object)
   .typePatch<{
     /// GeneralFile
-    queryOrUpdate: T12.Query | T12.Update | Pick<T12.Update, 'base' | 'prefixes'>;
+    queryOrUpdate: T12.Query | T12.Update | Pick<T12.Update, 'base' | 'prefixes' | 'version'>;
     /// Query Unit file
     [g11.selectQuery.name]: Omit<T12.SelectQuery, g11.HandledByBase>;
     [g11.subSelect.name]: Omit<T12.SelectQuery, 'prefixes'>;
@@ -133,7 +133,7 @@ export const sparql12ParserBuilder = ParserBuilder.create(sparql11ParserBuilder)
     [g11.iriOrFunction.name]:
       T12.IriTerm | (Patch<g11.IArgList, { args: T12.Expression[] }> & { function: T12.IriTerm });
     /// General
-    [g11.prologue.name]: Pick<T12.BaseQuery, 'base' | 'prefixes'>;
+    [g11.prologue.name]: Pick<T12.BaseQuery, 'base' | 'prefixes' | 'version'>;
     // [g11.baseDecl.name]: // unchanged;
     // [g11.prefixDecl.name]: // unchanged;
     // [g11.verb.name]: unchanged
@@ -235,6 +235,8 @@ export const sparql12ParserBuilder = ParserBuilder.create(sparql11ParserBuilder)
     S12.builtinSubject,
     S12.builtinPredicate,
     S12.builtinObject,
+    S12.versionDecl,
+    S12.versionSpecifier,
   )
   .patchRule(S12.dataBlockValue)
   .patchRule(S12.triplesSameSubject)
@@ -247,7 +249,8 @@ export const sparql12ParserBuilder = ParserBuilder.create(sparql11ParserBuilder)
   .deleteRule(g11.graphTerm.name)
   .patchRule(S12.primaryExpression)
   .patchRule(S12.builtInCall)
-  .patchRule(S12.rdfLiteral);
+  .patchRule(S12.rdfLiteral)
+  .patchRule(S12.prologue);
 
 export class Parser extends SparqlParser<T12.SparqlQuery> {
   public constructor() {

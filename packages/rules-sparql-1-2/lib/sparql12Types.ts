@@ -46,7 +46,7 @@ export type PropertyPath = NegatedPropertySet | {
 /**
  * Overrides {@link T11.SparqlQuery}
  */
-export type SparqlQuery = Query | Update | Pick<Update, 'base' | 'prefixes'>;
+export type SparqlQuery = Query | Update | Pick<Update, 'base' | 'prefixes' | 'version'>;
 
 /**
  * Overrides {@link T11.Query}
@@ -65,7 +65,7 @@ export type AskQuery = Patch<T11.AskQuery, BaseQuery>;
 
 export type DescribeQuery = Patch<T11.DescribeQuery, BaseQuery>;
 
-export type Update = Patch<T11.Update, { updates: UpdateOperation }>;
+export type Update = Patch<T11.Update, { updates: UpdateOperation }> & { version: string | undefined };
 
 /**
  * Overrides {@link T11.UpdateOperation}
@@ -119,7 +119,7 @@ export type BaseQuery = Patch<T11.BaseQuery, {
   having?: Expression[] | undefined;
   group?: Grouping[] | undefined;
   order: Ordering[] | undefined;
-}>;
+}> & { version: string | undefined };
 
 export type IriTermOrElt = T11.IriTermOrElt;
 export type NegatedPropertySet = T11.NegatedPropertySet;
