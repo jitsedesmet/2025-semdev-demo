@@ -1,5 +1,5 @@
 import type { CheckOverlap } from '../utils';
-import type { GeneratorFromRules, GenNamesFromList, GenRuleMap, GenRulesToObject } from './builderTypes';
+import type { GeneratorFromRules, GenRuleMap, GenRulesToObject, GenNamesFromList } from './builderTypes';
 import { DynamicGenerator } from './dynamicGenerator';
 import type { GeneratorRule } from './generatorTypes';
 
@@ -46,6 +46,10 @@ export class GeneratorBuilder<Context, Names extends string, RuleDefs extends Ge
 
   private constructor(startRules: RuleDefs) {
     this.rules = startRules;
+  }
+
+  public widenContext<NewContext extends Context>(): GeneratorBuilder<NewContext, Names, RuleDefs> {
+    return <GeneratorBuilder<NewContext, Names, RuleDefs>> <unknown> this;
   }
 
   public typePatch<Patch extends {[Key in Names]?: any }>():

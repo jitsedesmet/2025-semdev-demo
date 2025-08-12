@@ -1,67 +1,142 @@
-import * as path from 'node:path';
+import { Transformer } from '@traqula/core';
 import { Parser } from '@traqula/parser-sparql-1-2';
 import type * as T11 from '@traqula/rules-sparql-1-1';
-import type { types as T12 } from '@traqula/rules-sparql-1-2';
-import { positiveTest, readFile } from '@traqula/test-utils';
+import type * as T12 from '@traqula/rules-sparql-1-2';
+import { Factory } from '@traqula/rules-sparql-1-2';
 import { describe, it } from 'vitest';
 import { Generator } from '../lib';
 
 describe('a SPARQL 1.2 generator', () => {
   const generator = new Generator();
   const parser = new Parser();
-  const context: Partial<T11.SparqlContext> = {
-    prefixes: {
-      ex: 'http://example.org/',
-    },
-  };
+  const F = new Factory();
+  const transformer = new Transformer<T11.Sparql11Nodes>();
 
-  it ('should generate a simple query', ({ expect }) => {
+  it ('generates simple round tripped', ({ expect }) => {
     const query = 'SELECT * WHERE { ?s ?p ?o }';
-    const ast = <T12.Query> parser.parse(query);
-    const result = generator.generate(ast);
+    const ast = <T11.Query> parser.parse(query);
+    const result = generator.generate(ast, query);
     expect(result.replaceAll(/\s+/gu, ' ')).toBe(query);
   });
 
-  describe('positive paths', () => {
-    const suite = <const> 'paths';
-    for (const { name, statics } of positiveTest(suite)) {
-      it(`can regenerate ${name}`, async({ expect }) => {
-        const regenMatch = await readFile(path.join(__dirname, 'statics', suite, `${name}.sparql`), 'utf-8');
-        const { query } = await statics();
+  describe('on altered nodes', () => {
+    it('translates ?s -> ?subject', ({ expect }) => {
+      const query = 'SELECT * WHERE { ?s ?p ?o }';
+      const ast = <T11.Query> parser.parse(query);
 
-        const ast = parser.parsePath(query, context);
-        const regenQuery = generator.generatePath(ast);
-        // Await fsp.writeFile(path.join(__dirname, 'statics', suite, `${name}.sparql`), regenQuery, 'utf-8');
-        expect(regenQuery).toEqual(regenMatch);
-        expect(() => parser.parsePath(regenQuery, context)).not.toThrow();
-      });
-    }
+      const altered = transformer.transformNodeSpecific(
+        ast,
+        'term',
+        'variable',
+        (current) => {
+          if (current.value === 's') {
+            return F.variable('subject', F.sourceLocationNodeReplaceUnsafe(current.loc));
+          }
+          return current;
+        },
+      );
+
+      const result = generator.generate(altered, query);
+      expect(result).toBe(`SELECT * WHERE { ?subject ?p ?o }`);
+    });
+
+    it('translates blanknodes -> variables', ({ expect }) => {
+      const query = `
+BASE <ex:>
+CONSTRUCT { 
+  ?s0 ?p0 [ <a0> [ <b0> <c0> ] ].
+  [ <a0> [ <b0> <c0> ] ] ?p0 ?o0.
+}
+WHERE {
+  ?s1 ?p1 [], <a1>; ?q1 <b1>, <c1>.
+  []  ?p2 ?o2.
+  ?s3 ?p3 [ <a3> <b3> ].
+  ?s4 ?p4 [ <a4> <b4>; <c4> <d4>, <e4> ].
+  ?s5 ?p5 [ <a5> [ <b5> <c5> ] ].
+  [ <a6> [ <b6> <c6> ] ] ?p6 ?o6.
+  [ <a7> <b7>; <c7> <d7>, <e7> ].
+}`;
+      const ast = <T12.Query> parser.parse(query);
+
+      function extractCollection(collection: T11.TripleCollection): T12.TripleNesting[] {
+        const result: T12.TripleNesting[] = [];
+        for (const entry of collection.triples) {
+          const subject = entry.subject;
+          const pred = entry.predicate;
+          if (F.isTripleCollection(entry.object)) {
+            const identifier = { ...F.graphNodeIdentifier(entry.object) };
+            result.push(F.triple(subject, pred, identifier, F.gen()));
+            result.push(...extractCollection(entry.object));
+          } else {
+            result.push(F.triple(
+              subject,
+              pred,
+              entry.object,
+              F.gen(),
+            ));
+          }
+        }
+        return result;
+      }
+      const flattenCollections = transformer.transformNodeSpecific(
+        ast,
+        'pattern',
+        'bgp',
+        (current) => {
+          const bgpCopy = F.forcedAutoGenTree(current);
+          const newTriples: T12.TripleNesting[] = [];
+          for (const entry of bgpCopy.triples) {
+            if (F.isTriple(entry)) {
+              const subject = entry.subject;
+              const pred = entry.predicate;
+              if (F.isTripleCollection(entry.object)) {
+                const object = entry.object;
+                const identifier = { ...F.graphNodeIdentifier(object) };
+                newTriples.push(F.triple(subject, pred, identifier));
+                newTriples.push(...extractCollection(object));
+              } else {
+                newTriples.push(F.triple(
+                  subject,
+                  pred,
+                  entry.object,
+                  F.gen(),
+                ));
+              }
+            } else {
+              const genTriples = extractCollection(entry);
+              newTriples.push(...genTriples);
+            }
+          }
+          return F.patternBgp(<T11.BasicGraphPattern> newTriples, F.sourceLocationNodeReplaceUnsafe(current.loc));
+        },
+      );
+
+      const result = generator.generate(flattenCollections, query);
+      expect(result).toBe(`
+BASE <ex:>
+CONSTRUCT { 
+  ?s0 ?p0 _:g_0 . _:g_0 <a0> _:g_1 . _:g_1 <b0> <c0> . [ <a0> [ <b0> <c0> ; ] ; ] ?p0 ?o0 .
+}
+WHERE {
+  ?s1 ?p1 _:g_4 . ?s1 ?p1 <a1> . ?s1 ?q1 <b1> . ?s1 ?q1 <c1> . _:g_5 ?p2 ?o2 . ?s3 ?p3 _:g_6 . _:g_6 <a3> <b3> . ?s4 ?p4 _:g_7 . _:g_7 <a4> <b4> . _:g_7 <c4> <d4> . _:g_7 <c4> <e4> . ?s5 ?p5 _:g_8 . _:g_8 <a5> _:g_9 . _:g_9 <b5> <c5> . [ <a6> [ <b6> <c6> ; ] ; ] ?p6 ?o6 . _:g_12 <a7> <b7> . _:g_12 <c7> <d7> . _:g_12 <c7> <e7> .
+}`);
+    });
   });
 
-  describe('positive sparql', () => {
-    for (const suite of <const> [
-      'sparql-1-1',
-      'sparql-1-2',
-    ]) {
-      describe(suite, () => {
-        for (const { name, statics } of positiveTest(suite)) {
-          it(`can regenerate ${name}`, async({ expect, onTestFailed }) => {
-            const regenMatch = await readFile(path.join(__dirname, 'statics', suite, `${name}.sparql`), 'utf-8');
-            const { query } = await statics();
-
-            // eslint-disable-next-line no-console
-            onTestFailed(() => console.error('---- INPUT ----\n', query.replaceAll(/(^|(\n))/gu, '$1|')));
-            const ast = parser.parse(query, context);
-            const regenQuery = generator.generate(ast);
-            // eslint-disable-next-line no-console
-            onTestFailed(() => console.error('---- GENERATED ----\n', regenQuery.replaceAll(/(^|(\n))/gu, '$1|')));
-
-            // Await fsp.writeFile(path.join(__dirname, 'statics', suite, `${name}.sparql`), regenQuery, 'utf-8');
-            expect(regenQuery).toEqual(regenMatch);
-            expect(() => parser.parse(regenQuery, context)).not.toThrow();
-          });
-        }
-      });
-    }
+  it ('generates hand constructed query', ({ expect }) => {
+    const query = 'SELECT * WHERE { ?s ?p ?o . }';
+    const ast = F.querySelect({
+      variables: [ F.wildcard(F.gen()) ],
+      datasets: F.datasetClauses([], F.sourceLocation()),
+      context: [],
+      where: F.patternGroup([
+        F.patternBgp([
+          F.triple(F.variable('s', F.gen()), F.variable('p', F.gen()), F.variable('o', F.gen())),
+        ], F.gen()),
+      ], F.gen()),
+      solutionModifiers: {},
+    }, F.gen());
+    const result = generator.generate(ast);
+    expect(result).toBe(query);
   });
 });

@@ -3,8 +3,8 @@ import type { ImplArgs } from '@traqula/core';
 import {
   unCapitalize,
 } from '@traqula/core';
-import type { RuleDefExpressionFunctionX } from '../expressionHelpers';
 import {
+  funcExprOrNil1,
   baseAggregateFunc,
   funcExpr1,
   funcExpr2,
@@ -17,9 +17,17 @@ import {
   funcVar1,
 } from '../expressionHelpers';
 import * as l from '../lexer';
-import type { AggregateExpression, Expression, SparqlGrammarRule, SparqlRule } from '../Sparql11types';
+import type {
+  Expression,
+  ExpressionAggregate,
+  ExpressionAggregateDefault,
+  ExpressionAggregateOnWildcard,
+  ExpressionAggregateSeparator,
+  Wildcard,
+} from '../RoundTripTypes';
+import type { SparqlGrammarRule, SparqlRule } from '../Sparql11types';
 import { expression } from './expression';
-import { string } from './literals';
+import { string, stringEscapedLexical } from './literals';
 
 export const builtInStr = funcExpr1(l.builtIn.str);
 export const builtInLang = funcExpr1(l.builtIn.lang);
@@ -28,35 +36,7 @@ export const builtInDatatype = funcExpr1(l.builtIn.datatype);
 export const builtInBound = funcVar1(l.builtIn.bound);
 export const builtInIri = funcExpr1(l.builtIn.iri);
 export const builtInUri = funcExpr1(l.builtIn.uri);
-// Todo: so ugly, just to be compatible with sparqlJS
-export const builtInBnodeSparqlJs: RuleDefExpressionFunctionX<Uncapitalize<'builtInBnode'>, [] | [Expression]> = {
-  name: 'builtInBnode',
-  impl: ({ CONSUME, OR, SUBRULE }) => () => {
-    const operator = CONSUME(l.builtIn.bnode);
-    const args = OR<[] | [Expression]>([
-      {
-        ALT: () => {
-          CONSUME(l.symbols.LParen);
-          const arg = SUBRULE(expression, undefined);
-          CONSUME(l.symbols.RParen);
-          return [ arg ];
-        },
-      },
-      {
-        ALT: () => {
-          CONSUME(l.terminals.nil);
-          return [];
-        },
-      },
-    ]);
-    return {
-      type: 'operation',
-      operator: operator.image,
-      args,
-    };
-  },
-};
-// Export const builtInBnode = funcExprOrNil1(l.builtIn.bnode);
+export const builtInBnodeSparqlJs = funcExprOrNil1(l.builtIn.bnode);
 export const builtInRand = funcNil1(l.builtIn.rand);
 export const builtInAbs = funcExpr1(l.builtIn.abs);
 export const builtInCeil = funcExpr1(l.builtIn.ceil);
@@ -162,7 +142,7 @@ export function builtInCallList(SUBRULE: ImplArgs['SUBRULE']): IOrAlt<Expression
 /**
  * [[121]](https://www.w3.org/TR/sparql11-query/#rBuiltInCall)
  */
-export const builtInCall: SparqlGrammarRule<'builtInCall', Expression> = <const> {
+export const builtInCall: SparqlGrammarRule<'builtInCall', Expression> = <const>{
   name: 'builtInCall',
   impl: ({ OR, SUBRULE, cache }) => () => {
     const cached = <IOrAlt<Expression>[]>cache.get(builtInCall);
@@ -200,48 +180,99 @@ export const existsFunc = funcGroupGraphPattern(l.builtIn.exists);
  */
 export const notExistsFunc = funcGroupGraphPattern(l.builtIn.notexists);
 
-export const aggregateCount = baseAggregateFunc(l.builtIn.count);
+export const aggregateCount:
+SparqlGrammarRule<'builtInCount', ExpressionAggregateOnWildcard | ExpressionAggregateDefault> = {
+  name: unCapitalize(l.builtIn.count.name),
+  impl: ({ ACTION, CONSUME, SUBRULE, OR, OPTION }) => (C) => {
+    const operatorToken = CONSUME(l.builtIn.count);
+    CONSUME(l.symbols.LParen);
+    const distinctToken = OPTION(() => CONSUME(l.distinct));
+
+    const expressionVal = OR<Expression | Wildcard>([
+      { ALT: () => {
+        const starToken = CONSUME(l.symbols.star);
+        return ACTION(() => C.factory.wildcard(C.factory.sourceLocation(starToken)));
+      } },
+      { ALT: () => SUBRULE(expression, undefined) },
+    ]);
+    const closeToken = CONSUME(l.symbols.RParen);
+
+    return ACTION(() => {
+      const F = C.factory;
+      if (C.factory.isWildcard(expressionVal)) {
+        return F.aggregate(
+          operatorToken.image,
+          Boolean(distinctToken),
+          expressionVal,
+          undefined,
+          C.factory.sourceLocation(operatorToken, closeToken),
+        );
+      }
+      return F.aggregate(
+        operatorToken.image,
+        Boolean(distinctToken),
+        expressionVal,
+        undefined,
+        C.factory.sourceLocation(operatorToken, closeToken),
+      );
+    });
+  },
+};
 export const aggregateSum = baseAggregateFunc(l.builtIn.sum);
 export const aggregateMin = baseAggregateFunc(l.builtIn.min);
 export const aggregateMax = baseAggregateFunc(l.builtIn.max);
 export const aggregateAvg = baseAggregateFunc(l.builtIn.avg);
 export const aggregateSample = baseAggregateFunc(l.builtIn.sample);
-export const aggregateGroup_concat: SparqlGrammarRule<'builtInGroup_concat', AggregateExpression> = <const> {
+export const aggregateGroup_concat:
+SparqlGrammarRule<'builtInGroup_concat', ExpressionAggregateDefault | ExpressionAggregateSeparator> = <const>{
   name: unCapitalize(l.builtIn.groupConcat.name),
-  impl: ({ CONSUME, OPTION1, SUBRULE, OPTION2 }) => () => {
-    CONSUME(l.builtIn.groupConcat);
-    CONSUME(l.symbols.LParen);
-    const distinct = OPTION1(() => CONSUME(l.distinct));
-    const expr = SUBRULE(expression, undefined);
-    const separator = OPTION2(() => {
-      CONSUME(l.symbols.semi);
-      CONSUME(l.separator);
-      CONSUME(l.symbols.equal);
-      return SUBRULE(string, undefined);
-    }) ?? ' ';
-    CONSUME(l.symbols.RParen);
+  impl: ({ ACTION, CONSUME, OPTION1, SUBRULE, OPTION2 }) =>
+    (C) => {
+      const operatorToken = CONSUME(l.builtIn.groupConcat);
+      CONSUME(l.symbols.LParen);
+      const distinctToken = OPTION1(() => CONSUME(l.distinct));
 
-    return {
-      type: 'aggregate',
-      aggregation: 'group_concat',
-      expression: expr,
-      distinct: Boolean(distinct),
-      separator,
-    };
-  },
+      const expr = SUBRULE(expression, undefined);
+      const sep = OPTION2(() => {
+        CONSUME(l.symbols.semi);
+        CONSUME(l.separator);
+        CONSUME(l.symbols.equal);
+        return SUBRULE(string, undefined);
+      });
+      const closeToken = CONSUME(l.symbols.RParen);
+
+      return ACTION(() => {
+        const F = C.factory;
+        return sep ?
+          F.aggregate(
+            operatorToken.image,
+            Boolean(distinctToken),
+            expr,
+            sep.value,
+            F.sourceLocation(operatorToken, closeToken),
+          ) :
+          F.aggregate(
+            operatorToken.image,
+            Boolean(distinctToken),
+            expr,
+            undefined,
+            F.sourceLocation(operatorToken, closeToken),
+          );
+      });
+    },
 };
 
 /**
  * [[127]](https://www.w3.org/TR/sparql11-query/#rBuiltInCall)
  */
-export const aggregate: SparqlRule<'aggregate', AggregateExpression> = <const> {
+export const aggregate: SparqlRule<'aggregate', ExpressionAggregate> = <const>{
   name: 'aggregate',
   impl: ({ ACTION, SUBRULE, OR }) => (C) => {
     // https://www.w3.org/2013/sparql-errata#errata-query-5 - Or note 15 in SPARQL1.2 spec
     //  An aggregate function is not allowed within an aggregate function.
     const wasInAggregate = ACTION(() => C.parseMode.has('inAggregate'));
     ACTION(() => C.parseMode.add('inAggregate'));
-    const result = OR<AggregateExpression>([
+    const result = OR<ExpressionAggregate>([
       { ALT: () => SUBRULE(aggregateCount, undefined) },
       { ALT: () => SUBRULE(aggregateSum, undefined) },
       { ALT: () => SUBRULE(aggregateMin, undefined) },
@@ -263,20 +294,22 @@ export const aggregate: SparqlRule<'aggregate', AggregateExpression> = <const> {
 
     return result;
   },
-  gImpl: ({ SUBRULE }) => (ast) => {
-    const builder = [ ast.aggregation, '(' ];
-    if (ast.distinct) {
-      builder.push('DISTINCT');
-    }
-    if ('termType' in ast.expression && ast.expression.termType === 'Wildcard') {
-      builder.push('*');
+  gImpl: ({ SUBRULE, PRINT_WORD }) => (ast, { factory: F }) => {
+    F.printFilter(ast, () => {
+      PRINT_WORD(ast.aggregation, '(');
+      if (ast.distinct) {
+        PRINT_WORD('DISTINCT');
+      }
+    });
+    const arg = ast.expression[0];
+    if (F.isWildcard(arg)) {
+      F.printFilter(ast, () => PRINT_WORD('*'));
     } else {
-      builder.push(SUBRULE(expression, ast.expression, undefined));
+      SUBRULE(expression, arg, undefined);
     }
-    if (ast.separator !== undefined && ast.separator !== ' ') {
-      builder.push(';', 'SEPARATOR', '=', SUBRULE(string, ast.separator, undefined));
+    if (F.isExpressionAggregateSeparator(ast)) {
+      F.printFilter(ast, () => PRINT_WORD(';', 'SEPARATOR', '=', stringEscapedLexical(ast.separator)));
     }
-    builder.push(')');
-    return builder.join(' ');
+    F.printFilter(ast, () => PRINT_WORD(')'));
   },
 };

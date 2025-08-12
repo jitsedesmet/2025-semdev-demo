@@ -1,161 +1,380 @@
-import type * as RDF from '@rdfjs/types';
-import type { Patch } from '@traqula/core';
+import type { Localized, Node, Patch } from '@traqula/core';
 import type * as T11 from '@traqula/rules-sparql-1-1';
 
-export type BaseQuadTerm = RDF.BaseQuad & { subject: Term; predicate: Term; object: Term };
-export type GraphTerm = IriTerm | BlankTerm | LiteralTerm | BaseQuadTerm;
-export type Term = GraphTerm | VariableTerm;
+export type Sparql12Nodes =
+  | GraphRef
+  | UpdateOperation
+  | Update
+  | Query
+  | DatasetClauses
+  | TripleCollection
+  | TripleNesting
+  | Pattern
+  | SolutionModifier
+  | Expression
+  | Path
+  | ContextDefinition
+  | Wildcard
+  | Term;
 
-export type Expression = T11.Expression | BaseQuadTerm;
+export type GraphRefBase = T11.GraphRefBase;
+export type GraphRefDefault = T11.GraphRefDefault;
+export type GraphRefNamed = T11.GraphRefNamed;
+export type GraphRefAll = T11.GraphRefAll;
+export type GraphRefSpecific = T11.GraphRefSpecific;
+export type GraphRef = T11.GraphRef;
 
-// Overriding other types
-export type Triple = Patch<T11.Triple, { subject: Term; object: Term }>;
+export type Quads = PatternBgp | GraphQuads;
 
-export type IGraphNode = Patch<T11.IGraphNode, { triples: Triple[]; node: ITriplesNode['node'] | Term }>;
-
-export type ITriplesNode = Patch<T11.ITriplesNode, { triples: Triple[] }>;
-
-/**
- * Overrides {@link T11.Pattern}
- */
-export type Pattern =
-  | BgpPattern
-  | BlockPattern
-  | FilterPattern
-  | BindPattern
-  | ValuesPattern
-  | Omit<SelectQuery, 'prefixes'>;
-
-export type FunctionCallExpression = Patch<T11.FunctionCallExpression, { args: Expression[] }>;
-
-export type BgpPattern = Patch<T11.BgpPattern, { triples: Triple[] }>;
-
-export type GraphQuads = Patch<T11.GraphQuads, { triples: Triple[] }>;
-
-export type VariableTerm = T11.VariableTerm;
-export type IriTerm<IRI extends string = string> = T11.IriTerm<IRI>;
-export type LiteralTerm = T11.LiteralTerm;
-export type BlankTerm = T11.BlankTerm;
-
-export type PropertyPath = NegatedPropertySet | {
-  type: 'path';
-  pathType: '|' | '/' | '^' | '+' | '*' | '?';
-  items: (IriTerm | PropertyPath)[];
+export type GraphQuads = Node & {
+  type: 'graph';
+  graph: TermIri | TermVariable;
+  triples: PatternBgp;
 };
 
-/**
- * Overrides {@link T11.SparqlQuery}
- */
-export type SparqlQuery = Query | Update | Pick<Update, 'base' | 'prefixes' | 'version'>;
-
-/**
- * Overrides {@link T11.Query}
- */
-export type Query = SelectQuery | ConstructQuery | AskQuery | DescribeQuery;
-
-export type SelectQuery = Patch<T11.SelectQuery, BaseQuery>;
-
-export type Grouping = Patch<T11.Grouping, { expression: Expression }>;
-
-export type Ordering = Patch<T11.Ordering, { expression: Expression }>;
-
-export type ConstructQuery = Patch<T11.ConstructQuery, BaseQuery & { template?: Triple[] | undefined }>;
-
-export type AskQuery = Patch<T11.AskQuery, BaseQuery>;
-
-export type DescribeQuery = Patch<T11.DescribeQuery, BaseQuery>;
-
-export type Update = Patch<T11.Update, { updates: UpdateOperation }> & { version: string | undefined };
-
-/**
- * Overrides {@link T11.UpdateOperation}
- */
-export type UpdateOperation = InsertDeleteOperation | ManagementOperation;
-
-/**
- * Overrides {@link T11.InsertDeleteOperation}
- */
-export type InsertDeleteOperation = InsertOperation | DeleteOperation | ModifyOperation | DeleteWhereOperation;
-
-export type InsertOperation = Patch<T11.InsertOperation, { insert: Quads[] }>;
-
-export type DeleteOperation = Patch<T11.DeleteOperation, { delete: Quads[] }>;
-
-export type ModifyOperation = Patch<T11.ModifyOperation, {
+// https://www.w3.org/TR/sparql11-query/#rUpdate1
+export type UpdateOperationBase = Node & { type: 'updateOperation'; subType: string };
+export type UpdateOperationLoad = UpdateOperationBase & {
+  subType: 'load';
+  silent: boolean;
+  source: TermIri;
+  destination?: GraphRefSpecific;
+};
+type UpdateOperationClearDropCreateBase = UpdateOperationBase & {
+  subType: 'clear' | 'drop' | 'create';
+  silent: boolean;
+  destination: GraphRef;
+};
+export type UpdateOperationClear = UpdateOperationClearDropCreateBase & { subType: 'clear' };
+export type UpdateOperationDrop = UpdateOperationClearDropCreateBase & { subType: 'drop' };
+export type UpdateOperationCreate = UpdateOperationClearDropCreateBase & {
+  subType: 'create';
+  destination: GraphRefSpecific;
+};
+type UpdateOperationAddMoveCopy = UpdateOperationBase & {
+  subType: 'add' | 'move' | 'copy';
+  silent: boolean;
+  source: GraphRefDefault | GraphRefSpecific;
+  destination: GraphRefDefault | GraphRefSpecific;
+};
+export type UpdateOperationAdd = UpdateOperationAddMoveCopy & { subType: 'add' };
+export type UpdateOperationMove = UpdateOperationAddMoveCopy & { subType: 'move' };
+export type UpdateOperationCopy = UpdateOperationAddMoveCopy & { subType: 'copy' };
+type UpdateOperationInsertDeleteDelWhere = UpdateOperationBase & {
+  subType: 'insertdata' | 'deletedata' | 'deletewhere';
+  data: Quads[];
+};
+export type UpdateOperationInsertData = UpdateOperationInsertDeleteDelWhere & { subType: 'insertdata' };
+export type UpdateOperationDeleteData = UpdateOperationInsertDeleteDelWhere & { subType: 'deletedata' };
+export type UpdateOperationDeleteWhere = UpdateOperationInsertDeleteDelWhere & { subType: 'deletewhere' };
+export type UpdateOperationModify = UpdateOperationBase & {
+  subType: 'modify';
+  graph: TermIri | undefined;
   insert: Quads[];
   delete: Quads[];
+  from: DatasetClauses;
   where: Pattern[];
+};
+export type UpdateOperation =
+  | UpdateOperationLoad
+  | UpdateOperationClear
+  | UpdateOperationDrop
+  | UpdateOperationCreate
+  | UpdateOperationAdd
+  | UpdateOperationMove
+  | UpdateOperationCopy
+  | UpdateOperationInsertData
+  | UpdateOperationDeleteData
+  | UpdateOperationDeleteWhere
+  | UpdateOperationModify;
+
+// https://www.w3.org/TR/sparql11-query/#rUpdate
+export type Update = Node & {
+  type: 'update';
+  updates: {
+    operation?: UpdateOperation;
+    context: ContextDefinition[];
+  }[];
+};
+
+// https://www.w3.org/TR/sparql11-query/#rQueryUnit
+export type QueryBase = Node & {
+  type: 'query';
+  subType: string;
+
+  context: ContextDefinition[];
+  values?: PatternValues;
+  solutionModifiers: SolutionModifiers;
+  datasets: DatasetClauses;
+  where?: PatternGroup;
+};
+export type QuerySelect = QueryBase & {
+  subType: 'select';
+  variables: (TermVariable | PatternBind)[] | [Wildcard];
+  distinct?: true;
+  reduced?: true;
+  where: PatternGroup;
+};
+export type QueryConstruct = QueryBase & {
+  subType: 'construct';
+  template: PatternBgp;
+  where: PatternGroup;
+};
+export type QueryDescribe = QueryBase & {
+  subType: 'describe';
+  variables: (TermVariable | TermIri)[] | [Wildcard];
+};
+export type QueryAsk = QueryBase & {
+  subType: 'ask';
+  where: PatternGroup;
+};
+export type Query =
+  | QuerySelect
+  | QueryConstruct
+  | QueryDescribe
+  | QueryAsk;
+
+export type SparqlQuery = Query | Update;
+
+// https://www.w3.org/TR/sparql11-query/#rDatasetClause
+export type DatasetClauses = Node & {
+  type: 'datasetClauses';
+  clauses: { clauseType: 'default' | 'named'; value: TermIri }[];
+};
+
+// https://www.w3.org/TR/sparql11-query/#rGraphNode
+export type TripleCollectionBase = Node & {
+  type: 'tripleCollection';
+  subType: string;
+  triples: TripleNesting[];
+  identifier: Term;
+};
+/**
+ * Both subject and predicate of the triples do not have a string manifestation.
+ */
+export type TripleCollectionList = TripleCollectionBase & {
+  subType: 'list';
+  identifier: TermBlank;
+};
+/**
+ * The subject of the triples does not have a string manifestation.
+ */
+export type TripleCollectionBlankNodeProperties = Patch<T11.TripleCollectionBlankNodeProperties, {
+  triples: TripleNesting[];
+  identifier: TermBlank | TermVariable | TermIri;
 }>;
+export type TripleCollectionReifiedTriple = TripleCollectionBase & {
+  subType: 'reifiedTriple';
+  identifier: TermVariable | TermIri | TermBlank;
+};
 
-export type DeleteWhereOperation = Patch<T11.DeleteWhereOperation, { delete: Quads[] }>;
+export type TripleCollection =
+  | TripleCollectionList
+  | TripleCollectionBlankNodeProperties
+  | TripleCollectionReifiedTriple;
 
+// https://www.w3.org/TR/sparql11-query/#rGraphNode
+export type GraphNode = Term | TripleCollection;
+export type Annotation = TripleCollectionBlankNodeProperties | TermVariable | TermIri | TermBlank;
+// https://www.w3.org/TR/sparql11-query/#rTriplesBlock
+export type TripleNesting = Node & {
+  type: 'triple';
+  subject: GraphNode;
+  predicate: TermIri | TermVariable | Path;
+  object: GraphNode;
+  annotations?: Annotation[];
+};
+
+export type PatternBase = Node & { type: 'pattern'; subType: string };
+export type PatternFilter = PatternBase & {
+  subType: 'filter';
+  expression: Expression;
+};
+export type PatternMinus = PatternBase & {
+  subType: 'minus';
+  patterns: Pattern[];
+};
+
+export type PatternGroup = PatternBase & {
+  subType: 'group';
+  patterns: Pattern[];
+};
+export type PatternOptional = PatternBase & {
+  subType: 'optional';
+  patterns: Pattern[];
+};
+export type PatternGraph = PatternBase & {
+  subType: 'graph';
+  name: TermIri | TermVariable;
+  patterns: Pattern[];
+};
+export type PatternUnion = PatternBase & {
+  subType: 'union';
+  patterns: PatternGroup[];
+};
+export type BasicGraphPattern = (TripleNesting | TripleCollection)[];
+export type PatternBgp = PatternBase & {
+  subType: 'bgp';
+  /**
+   * Only the first appearance of a subject and predicate have a string manifestation
+   */
+  triples: BasicGraphPattern;
+};
+export type PatternBind = PatternBase & {
+  subType: 'bind';
+  expression: Expression;
+  variable: TermVariable;
+};
+export type PatternService = PatternBase & {
+  subType: 'service';
+  name: TermIri | TermVariable;
+  silent: boolean;
+  patterns: Pattern[];
+};
 /**
- * Overrides {@link T11.Quads}
+ * A single list of assignments maps the variable identifier to the value
  */
-export type Quads = BgpPattern | GraphQuads;
+export type ValuePatternRow = Record<string, TermIri | TermBlank | TermLiteral | undefined>;
+export type PatternValues = PatternBase & {
+  subType: 'values';
+  values: ValuePatternRow[];
+};
+export type SubSelect = QuerySelect;
 
-/**
- * Overrides {@link T11.ManagementOperation}
- */
-export type ManagementOperation =
-  | CopyMoveAddOperation
-  | LoadOperation
-  | CreateOperation
-  | ClearDropOperation;
+export type Pattern =
+  | PatternBgp
+  | PatternGroup
+  | PatternUnion
+  | PatternOptional
+  | PatternMinus
+  | PatternGraph
+  | PatternService
+  | PatternFilter
+  | PatternBind
+  | PatternValues
+  | SubSelect;
 
-export type CopyMoveAddOperation = T11.CopyMoveAddOperation;
-export type LoadOperation = T11.LoadOperation;
-export type CreateOperation = T11.CreateOperation;
-export type ClearDropOperation = T11.ClearDropOperation;
-export type GraphOrDefault = T11.GraphOrDefault;
-export type GraphReference = T11.GraphReference;
-export type Variable = T11.Variable;
+export type SolutionModifiers = {
+  group?: SolutionModifierGroup;
+  having?: SolutionModifierHaving;
+  order?: SolutionModifierOrder;
+  limitOffset?: SolutionModifierLimitOffset;
+};
+export type SolutionModifierBase = Node & { type: 'solutionModifier'; subType: string };
+export type SolutionModifierGroupBind = Localized & {
+  variable: TermVariable;
+  value: Expression;
+};
+export type SolutionModifierGroup = SolutionModifierBase & {
+  subType: 'group';
+  groupings: (Expression | SolutionModifierGroupBind)[];
+};
+export type SolutionModifierHaving = SolutionModifierBase & {
+  subType: 'having';
+  having: Expression[];
+};
+export type Ordering =
+  | Expression
+  | (Localized & { descending: boolean; expression: Expression });
+export type SolutionModifierOrder = SolutionModifierBase & {
+  subType: 'order';
+  orderDefs: Ordering[];
+};
+export type SolutionModifierLimitOffset = T11.SolutionModifierLimitOffset;
 
-export type VariableExpression = Patch<T11.VariableExpression, { expression: Expression }>;
+export type SolutionModifier =
+  | SolutionModifierGroup
+  | SolutionModifierHaving
+  | SolutionModifierOrder
+  | SolutionModifierLimitOffset;
 
-export type BaseQuery = Patch<T11.BaseQuery, {
-  where?: Pattern[] | undefined;
-  values?: ValuePatternRow[] | undefined;
-  having?: Expression[] | undefined;
-  group?: Grouping[] | undefined;
-  order: Ordering[] | undefined;
-}> & { version: string | undefined };
+export type ExpressionBase = Node & { type: 'expression'; subType: string };
 
-export type IriTermOrElt = T11.IriTermOrElt;
-export type NegatedPropertySet = T11.NegatedPropertySet;
+type ExpressionAggregateBase = ExpressionBase & {
+  subType: 'aggregate';
+  distinct: boolean;
+};
+export type ExpressionAggregateDefault = ExpressionAggregateBase & {
+  expression: [Expression];
+  aggregation: string;
+};
+export type ExpressionAggregateOnWildcard = ExpressionAggregateBase & {
+  expression: [Wildcard];
+  aggregation: string;
+};
+export type ExpressionAggregateSeparator = ExpressionAggregateBase & {
+  expression: [Expression];
+  aggregation: string;
+  separator: string;
+};
+export type ExpressionAggregate =
+  | ExpressionAggregateDefault
+  | ExpressionAggregateOnWildcard
+  | ExpressionAggregateSeparator;
 
-export type GroupPattern = Patch<T11.GroupPattern, { patterns: Pattern[] }>;
-export type GraphPattern = Patch<T11.GraphPattern, { patterns: Pattern[] }>;
-export type MinusPattern = Patch<T11.MinusPattern, { patterns: Pattern[] }>;
-export type ServicePattern = Patch<T11.ServicePattern, { patterns: Pattern[] }>;
+export type ExpressionOperation = ExpressionBase & {
+  subType: 'operation';
+  operator: string;
+  args: Expression[];
+};
 
-/**
- * Overrides {@link T11.BlockPattern}
- */
-export type BlockPattern =
-  | OptionalPattern
-  | UnionPattern
-  | GroupPattern
-  | GraphPattern
-  | MinusPattern
-  | ServicePattern;
+export type ExpressionPatternOperation = ExpressionBase & {
+  subType: 'patternOperation';
+  operator: string;
+  // Can be a pattern in case of exists and not exists
+  args: PatternGroup;
+};
 
-export type OptionalPattern = Patch<T11.OptionalPattern, { patterns: Pattern[] }>;
-export type UnionPattern = Patch<T11.UnionPattern, { patterns: Pattern[] }>;
+export type ExpressionFunctionCall = ExpressionBase & {
+  subType: 'functionCall';
+  function: TermIri;
+  distinct: boolean;
+  args: Expression[];
+};
 
-/**
- * Overrides {@link T11.ValuePatternRow}
- */
-export type ValuePatternRow = Record<string, IriTerm | BlankTerm | LiteralTerm | BaseQuery | undefined>;
+export type Expression =
+  | ExpressionOperation
+  | ExpressionPatternOperation
+  | ExpressionFunctionCall
+  | ExpressionAggregate
+  | TermIri
+  | TermVariable
+  | TermLiteral
+  | TermTriple;
 
-export type FilterPattern = Patch<T11.FilterPattern, { expression: Expression }>;
-export type BindPattern = Patch<T11.BindPattern, { expression: Expression }>;
-export type ValuesPattern = Patch<T11.ValuesPattern, { values: ValuePatternRow[] }>;
-export type BaseExpression = T11.BaseExpression;
+export type PropertyPathChain = T11.PropertyPathChain;
+export type PathModified = T11.PathModified;
+export type PathNegatedElt = T11.PathNegatedElt;
+export type PathAlternativeLimited = T11.PathAlternativeLimited;
+export type PathNegated = T11.PathNegated;
+// [[88]](https://www.w3.org/TR/sparql11-query/#rPath)
+export type Path = T11.Path;
 
-export type OperationExpression = Patch<T11.OperationExpression, BaseExpression & {
-  args: Expression[] | [Pattern];
-}>;
-export type AggregateExpression = Patch<T11.AggregateExpression, BaseExpression & {
-  expression: Expression | T11.Wildcard;
-}>;
+export type ContextDefinitionPrefix = T11.ContextDefinitionPrefix;
+export type ContextDefinitionBase = T11.ContextDefinitionBase;
+export type ContextDefinitionVersion = T11.ContextDefinitionBase_ & {
+  subType: 'version';
+  version: string;
+};
+export type ContextDefinition = T11.ContextDefinition | ContextDefinitionVersion;
+
+export type Wildcard = T11.Wildcard;
+export type TermLiteralStr = T11.TermLiteralStr;
+export type TermLiteralLangStr = T11.TermLiteralLangStr;
+export type TermLiteralTyped = T11.TermLiteralTyped;
+export type TermLiteral = T11.TermLiteral;
+export type TermVariable = T11.TermVariable;
+export type TermIriFull = T11.TermIriFull;
+export type TermIriPrefixed = T11.TermIriPrefixed;
+export type TermIri = T11.TermIri;
+export type TermBlank = T11.TermBlank;
+
+export type TermTriple = T11.TermBase & {
+  subType: 'triple';
+  subject: Term;
+  predicate: TermIri | TermVariable;
+  object: Term;
+};
+
+export type Term = GraphTerm | TermVariable;
+export type GraphTerm = TermIri | TermBlank | TermLiteral | TermTriple;

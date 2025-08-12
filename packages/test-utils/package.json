@@ -1,7 +1,7 @@
 {
   "name": "@traqula/test-utils",
   "type": "module",
-  "version": "0.0.1-alpha.138",
+  "version": "0.0.0",
   "description": "Test utils used by the Traqula monorepo",
   "lsd:module": true,
   "license": "MIT",
@@ -39,7 +39,6 @@
     "build:transpile": " node \"../../node_modules/esbuild/bin/esbuild\" --platform=node --format=cjs --bundle --log-level=error --outfile=lib/index.cjs lib/index.ts"
   },
   "dependencies": {
-    "@traqula/rules-sparql-1-1": "^0.0.1-alpha.138",
     "rdf-data-factory": "^2.0.1",
     "vitest": "*"
   },

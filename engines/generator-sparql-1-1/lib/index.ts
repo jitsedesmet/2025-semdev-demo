@@ -1,6 +1,17 @@
 import { GeneratorBuilder } from '@traqula/core';
-import { gram } from '@traqula/rules-sparql-1-1';
+import { gram, Factory } from '@traqula/rules-sparql-1-1';
 import type * as T11 from '@traqula/rules-sparql-1-1';
+
+const queryOrUpdate: T11.SparqlGeneratorRule<'queryOrUpdate', T11.Query | T11.Update> = {
+  name: 'queryOrUpdate',
+  gImpl: ({ SUBRULE }) => (ast, { factory: F }) => {
+    if (F.isQuery(ast)) {
+      SUBRULE(gram.query, ast, undefined);
+    } else {
+      SUBRULE(gram.update, ast, undefined);
+    }
+  },
+};
 
 export const sparql11GeneratorBuilder = GeneratorBuilder.create(<const> [
   gram.query,
@@ -8,9 +19,7 @@ export const sparql11GeneratorBuilder = GeneratorBuilder.create(<const> [
   gram.constructQuery,
   gram.describeQuery,
   gram.askQuery,
-  gram.valuesClause,
   gram.selectClause,
-  gram.constructTemplate,
 ])
   .addMany(
     gram.update,
@@ -26,15 +35,16 @@ export const sparql11GeneratorBuilder = GeneratorBuilder.create(<const> [
     gram.deleteData,
     gram.deleteWhere,
     gram.modify,
-    gram.graphOrDefault,
     gram.graphRef,
     gram.graphRefAll,
-    gram.quadData,
     gram.quads,
     gram.quadsNotTriples,
   )
   .addRule(gram.aggregate)
-  .addRule(gram.datasetClause)
+  .addMany(
+    gram.datasetClauseStar,
+    gram.usingClauseStar,
+  )
   .addMany(
     gram.argList,
     gram.expression,
@@ -42,55 +52,67 @@ export const sparql11GeneratorBuilder = GeneratorBuilder.create(<const> [
   )
   .addMany(
     gram.prologue,
+    gram.prefixDecl,
+    gram.baseDecl,
     gram.varOrTerm,
     gram.var_,
     gram.graphTerm,
   )
   .addMany(
     gram.rdfLiteral,
-    gram.string,
     gram.iri,
+    gram.iriFull,
+    gram.prefixedName,
     gram.blankNode,
   )
   .addRule(gram.path)
   .addMany(
     gram.solutionModifier,
     gram.groupClause,
-    gram.groupCondition,
     gram.havingClause,
     gram.orderClause,
-    gram.orderCondition,
     gram.limitOffsetClauses,
   )
-  .addRule(gram.triplesBlock)
   .addMany(
+    gram.triplesBlock,
+    gram.collectionPath,
+    gram.blankNodePropertyListPath,
+    gram.triplesNodePath,
+    gram.graphNodePath,
+  )
+  .addMany(
+    gram.whereClause,
+    gram.generatePattern,
     gram.groupGraphPattern,
     gram.graphPatternNotTriples,
     gram.optionalGraphPattern,
     gram.graphGraphPattern,
     gram.serviceGraphPattern,
     gram.bind,
-    gram.inlineDataFull,
-    gram.dataBlockValue,
+    gram.inlineData,
     gram.minusGraphPattern,
     gram.groupOrUnionGraphPattern,
     gram.filter,
-  );
+  )
+  .addRule(queryOrUpdate);
 
 export class Generator {
   private readonly generator = sparql11GeneratorBuilder.build();
+  private readonly factory = new Factory();
 
-  public generate(ast: T11.Query | T11.Update | Pick<T11.Update, 'base' | 'prefixes'>): string {
-    if ('type' in ast) {
-      if (ast.type === 'update') {
-        return this.generator.update(ast, undefined, undefined);
-      }
-      return this.generator.query(ast, undefined, undefined);
-    }
-    return this.generator.prologue(ast, undefined, undefined);
+  public generate(ast: T11.Query | T11.Update, origSource = ''): string {
+    return this.generator.queryOrUpdate(ast, {
+      factory: this.factory,
+      offset: 0,
+      origSource,
+    }, undefined);
   }
 
-  public generatePath(ast: T11.IriTerm | T11.PropertyPath): string {
-    return this.generator.path(ast, undefined, undefined);
+  public generatePath(ast: T11.Path, origSource = ''): string {
+    return this.generator.path(ast, {
+      factory: this.factory,
+      offset: 0,
+      origSource,
+    }, undefined);
   }
 }

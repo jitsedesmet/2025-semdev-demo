@@ -20,6 +20,7 @@ export const queryUnitParserBuilder = ParserBuilder.create(rules)
   // Select Query
   .merge(subSelectParserBuilder, <const> [])
   .addRule(gram.datasetClause)
+  .addRule(gram.datasetClauseStar)
   .addRule(gram.defaultGraphClause)
   .addRule(gram.namedGraphClause)
   .addRule(gram.sourceSelector)

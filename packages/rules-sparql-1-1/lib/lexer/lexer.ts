@@ -1,7 +1,7 @@
 /* eslint-disable require-unicode-regexp */
 import { LexerBuilder, createToken } from '@traqula/core';
-import { allBuiltInCalls, avg, datatype } from './BuildinCalls';
-import { allGraphTokens } from './graph';
+import { allBuiltInCalls, avg, datatype, groupConcat } from './BuildinCalls';
+import { allGraphTokens, graphAll } from './graph';
 import { allSymbols } from './symbols';
 import { allTerminals } from './terminals';
 
@@ -16,9 +16,10 @@ export const describe = createToken({ name: 'Describe', pattern: /describe/i, la
 export const ask = createToken({ name: 'Ask', pattern: /ask/i, label: 'ASK' });
 export const from = createToken({ name: 'From', pattern: /from/i, label: 'FROM' });
 export const where = createToken({ name: 'Where', pattern: /where/i, label: 'WHERE' });
-export const groupBy = createToken({ name: 'GroupBy', pattern: /group by/i, label: 'GROUP BY' });
+export const groupByGroup = createToken({ name: 'GroupByGroup', pattern: /group/i, label: '_GROUP_ BY' });
+export const by = createToken({ name: 'By', pattern: /by/i, label: 'BY' });
 export const having = createToken({ name: 'Having', pattern: /having/i, label: 'HAVING' });
-export const order = createToken({ name: 'Order', pattern: /order by/i, label: 'ORDER BY' });
+export const order = createToken({ name: 'Order', pattern: /order/i, label: '_ORDER_ BY' });
 export const orderAsc = createToken({ name: 'OrderAsc', pattern: /asc/i, label: 'ASC' });
 export const orderDesc = createToken({ name: 'OrderDesc', pattern: /desc/i, label: 'DESC' });
 export const limit = createToken({ name: 'Limit', pattern: /limit/i, label: 'LIMIT' });
@@ -50,7 +51,8 @@ export const a = createToken({ name: 'a', pattern: 'a', label: 'type declaration
 export const true_ = createToken({ name: 'True', pattern: /true/i, label: 'true' });
 export const false_ = createToken({ name: 'False', pattern: /false/i, label: 'false' });
 export const in_ = createToken({ name: 'In', pattern: /in/i, label: 'IN' });
-export const notIn = createToken({ name: 'NotIn', pattern: /not in/i, label: 'NOT IN' });
+// eslint-disable-next-line unicorn/better-regex,no-control-regex
+export const notIn = createToken({ name: 'NotIn', pattern: /not[\u0020\u0009\u000D\u000A]+in/i, label: 'NOT IN' });
 export const separator = createToken({ name: 'Separator', pattern: /separator/i, label: 'SEPARATOR' });
 
 export const allBaseTokens = LexerBuilder.create().add(
@@ -64,8 +66,9 @@ export const allBaseTokens = LexerBuilder.create().add(
   ask,
   from,
   where,
-  groupBy,
   having,
+  groupByGroup,
+  by,
   order,
   orderAsc,
   orderDesc,
@@ -113,4 +116,6 @@ export const sparql11Tokens = LexerBuilder
   .merge(allGraphTokens)
   .merge(allSymbols)
   .moveBefore(datatype, dataClause)
-  .moveAfter(avg, a);
+  .moveAfter(avg, a)
+  .moveBefore(a, graphAll)
+  .moveAfter(groupConcat, groupByGroup);

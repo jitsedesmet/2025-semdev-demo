@@ -11,9 +11,9 @@ describe('a SPARQL 1.1 + adjust parser', () => {
   describe('positive paths', () => {
     for (const { name, statics } of positiveTest('paths')) {
       it(`can parse ${name}`, async({ expect }) => {
-        const { query, result } = await statics();
+        const { query, ast } = await statics();
         const res: unknown = parser.parsePath(query, context);
-        expect(res).toEqualParsedQuery(result);
+        expect(res).toEqualParsedQuery(ast);
       });
     }
   });
@@ -21,9 +21,9 @@ describe('a SPARQL 1.1 + adjust parser', () => {
   describe('positive sparql 1.1', () => {
     for (const { name, statics } of positiveTest('sparql-1-1')) {
       it(`can parse ${name}`, async({ expect }) => {
-        const { query, result } = await statics();
+        const { query, ast } = await statics();
         const res: unknown = parser.parse(query, context);
-        expect(res).toEqualParsedQuery(result);
+        expect(res).toEqualParsedQuery(ast);
       });
     }
   });

@@ -1,3 +1,0 @@
- DELETE { ?S ?P ?O } WHERE {
- ?S ?P ?O FILTER ( isblank( ?S ) ) 
-}

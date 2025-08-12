@@ -1,11 +1,10 @@
-/* eslint-disable require-unicode-regexp,no-misleading-character-class,max-len */
+/* eslint-disable require-unicode-regexp,no-misleading-character-class,max-len,no-control-regex */
 import { LexerBuilder, createToken } from '@traqula/core';
 import { Lexer } from 'chevrotain';
 
 const pnCharsBasePattern = /[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD]|[\uD800-\uDB7F][\uDC00-\uDFFF]/;
 const pnCharsUPattern = new RegExp(`${pnCharsBasePattern.source}|_`);
 const varNamePattern = new RegExp(`((${pnCharsUPattern.source})|[0-9])((${pnCharsUPattern.source})|[0-9]|[\u00B7\u0300-\u036F\u203F-\u2040])*`);
-// eslint-disable-next-line no-control-regex
 const iriRefPattern = /<([^\u0000-\u0020"<>\\^`{|}])*>/;
 const pnCharsPattern = new RegExp(`(${pnCharsUPattern.source})|[\\-0-9\u00B7\u0300-\u036F\u203F-\u2040]`);
 const pnPrefixPattern = new RegExp(`(${pnCharsBasePattern.source})(((${pnCharsPattern.source})|\\.)*(${pnCharsPattern.source}))?`);
@@ -34,7 +33,6 @@ const stringLiteral1Pattern = new RegExp(`'(([^\\u0027\\u005C\\u000A\u000D])|(${
 const stringLiteral2Pattern = new RegExp(`"(([^\\u0022\\u005C\\u000A\\u000D])|(${echarPattern.source}))*"`);
 const stringLiteralLong1Pattern = new RegExp(`'''(('|(''))?([^'\\\\]|(${echarPattern.source})))*'''`);
 const stringLiteralLong2Pattern = new RegExp(`"""(("|(""))?([^"\\\\]|(${echarPattern.source})))*"""`);
-// eslint-disable-next-line no-control-regex
 const wsPattern = /[\u0009\u000A\u000D ]/;
 const nilPattern = new RegExp(`\\((${wsPattern.source})*\\)`);
 const anonPattern = new RegExp(`\\[(${wsPattern.source})*\\]`);

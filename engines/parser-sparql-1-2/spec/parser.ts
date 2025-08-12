@@ -1,4 +1,4 @@
-import type { SparqlContext } from '@traqula/rules-sparql-1-1';
+import type { SparqlContext } from '@traqula/rules-sparql-1-2';
 import { ErrorSkipped } from 'rdf-test-suite';
 import { Parser } from '../lib';
 

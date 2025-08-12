@@ -1,60 +1,40 @@
-import { CommonIRIs, resolveIRI } from '../grammar-helpers/utils';
+import { CommonIRIs } from '../grammar-helpers/utils';
 import * as l from '../lexer';
 import type {
+  ContextDefinition,
+  ContextDefinitionBase,
+  ContextDefinitionPrefix,
   GraphTerm,
   Term,
-  VerbA,
-  IriTerm,
-  VariableTerm,
-  BaseQuery,
-  SparqlGrammarRule,
-  SparqlRule,
-} from '../Sparql11types';
-import { blankNode, booleanLiteral, iri, numericLiteral, rdfLiteral } from './literals';
+  TermIri,
+  TermVariable,
+} from '../RoundTripTypes';
+import type { SparqlGrammarRule, SparqlRule } from '../Sparql11types';
+import { blankNode, booleanLiteral, iri, iriFull, numericLiteral, rdfLiteral, verbA } from './literals';
 
 /**
  * [[4]](https://www.w3.org/TR/sparql11-query/#rPrologue)
  */
-export const prologue: SparqlRule<'prologue', Pick<BaseQuery, 'base' | 'prefixes'>> = <const> {
+export const prologue: SparqlRule<'prologue', ContextDefinition[]> = <const> {
   name: 'prologue',
-  impl: ({ ACTION, SUBRULE, MANY, OR }) => (C) => {
-    const result: Pick<BaseQuery, 'base' | 'prefixes'> = ACTION(() => ({
-      prefixes: {},
-      ...(C.baseIRI && { base: C.baseIRI }),
-    }));
-    MANY(() => {
-      OR([
-        {
-          ALT: () => {
-            const base = SUBRULE(baseDecl, undefined);
-            ACTION(() => result.base = base);
-          },
-        },
-        {
-          ALT: () => {
-            // TODO: the [spec](https://www.w3.org/TR/sparql11-query/#iriRefs) says you cannot redefine prefixes.
-            //  We might need to check this.
-            const pref = SUBRULE(prefixDecl, undefined);
-            ACTION(() => {
-              const [ name, value ] = pref;
-              result.prefixes[name] = value;
-            });
-          },
-        },
-      ]);
-    });
+  impl: ({ SUBRULE, MANY, OR }) => () => {
+    const result: ContextDefinition[] = [];
+    MANY(() => OR([
+      { ALT: () => result.push(SUBRULE(baseDecl, undefined)) },
+      // TODO: the [spec](https://www.w3.org/TR/sparql11-query/#iriRefs) says you cannot redefine prefixes.
+      //  We might need to check this.
+      { ALT: () => result.push(SUBRULE(prefixDecl, undefined)) },
+    ]));
     return result;
   },
-  gImpl: () => (ast) => {
-    const rules: string[] = [];
-    if (ast.base) {
-      rules.push(`BASE <${ast.base}>`);
+  gImpl: ({ SUBRULE }) => (ast, { factory: F }) => {
+    for (const context of ast) {
+      if (F.isContextDefinitionBase(context)) {
+        SUBRULE(baseDecl, context, undefined);
+      } else if (F.isContextDefinitionPrefix(context)) {
+        SUBRULE(prefixDecl, context, undefined);
+      }
     }
-    // eslint-disable-next-line ts/no-unnecessary-type-assertion
-    for (const [ key, value ] of <[string, string][]> Object.entries(ast.prefixes)) {
-      rules.push(`PREFIX ${key}: <${value}>`);
-    }
-    return rules.join('\n');
   },
 };
 
@@ -62,15 +42,16 @@ export const prologue: SparqlRule<'prologue', Pick<BaseQuery, 'base' | 'prefixes
  * Registers base IRI in the context and returns it.
  * [[5]](https://www.w3.org/TR/sparql11-query/#rBaseDecl)
  */
-export const baseDecl: SparqlGrammarRule<'baseDecl', string> = <const> {
+export const baseDecl: SparqlRule<'baseDecl', ContextDefinitionBase> = <const> {
   name: 'baseDecl',
-  impl: ({ CONSUME, ACTION }) => (C) => {
-    CONSUME(l.baseDecl);
-    const base = CONSUME(l.terminals.iriRef).image.slice(1, -1);
-    return ACTION(() => {
-      C.baseIRI = base;
-      return base;
-    });
+  impl: ({ ACTION, CONSUME, SUBRULE }) => (C) => {
+    const base = CONSUME(l.baseDecl);
+    const val = SUBRULE(iriFull, undefined);
+    return ACTION(() => C.factory.contextDefinitionBase(C.factory.sourceLocation(base, val), val));
+  },
+  gImpl: ({ SUBRULE, PRINT_WORD }) => (ast, { factory: F }) => {
+    F.printFilter(ast, () => PRINT_WORD('BASE'));
+    SUBRULE(iri, ast.value, undefined);
   },
 };
 
@@ -78,40 +59,32 @@ export const baseDecl: SparqlGrammarRule<'baseDecl', string> = <const> {
  * Registers prefix in the context and returns registered key-value-pair.
  * [[6]](https://www.w3.org/TR/sparql11-query/#rPrefixDecl)
  */
-export const prefixDecl: SparqlGrammarRule<'prefixDecl', [string, string]> = <const> {
+export const prefixDecl: SparqlRule<'prefixDecl', ContextDefinitionPrefix> = <const> {
   name: 'prefixDecl',
-  impl: ({ CONSUME, ACTION }) => (C) => {
-    CONSUME(l.prefixDecl);
+  impl: ({ ACTION, CONSUME, SUBRULE }) => (C) => {
+    const prefix = CONSUME(l.prefixDecl);
     const name = CONSUME(l.terminals.pNameNs).image.slice(0, -1);
-    const value = CONSUME(l.terminals.iriRef).image.slice(1, -1);
+    const value = SUBRULE(iriFull, undefined);
 
-    return ACTION(() => {
-      const fullIri = resolveIRI(value, C.baseIRI);
-      C.prefixes[name] = fullIri;
-      return [ name, fullIri ];
+    return ACTION(() => C.factory.contextDefinitionPrefix(C.factory.sourceLocation(prefix, value), name, value));
+  },
+  gImpl: ({ SUBRULE, PRINT_WORDS }) => (ast, { factory: F }) => {
+    F.printFilter(ast, () => {
+      PRINT_WORDS('PREFIX', `${ast.key}:`);
     });
+    SUBRULE(iri, ast.value, undefined);
   },
 };
 
 /**
  * [[78]](https://www.w3.org/TR/sparql11-query/#rVerb)
  */
-export const verb: SparqlGrammarRule<'verb', VariableTerm | IriTerm> = <const> {
+export const verb: SparqlGrammarRule<'verb', TermVariable | TermIri> = <const> {
   name: 'verb',
   impl: ({ SUBRULE, OR }) => () => OR([
     { ALT: () => SUBRULE(varOrIri, undefined) },
-    {
-      ALT: () => SUBRULE(verbA, undefined),
-    },
+    { ALT: () => SUBRULE(verbA, undefined) },
   ]),
-};
-
-export const verbA: SparqlGrammarRule<'VerbA', VerbA> = <const> {
-  name: 'VerbA',
-  impl: ({ ACTION, CONSUME }) => (C) => {
-    CONSUME(l.a);
-    return ACTION(() => C.dataFactory.namedNode(CommonIRIs.TYPE));
-  },
 };
 
 /**
@@ -123,26 +96,20 @@ export const varOrTerm: SparqlRule<'varOrTerm', Term> = <const> {
     { GATE: () => C.parseMode.has('canParseVars'), ALT: () => SUBRULE(var_, undefined) },
     { ALT: () => SUBRULE(graphTerm, undefined) },
   ]),
-  gImpl: ({ SUBRULE }) => (ast) => {
-    if (ast.termType === 'Variable') {
+  gImpl: ({ SUBRULE }) => (ast, { factory: F }) => {
+    if (F.isTermVariable(ast)) {
       return SUBRULE(var_, ast, undefined);
     }
-    if (ast.termType === 'NamedNode') {
-      return SUBRULE(iri, <IriTerm> ast, undefined);
-    }
-    if (ast.termType === 'BlankNode') {
-      return SUBRULE(blankNode, ast, undefined);
-    }
-    return SUBRULE(rdfLiteral, ast, undefined);
+    return SUBRULE(graphTerm, ast, undefined);
   },
 };
 
 /**
  * [[107]](https://www.w3.org/TR/sparql11-query/#rVarOrIri)
  */
-export const varOrIri: SparqlGrammarRule<'varOrIri', IriTerm | VariableTerm> = <const> {
+export const varOrIri: SparqlGrammarRule<'varOrIri', TermIri | TermVariable> = <const> {
   name: 'varOrIri',
-  impl: ({ SUBRULE, OR }) => C => OR<IriTerm | VariableTerm>([
+  impl: ({ SUBRULE, OR }) => C => OR<TermIri | TermVariable>([
     { GATE: () => C.parseMode.has('canParseVars'), ALT: () => SUBRULE(var_, undefined) },
     { ALT: () => SUBRULE(iri, undefined) },
   ]),
@@ -151,21 +118,18 @@ export const varOrIri: SparqlGrammarRule<'varOrIri', IriTerm | VariableTerm> = <
 /**
  * [[108]](https://www.w3.org/TR/sparql11-query/#rVar)
  */
-export const var_: SparqlRule<'var', VariableTerm> = <const> {
+export const var_: SparqlRule<'var', TermVariable> = <const> {
   name: 'var',
   impl: ({ ACTION, CONSUME, OR }) => (C) => {
-    const varVal = OR([
-      { ALT: () => CONSUME(l.terminals.var1).image.slice(1) },
-      { ALT: () => CONSUME(l.terminals.var2).image.slice(1) },
+    const varToken = OR([
+      { ALT: () => CONSUME(l.terminals.var1) },
+      { ALT: () => CONSUME(l.terminals.var2) },
     ]);
-    ACTION(() => {
-      if (!C.parseMode.has('canParseVars')) {
-        throw new Error('Variables are not allowed here');
-      }
-    });
-    return ACTION(() => C.dataFactory.variable(varVal));
+    return ACTION(() => C.factory.variable(varToken.image.slice(1), C.factory.sourceLocation(varToken)));
   },
-  gImpl: () => ast => `?${ast.value}`,
+  gImpl: ({ PRINT_WORD }) => (ast, { factory: F }) => {
+    F.printFilter(ast, () => PRINT_WORD(`?${ast.value}`));
+  },
 };
 
 /**
@@ -179,21 +143,19 @@ export const graphTerm: SparqlRule<'graphTerm', GraphTerm> = <const> {
     { ALT: () => SUBRULE(numericLiteral, undefined) },
     { ALT: () => SUBRULE(booleanLiteral, undefined) },
     { GATE: () => C.parseMode.has('canCreateBlankNodes'), ALT: () => SUBRULE(blankNode, undefined) },
-    {
-      ALT: () => {
-        CONSUME(l.terminals.nil);
-        return ACTION(() => C.dataFactory.namedNode(CommonIRIs.NIL));
-      },
-    },
+    { ALT: () => {
+      const tokenNil = CONSUME(l.terminals.nil);
+      return ACTION(() =>
+        C.factory.namedNode(C.factory.sourceLocation(tokenNil), CommonIRIs.NIL));
+    } },
   ]),
-  gImpl: ({ SUBRULE }) => (ast) => {
-    switch (ast.termType) {
-      case 'BlankNode':
-        return SUBRULE(blankNode, ast, undefined);
-      case 'NamedNode':
-        return SUBRULE(iri, ast, undefined);
-      case 'Literal':
-        return SUBRULE(rdfLiteral, ast, undefined);
+  gImpl: ({ SUBRULE }) => (ast, { factory: F }) => {
+    if (F.isTermNamed(ast)) {
+      SUBRULE(iri, ast, undefined);
+    } else if (F.isTermLiteral(ast)) {
+      SUBRULE(rdfLiteral, ast, undefined);
+    } else if (F.isTermBlank(ast)) {
+      SUBRULE(blankNode, ast, undefined);
     }
   },
 };

@@ -11,6 +11,7 @@ const rules = <const> [
   gram.var_,
   gram.graphTerm,
   gram.iri,
+  gram.iriFull,
   gram.prefixedName,
   gram.rdfLiteral,
   gram.string,

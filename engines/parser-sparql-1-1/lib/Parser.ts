@@ -1,99 +1,77 @@
 import { ParserBuilder } from '@traqula/core';
-import type { Query, SparqlQuery, Update, SparqlGrammarRule } from '@traqula/rules-sparql-1-1';
-import { sparqlCodepointEscape, gram, lex as l, SparqlParser } from '@traqula/rules-sparql-1-1';
+import type * as T11 from '@traqula/rules-sparql-1-1';
+import {
+  sparqlCodepointEscape,
+  lex as l,
+  SparqlParser,
+  gram,
+  updateNoReuseBlankNodeLabels,
+} from '@traqula/rules-sparql-1-1';
 import { queryUnitParserBuilder } from './queryUnitParser';
 import { updateParserBuilder } from './updateUnitParser';
 
-// Create merge of
-// ```
-// Prologue
-// ( SelectQuery | ConstructQuery | DescribeQuery | AskQuery )
-// ValuesClause
-// ```
-// and:
-// ```
-// Prologue ( Update1 ( ';' Update )? )?
-// ```
-const queryOrUpdate: SparqlGrammarRule<'queryOrUpdate', Query | Update | Pick<Update, 'base' | 'prefixes'>> = {
+/**
+ * Query or update, optimized for the Query case.
+ * One could implement a new rule that does not use BACKTRACK.
+ */
+const queryOrUpdate: T11.SparqlGrammarRule<'queryOrUpdate', T11.SparqlQuery> = {
   name: 'queryOrUpdate',
-  impl: ({ ACTION, SUBRULE, SUBRULE2, OR1, OR2, CONSUME, OPTION1, MANY }) => () => {
+  impl: ({ ACTION, SUBRULE, OR1, OR2, MANY, OPTION1, CONSUME, SUBRULE2 }) => (C) => {
     const prologueValues = SUBRULE(gram.prologue, undefined);
-    return OR1<Query | Update | Pick<Update, 'base' | 'prefixes'>>([
+    return OR1<T11.Query | T11.Update>([
       { ALT: () => {
-        const queryType = OR2<Omit<Query, gram.HandledByBase>>([
+        const subType = OR2<Omit<T11.Query, T11.gram.HandledByBase>>([
           { ALT: () => SUBRULE(gram.selectQuery, undefined) },
           { ALT: () => SUBRULE(gram.constructQuery, undefined) },
           { ALT: () => SUBRULE(gram.describeQuery, undefined) },
           { ALT: () => SUBRULE(gram.askQuery, undefined) },
         ]);
         const values = SUBRULE(gram.valuesClause, undefined);
-        return ACTION(() => (<Query>{
-          ...prologueValues,
-          ...queryType,
+        return ACTION(() => (<T11.Query>{
+          context: prologueValues,
+          ...subType,
           type: 'query',
           ...(values && { values }),
+          loc: C.factory.sourceLocation(
+            prologueValues.at(0),
+            subType,
+            values,
+          ),
         }));
       } },
       { ALT: () => {
-        // Prologue ( Update1 ( ';' Update )? )?
-        // Is equivalent to:
-
+        const updates: T11.Update['updates'] = [];
+        updates.push({ context: prologueValues });
         let parsedSemi = true;
-        const updateResult: Update = {
-          ...prologueValues,
-          type: 'update',
-          updates: [],
-        };
         MANY({
           GATE: () => parsedSemi,
           DEF: () => {
             parsedSemi = false;
-            const updateOperation = SUBRULE(gram.update1, undefined);
-
-            updateResult.updates.push(updateOperation);
+            updates.at(-1)!.operation = SUBRULE(gram.update1, undefined);
 
             OPTION1(() => {
               CONSUME(l.symbols.semi);
-              const prologueValues = SUBRULE2(gram.prologue, undefined);
-
-              ACTION(() => {
-                updateResult.base = prologueValues.base ?? updateResult.base;
-                updateResult.prefixes = prologueValues.prefixes ?
-                    { ...updateResult.prefixes, ...prologueValues.prefixes } :
-                  updateResult.prefixes;
-              });
 
               parsedSemi = true;
+              const innerPrologue = SUBRULE2(gram.prologue, undefined);
+              updates.push({ context: innerPrologue });
             });
           },
         });
-
-        ACTION(() => {
-          const blankLabelsUsedInInsertData = new Set<string>();
-          for (const updateOperation of updateResult.updates) {
-            const iterBlankNodes = (callback: (blankNodeLabel: string) => void): void => {
-              if ('updateType' in updateOperation && updateOperation.updateType === 'insert') {
-                for (const quad of updateOperation.insert) {
-                  for (const triple of quad.triples) {
-                    for (const position of <const> [ 'subject', 'object' ]) {
-                      if (triple[position].termType === 'BlankNode') {
-                        callback(triple[position].value);
-                      }
-                    }
-                  }
-                }
-              }
-            };
-            iterBlankNodes((label) => {
-              if (blankLabelsUsedInInsertData.has(label)) {
-                throw new Error('Detected reuse blank node across different INSERT DATA clauses');
-              }
-            });
-            iterBlankNodes(label => blankLabelsUsedInInsertData.add(label));
-          }
+        return ACTION(() => {
+          const update = {
+            type: 'update',
+            updates,
+            loc: C.factory.sourceLocation(
+              ...updates[0].context,
+              updates[0].operation,
+              ...updates.at(-1)!.context,
+              updates.at(-1)?.operation,
+            ),
+          } satisfies T11.Update;
+          updateNoReuseBlankNodeLabels(update);
+          return update;
         });
-
-        return updateResult.updates.length > 0 ? updateResult : prologueValues;
       } },
     ]);
   },
@@ -101,20 +79,13 @@ const queryOrUpdate: SparqlGrammarRule<'queryOrUpdate', Query | Update | Pick<Up
 
 export const sparql11ParserBuilder = ParserBuilder.create(queryUnitParserBuilder)
   .merge(updateParserBuilder, <const> [])
-  .deleteRule('queryUnit')
-  .deleteRule('query')
-  .deleteRule('updateUnit')
-  .deleteRule('update')
   .addRule(queryOrUpdate);
 
-export class Parser extends SparqlParser<SparqlQuery> {
+export class Parser extends SparqlParser<T11.SparqlQuery> {
   public constructor() {
     const parser = sparql11ParserBuilder.build({
       tokenVocabulary: l.sparql11Tokens.tokenVocabulary,
       queryPreProcessor: sparqlCodepointEscape,
-      parserConfig: {
-        skipValidations: true,
-      },
     });
     super(parser);
   }

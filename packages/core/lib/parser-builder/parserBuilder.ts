@@ -1,13 +1,13 @@
 import type { ILexerConfig, IParserConfig, IRecognitionException } from '@chevrotain/types';
-import type { Lexer, TokenType, TokenVocabulary, EmbeddedActionsParser } from 'chevrotain';
+import type { TokenType, TokenVocabulary, EmbeddedActionsParser } from 'chevrotain';
 import { LexerBuilder } from '../lexer-builder/LexerBuilder';
 import type { CheckOverlap } from '../utils';
 import type {
   ParseMethodsFromRules,
-  ParseNamesFromList,
   ParserFromRules,
   ParseRuleMap,
   ParseRulesToObject,
+  ParseNamesFromList,
 } from './builderTypes';
 import { DynamicParser } from './dynamicParser';
 import type { ParserRule } from './ruleDefTypes';
@@ -53,6 +53,10 @@ export class ParserBuilder<Context, Names extends string, RuleDefs extends Parse
 
   private constructor(startRules: RuleDefs) {
     this.rules = startRules;
+  }
+
+  public widenContext<NewContext extends Context>(): ParserBuilder<NewContext, Names, RuleDefs> {
+    return <ParserBuilder<NewContext, Names, RuleDefs>> <unknown> this;
   }
 
   public typePatch<Patch extends {[Key in Names]?: any }>():
@@ -224,15 +228,20 @@ ${errorLine}`);
     queryPreProcessor?: (input: string) => string;
     errorHandler?: (errors: IRecognitionException[]) => void;
   }): ParserFromRules<Context, Names, RuleDefs> {
-    const lexer: Lexer = LexerBuilder.create().add(...tokenVocabulary).build(lexerConfig);
-
+    const lexer = LexerBuilder.create().add(...tokenVocabulary).build({
+      positionTracking: 'full',
+      recoveryEnabled: false,
+      // SafeMode: true,
+      // SkipValidations: true,
+      // ensureOptimizations: true,
+      ...lexerConfig,
+    });
     // Get the chevrotain parser
     const parser = this.consume({
       tokenVocabulary: <TokenType[]> tokenVocabulary,
       config: parserConfig,
     });
-
-    // Start building a parser accepts a string instead of tokenized input
+    // Start building a parser that does not pass input using a state, but instead gets it as a function argument.
     const selfSufficientParser: Partial<ParserFromRules<Context, Names, RuleDefs>> = {};
 
     // To do that, we need to create a wrapper for each parser rule.

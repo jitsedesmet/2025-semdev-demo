@@ -1,3 +1,0 @@
-BASE <ex:> ASK WHERE {
- _:g_0 <ex:> ?o 
-} 

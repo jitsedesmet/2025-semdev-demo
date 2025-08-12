@@ -1,30 +1,44 @@
 /* eslint-disable import/no-nodejs-modules,no-sync */
 import * as fs from 'node:fs';
-import fsp from 'node:fs/promises';
 import * as path from 'node:path';
+import { readFile } from '../fileUtils';
 
 interface PositiveTest {
   name: string;
   statics: () => Promise<{
     query: string;
-    result: unknown;
+    ast: unknown;
+    autoGen: string;
   }>;
 }
 
-export function* positiveTest(type: 'paths' | 'sparql-1-1' | 'sparql-1-2'): Generator<PositiveTest> {
+export function* positiveTest(
+  type: 'paths' | 'sparql-1-1' | 'sparql-1-2',
+  filter?: (name: string) => boolean,
+): Generator<PositiveTest> {
   const dir = path.join(__dirname, type);
   const statics = fs.readdirSync(dir);
   for (const file of statics) {
-    if (file.endsWith('.sparql')) {
+    if (file.endsWith('.json')) {
+      if (filter && !filter(file.replace('.json', ''))) {
+        continue;
+      }
       yield {
-        name: file.replace(/\.sparql$/u, ''),
+        name: file.replace(/\.json$/u, ''),
         statics: async() => {
-          const query = await fsp.readFile(`${dir}/${file}`, 'utf-8');
-          const result = await fsp.readFile(`${dir}/${file.replace('.sparql', '.json')}`, 'utf-8');
+          const query = await readFile(`${dir}/${file.replace('.json', '.sparql')}`);
+          const result = await readFile(`${dir}/${file}`);
+          let autoGen: string;
+          try {
+            autoGen = await readFile(`${dir}/${file.replace('.json', '-generated.sparql')}`);
+          } catch {
+            autoGen = query;
+          }
           const json: unknown = JSON.parse(result);
           return {
             query,
-            result: json,
+            ast: json,
+            autoGen,
           };
         },
       };
@@ -39,15 +53,21 @@ interface NegativeTest {
   }>;
 }
 
-export function* negativeTest(type: 'sparql-1-2-invalid'): Generator<NegativeTest> {
+export function* negativeTest(
+  type: 'sparql-1-2-invalid',
+  filter?: (name: string) => boolean,
+): Generator<NegativeTest> {
   const dir = path.join(__dirname, type);
   const statics = fs.readdirSync(dir);
   for (const file of statics) {
     if (file.endsWith('.sparql')) {
+      if (filter && !filter(file.replace('.sparql', ''))) {
+        continue;
+      }
       yield {
         name: file.replace(/\.sparql$/u, ''),
         statics: async() => {
-          const query = await fsp.readFile(`${dir}/${file}`, 'utf-8');
+          const query = await readFile(`${dir}/${file}`);
           return {
             query,
           };

@@ -1,19 +1,3 @@
-import type {
-  GroupPattern,
-  Pattern,
-  PropertyPath,
-  Term,
-  VariableTerm,
-} from './Sparql11types';
-
-export function deGroupSingle(group: GroupPattern): Pattern {
-  return group.patterns.length === 1 ? group.patterns[0] : group;
-}
-
-export function isVariable(term: Term | PropertyPath): term is VariableTerm {
-  return 'termType' in term && term.termType === 'Variable';
-}
-
 /**
  * Transform input in accordance to [19.2](https://www.w3.org/TR/sparql11-query/#codepointEscape)
  * and validate unicode codepoints.

@@ -17,14 +17,13 @@ export const adjustBuilder = ParserBuilder.create(sparql11ParserBuilder)
   .addRule(gram.existingBuildInCall)
   .patchRule(builtInPatch);
 
+export const lexerBuilder = LexerBuilder.create(l11.sparql11Tokens).addBefore(l11.a, lex.BuiltInAdjust);
+
 export class Parser extends SparqlParser<SparqlQuery> {
   public constructor() {
     const parser = adjustBuilder.build({
-      tokenVocabulary: LexerBuilder.create(l11.sparql11Tokens).addBefore(l11.a, lex.BuiltInAdjust).tokenVocabulary,
+      tokenVocabulary: lexerBuilder.tokenVocabulary,
       queryPreProcessor: sparqlCodepointEscape,
-      parserConfig: {
-        skipValidations: true,
-      },
     });
     super(parser);
   }
