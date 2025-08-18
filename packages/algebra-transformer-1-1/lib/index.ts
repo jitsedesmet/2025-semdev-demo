@@ -1,7 +1,9 @@
 import * as Algebra from './algebra';
-import { toSparql } from './algebraToAst/sparql';
 import Factory from './factory';
-import translate from './sparqlAlgebra';
+import translate from './toAlgebra/toAlgebra';
+import translate12 from './toAlgebra12/toAlgebra12';
+import { toSparql } from './toAst/toAst';
+import { toSparql12 } from './toAst12/toAst12';
 import Util from './util';
 
-export { translate, Algebra, Factory, toSparql, Util };
+export { translate, Algebra, Factory, toSparql, Util, translate12, toSparql12 };

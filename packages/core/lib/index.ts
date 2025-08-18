@@ -2,6 +2,9 @@
 export * from './generator-builder/builderTypes';
 export * from './generator-builder/generatorBuilder';
 export * from './generator-builder/generatorTypes';
+// Export Indirection Builder
+export * from './indirection-builder/helpers';
+export * from './indirection-builder/IndirBuilder';
 // Export lexer builder
 export * from './lexer-builder/LexerBuilder';
 // Export parser builder
@@ -10,7 +13,6 @@ export * from './parser-builder/parserBuilder';
 export * from './parser-builder/ruleDefTypes';
 // Export general types
 export * from './utils';
-export * from './RangeArithmetic';
 export * from './CoreFactory';
 export * from './nodeTypings';
 export * from './Transformer';
