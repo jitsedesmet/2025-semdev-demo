@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+<a name="v0.0.3"></a>
+## [v0.0.3](https://github.com/comunica/traqula/compare/v0.0.2...v0.0.3) - 2025-08-19
+
+* [Should use config entries in algebraTransformers](https://github.com/comunica/traqula/commit/3364dda03a79bb717fa291aa0c43268fc1c0d9de)
+
 <a name="v0.0.2"></a>
 ## [v0.0.2](https://github.com/comunica/traqula/compare/v0.0.1...v0.0.2) - 2025-08-19
 
