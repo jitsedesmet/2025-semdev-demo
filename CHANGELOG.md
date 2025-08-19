@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+<a name="v0.0.2"></a>
+## [v0.0.2](https://github.com/comunica/traqula/compare/v0.0.1...v0.0.2) - 2025-08-19
+
+* [Bugfix: package.json should export itself](https://github.com/comunica/traqula/commit/0a078b040d0789166f9d65899e4d5afad869d91e)
+
 <a name="v0.0.1"></a>
 ## [v0.0.1](https://github.com/comunica/traqula/compare/v0.0.1-alpha.138...v0.0.1) - 2025-08-18
 
