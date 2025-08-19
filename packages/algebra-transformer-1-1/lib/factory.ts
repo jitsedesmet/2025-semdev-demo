@@ -7,7 +7,7 @@ export default class Factory {
   public dataFactory: RDF.DataFactory<RDF.BaseQuad, RDF.BaseQuad>;
   public stringType: RDF.NamedNode;
 
-  public constructor(dataFactory?: RDF.DataFactory) {
+  public constructor(dataFactory?: RDF.DataFactory<RDF.BaseQuad>) {
     this.dataFactory = dataFactory ?? new DataFactory();
     this.stringType = <RDF.NamedNode> this.createTerm('http://www.w3.org/2001/XMLSchema#string');
   }

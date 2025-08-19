@@ -5,7 +5,7 @@ import type { PathPure, Sparql11Nodes } from '@traqula/rules-sparql-1-1';
 import { Factory as AstFactory } from '@traqula/rules-sparql-1-1';
 import { DataFactory } from 'rdf-data-factory';
 import * as Algebra from '../algebra';
-import type Factory from '../factory';
+import Factory from '../factory';
 
 export interface AlgebraContext {
   variables: Set<string>;
@@ -14,22 +14,30 @@ export interface AlgebraContext {
   factory: Factory;
   transformer: Transformer<Sparql11Nodes>;
   astFactory: AstFactory;
-  dataFactory: DataFactory<RDF.BaseQuad>;
+  dataFactory: RDF.DataFactory<RDF.BaseQuad> & { variable: Function };
   currentBase: string | undefined;
   currentPrefixes: Record<string, string>;
 }
 
-export function createAlgebraContext(factory: Factory): AlgebraContext {
+export interface ContextConfigs {
+  dataFactory?: RDF.DataFactory<RDF.BaseQuad> & { variable: Function };
+  quads?: boolean;
+  prefixes?: Record<string, string>;
+  baseIRI?: string;
+  blankToVariable?: boolean;
+}
+export function createAlgebraContext(config: ContextConfigs): AlgebraContext {
+  const dataFactory = config.dataFactory ?? new DataFactory<RDF.BaseQuad>();
   return {
     variables: new Set<string>(),
     varCount: 0,
     useQuads: false,
     transformer: new Transformer<Sparql11Nodes>(),
     astFactory: new AstFactory(),
-    dataFactory: new DataFactory(),
-    factory,
-    currentBase: undefined,
-    currentPrefixes: {},
+    dataFactory,
+    factory: new Factory(dataFactory),
+    currentBase: config.baseIRI,
+    currentPrefixes: config.prefixes ?? {},
   };
 }
 

@@ -3,9 +3,8 @@ import { IndirBuilder } from '@traqula/core';
 import type * as T11 from '@traqula/rules-sparql-1-1';
 import type { SparqlQuery, Term, TripleCollection, TripleNesting } from '@traqula/rules-sparql-1-2';
 import { termToString } from 'rdf-string';
-import Factory from '../factory';
 import type { Algebra } from '../index';
-import type { AlgebraIndir, FlattenedTriple } from '../toAlgebra/core';
+import type { AlgebraIndir, ContextConfigs, FlattenedTriple } from '../toAlgebra/core';
 import { createAlgebraContext } from '../toAlgebra/core';
 import { translateTerm } from '../toAlgebra/general';
 import type { translateQuery } from '../toAlgebra/toAlgebra';
@@ -108,14 +107,8 @@ export const sparqlAlgebraTransformerBuilder12 = IndirBuilder
  * @param options.blankToVariable - translate all blank nodes into variables
  * @returns Operation
  */
-export default function translate12(query: SparqlQuery, options: {
-  dataFactory?: RDF.DataFactory;
-  quads?: boolean;
-  prefixes?: Record<string, string>;
-  baseIRI?: string;
-  blankToVariable?: boolean;
-} = {}): Algebra.Operation {
-  const c = createAlgebraContext(new Factory(options.dataFactory));
+export default function translate12(query: SparqlQuery, options: ContextConfigs = {}): Algebra.Operation {
+  const c = createAlgebraContext(options);
   const transformer = sparqlAlgebraTransformerBuilder12.build();
   return transformer.translateQuery(c, query, options.quads, options.blankToVariable);
 }

@@ -1,11 +1,9 @@
-import type * as RDF from '@rdfjs/types';
 import { IndirBuilder } from '@traqula/core';
 import type { PatternGroup, SparqlQuery } from '@traqula/rules-sparql-1-1';
-import Factory from '../factory';
 import type { Algebra } from '../index';
 import { mapAggregate, translateAggregates, translateBoundAggregate } from './aggregate';
 import { createAlgebraContext } from './core';
-import type { AlgebraIndir } from './core';
+import type { AlgebraIndir, ContextConfigs } from './core';
 import {
   findAllVariables,
   generateFreshVar,
@@ -133,14 +131,8 @@ export const sparqlAlgebraTransformerBuilder = IndirBuilder
  * @param options.blankToVariable - translate all blank nodes into variables
  * @returns Operation
  */
-export default function translate(query: SparqlQuery, options: {
-  dataFactory?: RDF.DataFactory;
-  quads?: boolean;
-  prefixes?: Record<string, string>;
-  baseIRI?: string;
-  blankToVariable?: boolean;
-} = {}): Algebra.Operation {
-  const c = createAlgebraContext(new Factory(options.dataFactory));
+export default function translate(query: SparqlQuery, options: ContextConfigs = {}): Algebra.Operation {
+  const c = createAlgebraContext(options);
   const transformer = sparqlAlgebraTransformerBuilder.build();
   return transformer.translateQuery(c, query, options.quads, options.blankToVariable);
 }
