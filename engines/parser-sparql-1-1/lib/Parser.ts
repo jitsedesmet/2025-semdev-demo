@@ -14,7 +14,7 @@ import { updateParserBuilder } from './updateUnitParser';
  * Query or update, optimized for the Query case.
  * One could implement a new rule that does not use BACKTRACK.
  */
-const queryOrUpdate: T11.SparqlGrammarRule<'queryOrUpdate', T11.SparqlQuery> = {
+export const queryOrUpdate: T11.SparqlGrammarRule<'queryOrUpdate', T11.SparqlQuery> = {
   name: 'queryOrUpdate',
   impl: ({ ACTION, SUBRULE, OR1, OR2, MANY, OPTION1, CONSUME, SUBRULE2 }) => (C) => {
     const prologueValues = SUBRULE(gram.prologue, undefined);

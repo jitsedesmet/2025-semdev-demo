@@ -202,7 +202,7 @@ export class ParserBuilder<Context, Names extends string, RuleDefs extends Parse
     const firstError = errors[0];
     const messageBuilder: string[] = [ 'Parse error' ];
     const lineIdx = firstError.token.startLine;
-    if (lineIdx !== undefined) {
+    if (lineIdx !== undefined && !Number.isNaN(lineIdx)) {
       const errorLine = input.split('\n')[lineIdx - 1];
       messageBuilder.push(` on line ${lineIdx}
 ${errorLine}`);
@@ -250,6 +250,7 @@ ${errorLine}`);
       selfSufficientParser[rule.name] = <any> ((input: string, context: Context, arg: unknown) => {
         const processedInput = queryPreProcessor(input);
         const lexResult = lexer.tokenize(processedInput);
+        // Console.log(JSON.stringify(lexResult, null, 2));
 
         // This also resets the parser
         parser.input = lexResult.tokens;
