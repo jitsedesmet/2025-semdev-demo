@@ -10,7 +10,7 @@ export function unCapitalize<T extends string>(str: T): Uncapitalize<T> {
   return <Uncapitalize<T>> (str.charAt(0).toLowerCase() + str.slice(1));
 }
 
-export type NamedToken<Name extends string> = TokenType & { name: Name };
+export type NamedToken<Name extends string = string> = TokenType & { name: Name };
 
 export function createToken<Name extends string>(config: ITokenConfig & { name: Name }): NamedToken<Name> {
   return <TokenType & { name: Name }> chevcT(config);

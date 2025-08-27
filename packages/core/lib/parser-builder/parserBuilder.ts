@@ -202,7 +202,7 @@ export class ParserBuilder<Context, Names extends string, RuleDefs extends Parse
     const firstError = errors[0];
     const messageBuilder: string[] = [ 'Parse error' ];
     const lineIdx = firstError.token.startLine;
-    if (lineIdx !== undefined) {
+    if (lineIdx !== undefined && !Number.isNaN(lineIdx)) {
       const errorLine = input.split('\n')[lineIdx - 1];
       messageBuilder.push(` on line ${lineIdx}
 ${errorLine}`);
