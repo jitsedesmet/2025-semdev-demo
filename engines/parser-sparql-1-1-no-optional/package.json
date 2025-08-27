@@ -50,7 +50,8 @@
   "dependencies": {
     "@traqula/core": "^0.0.3",
     "@traqula/parser-sparql-1-1": "^0.0.3",
-    "@traqula/rules-sparql-1-1": "^0.0.3"
+    "@traqula/rules-sparql-1-1": "^0.0.3",
+    "chevrotain": "^11.0.3"
   },
   "devDependencies": {
     "@rdfjs/types": "^2.0.0",
