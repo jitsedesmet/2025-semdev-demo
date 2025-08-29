@@ -60,15 +60,22 @@
         },
         "annotations": [
           {
-            "type": "term",
-            "subType": "namedNode",
-            "value": "iri",
+            "val": {
+              "type": "term",
+              "subType": "namedNode",
+              "value": "iri",
+              "loc": {
+                "sourceLocationType": "source",
+                "start": 64,
+                "end": 68
+              },
+              "prefix": ""
+            },
             "loc": {
               "sourceLocationType": "source",
-              "start": 64,
+              "start": 62,
               "end": 68
-            },
-            "prefix": ""
+            }
           },
           {
             "type": "tripleCollection",

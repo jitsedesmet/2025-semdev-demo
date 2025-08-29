@@ -67,7 +67,6 @@ void,
       //  -> a blocks identifier only need to be registered when the identifier is not explicitly registered before.
       //  We register: <annotationNode, reifies, tripleNesting>
       // You cannot have an annotation on a triple that has paths
-
       const asTerm = dataFactory.quad(subject, <Exclude<typeof predicate, T11.PathPure>> predicate, object);
       const registered = new Set<string>();
       for (const annotation of triple.annotations) {
@@ -78,7 +77,7 @@ void,
             continue;
           }
         } else {
-          subject = SUBRULE(translateTerm12, annotation);
+          subject = SUBRULE(translateTerm12, annotation.val);
         }
         registered.add(termToString(subject));
         result.push({

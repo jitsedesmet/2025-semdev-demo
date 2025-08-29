@@ -1,4 +1,4 @@
-import type { Localized, Node, Patch } from '@traqula/core';
+import type { Localized, Node, Patch, Wrap } from '@traqula/core';
 import type * as T11 from '@traqula/rules-sparql-1-1';
 
 export type Sparql12Nodes =
@@ -175,7 +175,7 @@ export type TripleCollection =
 
 // https://www.w3.org/TR/sparql11-query/#rGraphNode
 export type GraphNode = Term | TripleCollection;
-export type Annotation = TripleCollectionBlankNodeProperties | TermVariable | TermIri | TermBlank;
+export type Annotation = TripleCollectionBlankNodeProperties | Wrap<TermVariable | TermIri | TermBlank>;
 // https://www.w3.org/TR/sparql12-query/#rTriplesBlock
 export type TripleNesting = Node & {
   type: 'triple';

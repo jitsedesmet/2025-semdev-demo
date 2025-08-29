@@ -61,14 +61,21 @@
         },
         "annotations": [
           {
-            "type": "term",
-            "subType": "blankNode",
+            "val": {
+              "type": "term",
+              "subType": "blankNode",
+              "loc": {
+                "sourceLocationType": "source",
+                "start": 66,
+                "end": 73
+              },
+              "label": "e_bnode"
+            },
             "loc": {
               "sourceLocationType": "source",
-              "start": 66,
+              "start": 64,
               "end": 73
-            },
-            "label": "e_bnode"
+            }
           },
           {
             "type": "tripleCollection",
@@ -195,14 +202,21 @@
             },
             "annotations": [
               {
-                "type": "term",
-                "subType": "blankNode",
+                "val": {
+                  "type": "term",
+                  "subType": "blankNode",
+                  "loc": {
+                    "sourceLocationType": "source",
+                    "start": 66,
+                    "end": 73
+                  },
+                  "label": "e_bnode"
+                },
                 "loc": {
                   "sourceLocationType": "source",
-                  "start": 66,
+                  "start": 64,
                   "end": 73
-                },
-                "label": "e_bnode"
+                }
               },
               {
                 "type": "tripleCollection",

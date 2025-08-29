@@ -4,7 +4,6 @@
  * Rules in this module redefine the return type of core grammar rules.
  * It is therefore essential that the parser retypes the rules from the core grammar.
  */
-
 import type { RuleDefReturn, Wrap } from '@traqula/core';
 import { CommonIRIs, funcExpr1, funcExpr3, gram as S11, lex as l11 } from '@traqula/rules-sparql-1-1';
 import type * as T11 from '@traqula/rules-sparql-1-1';
@@ -28,7 +27,7 @@ import type {
   TripleCollectionReifiedTriple,
   TripleNesting,
 } from './sparql12Types';
-import { langTagHasCorrectDomain } from './validator';
+import { langTagHasCorrectRange } from './validator';
 
 /**
  *[[7]](https://www.w3.org/TR/sparql12-query/#rVersionDecl)
@@ -64,7 +63,7 @@ export const versionSpecifier: SparqlGrammarRule<'versionSpecifier', Wrap<string
 
 /**
  * OVERRIDING RULE {@link S11.prologue}
- * [[8]](https://www.w3.org/TR/sparql12-query/#rVersionSpecifier)
+ * [[4]](https://www.w3.org/TR/sparql12-query/#rPrologue)
  */
 export const prologue: SparqlRule<'prologue', ContextDefinition[]> = {
   name: 'prologue',
@@ -132,16 +131,19 @@ SparqlGrammarRule<'dataBlockValue', RuleDefReturn<typeof S11.dataBlockValue> | T
 /**
  * [[70]](https://www.w3.org/TR/sparql12-query/#rReifier)
  */
-export const reifier: SparqlGrammarRule<'reifier', RuleDefReturn<typeof varOrReifierId>> = <const> {
+export const reifier: SparqlGrammarRule<'reifier', Wrap<RuleDefReturn<typeof varOrReifierId>>> = <const> {
   name: 'reifier',
   impl: ({ ACTION, CONSUME, SUBRULE, OPTION }) => (C) => {
-    CONSUME(l12.tilde);
+    const tildeToken = CONSUME(l12.tilde);
     const reifier = OPTION(() => SUBRULE(varOrReifierId, undefined));
     return ACTION(() => {
       if (reifier === undefined && !C.parseMode.has('canCreateBlankNodes')) {
         throw new Error('Cannot create blanknodes in current parse mode');
       }
-      return reifier ?? C.factory.blankNode(undefined, C.factory.sourceLocation());
+      return C.factory.wrap(
+        reifier ?? C.factory.blankNode(undefined, C.factory.sourceLocation()),
+        C.factory.sourceLocation(tildeToken, reifier),
+      );
     });
   },
 };
@@ -208,12 +210,12 @@ SparqlGrammarRule<T, TripleNesting, Pick<TripleNesting, 'subject' | 'predicate'>
 }
 /**
  * OVERRIDING RULE: {@link S11.object}.
- * [[84]](https://www.w3.org/TR/sparql12-query/#rObject) Used by ObjectList
+ * [[86]](https://www.w3.org/TR/sparql12-query/#rObject) Used by ObjectList
  */
 export const object = objectImpl('object', false);
 /**
  * OVERRIDING RULE: {@link S11.objectPath}.
- * [[91]](https://www.w3.org/TR/sparql12-query/#rTriplesSameSubjectPath) Used by ObjectListPath
+ * [[87]](https://www.w3.org/TR/sparql12-query/#rTriplesSameSubjectPath) Used by ObjectListPath
  */
 export const objectPath = objectImpl('objectPath', true);
 
@@ -229,7 +231,7 @@ function annotationImpl<T extends string>(name: T, allowPaths: boolean): SparqlR
           { ALT: () => {
             const node = SUBRULE(reifier, undefined);
             annotations.push(node);
-            currentReifier = node;
+            currentReifier = node.val;
           } },
           { ALT: () => {
             ACTION(() => {
@@ -253,18 +255,18 @@ function annotationImpl<T extends string>(name: T, allowPaths: boolean): SparqlR
     },
     gImpl: ({ SUBRULE, PRINT_WORD }) => (ast, { factory: F }) => {
       for (const annotation of ast) {
-        if (F.isTerm(annotation)) {
-          F.printFilter(annotation, () => PRINT_WORD('~'));
-          SUBRULE(graphNodePath, annotation, undefined);
-        } else {
+        if (F.isTripleCollectionBlankNodeProperties(annotation)) {
           SUBRULE(annotationBlockPath, annotation, undefined);
+        } else {
+          F.printFilter(annotation, () => PRINT_WORD('~'));
+          SUBRULE(graphNodePath, annotation.val, undefined);
         }
       }
     },
   };
 }
 /**
- * [[107]](https://www.w3.org/TR/sparql12-query/#rAnnotationPath)
+ * [[109]](https://www.w3.org/TR/sparql12-query/#rAnnotationPath)
  */
 export const annotationPath = annotationImpl('annotationPath', true);
 /**
@@ -320,7 +322,7 @@ export const annotationBlock = annotationBlockImpl('annotationBlock', false);
 
 /**
  * OVERRIDING RULE: {@link S11.graphNode}.
- * [[111]](https://www.w3.org/TR/sparql12-query/#rGraphNode)
+ * [[113]](https://www.w3.org/TR/sparql12-query/#rGraphNode)
  */
 export const graphNode: SparqlGrammarRule<'graphNode', GraphNode> = <const> {
   name: 'graphNode',
@@ -371,7 +373,7 @@ export const varOrTerm: SparqlGrammarRule<'varOrTerm', Term> = <const> {
 };
 
 /**
- * [[114]](https://www.w3.org/TR/sparql12-query/#rReifiedTriple)
+ * [[116]](https://www.w3.org/TR/sparql12-query/#rReifiedTriple)
  */
 export const reifiedTriple: SparqlRule<'reifiedTriple', TripleCollectionReifiedTriple> = <const> {
   name: 'reifiedTriple',
@@ -393,7 +395,7 @@ export const reifiedTriple: SparqlRule<'reifiedTriple', TripleCollectionReifiedT
         subject,
         predicate,
         object,
-        reifierVal,
+        reifierVal?.val,
       );
     });
   },
@@ -407,13 +409,13 @@ export const reifiedTriple: SparqlRule<'reifiedTriple', TripleCollectionReifiedT
       SUBRULE(graphNodePath, triple.predicate, undefined);
     }
     SUBRULE(graphNodePath, triple.object, undefined);
-    SUBRULE(annotationPath, [ ast.identifier ], undefined);
+    SUBRULE(annotationPath, [ F.wrap(ast.identifier, ast.identifier.loc) ], undefined);
     F.printFilter(ast, () => PRINT_WORD('>>'));
   },
 };
 
 /**
- * [[115]](https://www.w3.org/TR/sparql12-query/#rReifiedTripleSubject)
+ * [[117]](https://www.w3.org/TR/sparql12-query/#rReifiedTripleSubject)
  */
 export const reifiedTripleSubject:
 SparqlGrammarRule<'reifiedTripleSubject', Term | TripleCollectionReifiedTriple> = <const> {
@@ -431,7 +433,7 @@ SparqlGrammarRule<'reifiedTripleSubject', Term | TripleCollectionReifiedTriple> 
 };
 
 /**
- * [[116]](https://www.w3.org/TR/sparql12-query/#rReifiedTripleObject)
+ * [[118]](https://www.w3.org/TR/sparql12-query/#rReifiedTripleObject)
  */
 export const reifiedTripleObject:
 SparqlGrammarRule<'reifiedTripleObject', RuleDefReturn<typeof reifiedTripleSubject>> =
@@ -441,7 +443,7 @@ SparqlGrammarRule<'reifiedTripleObject', RuleDefReturn<typeof reifiedTripleSubje
   };
 
 /**
- * [[117]](https://www.w3.org/TR/sparql12-query/#rTripleTerm)
+ * [[119]](https://www.w3.org/TR/sparql12-query/#rTripleTerm)
  */
 export const tripleTerm: SparqlRule<'tripleTerm', TermTriple> = <const> {
   name: 'tripleTerm',
@@ -547,7 +549,7 @@ export const primaryExpression: SparqlGrammarRule<'primaryExpression', Expressio
 };
 
 /**
- * [[135]](https://www.w3.org/TR/sparql12-query/#rExprTripleTerm)
+ * [[137]](https://www.w3.org/TR/sparql12-query/#rExprTripleTerm)
  */
 export const exprTripleTerm: SparqlGrammarRule<'exprTripleTerm', TermTriple> = <const> {
   name: 'exprTripleTerm',
@@ -641,7 +643,7 @@ export const rdfLiteral: SparqlGrammarRule<'rdfLiteral', RuleDefReturn<typeof S1
             value.value,
             langTag.image.slice(1).toLowerCase(),
           );
-          langTagHasCorrectDomain(literal);
+          langTagHasCorrectRange(literal);
           return literal;
         });
       } },
