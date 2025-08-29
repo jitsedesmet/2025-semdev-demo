@@ -22,15 +22,15 @@ export type GeneratorRule<
   /**
    * Function arguments that can be given to convey the state of the current parse operation.
    */
-  ParamType = any,
+  ParamType extends any[] = any[],
 > = {
   name: NameType;
   gImpl: (def: RuleDefArg) =>
-  (ast: ReturnType, context: Context, params: ParamType) => void;
+  (ast: ReturnType, context: Context, ...params: ParamType) => void;
 };
 
 export interface RuleDefArg {
-  SUBRULE: <T, U>(cstDef: GeneratorRule<any, any, T, U>, input: T, arg: U) => void;
+  SUBRULE: <T, U extends any[]>(cstDef: GeneratorRule<any, any, T, U>, input: T, ...arg: U) => void;
   PRINT: (...args: string[]) => void;
   PRINT_SPACE_LEFT: (...args: string[]) => void;
   PRINT_WORD: (...args: string[]) => void;

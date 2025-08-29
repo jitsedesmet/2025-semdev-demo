@@ -29,7 +29,7 @@ import { inlineData, whereClause } from './whereClause';
  */
 export const queryUnit: SparqlGrammarRule<'queryUnit', Query> = <const> {
   name: 'queryUnit',
-  impl: ({ SUBRULE }) => () => SUBRULE(query, undefined),
+  impl: ({ SUBRULE }) => () => SUBRULE(query),
 };
 
 export type HandledByBase = 'type' | 'context' | 'values';
@@ -40,14 +40,14 @@ export type HandledByBase = 'type' | 'context' | 'values';
 export const query: SparqlRule<'query', Query> = <const> {
   name: 'query',
   impl: ({ ACTION, SUBRULE, OR }) => (C) => {
-    const prologueValues = SUBRULE(prologue, undefined);
+    const prologueValues = SUBRULE(prologue);
     const subType = OR<Omit<Query, HandledByBase>>([
-      { ALT: () => SUBRULE(selectQuery, undefined) },
-      { ALT: () => SUBRULE(constructQuery, undefined) },
-      { ALT: () => SUBRULE(describeQuery, undefined) },
-      { ALT: () => SUBRULE(askQuery, undefined) },
+      { ALT: () => SUBRULE(selectQuery) },
+      { ALT: () => SUBRULE(constructQuery) },
+      { ALT: () => SUBRULE(describeQuery) },
+      { ALT: () => SUBRULE(askQuery) },
     ]);
-    const values = SUBRULE(valuesClause, undefined);
+    const values = SUBRULE(valuesClause);
 
     return ACTION(() => (<Query>{
       context: prologueValues,
@@ -62,18 +62,18 @@ export const query: SparqlRule<'query', Query> = <const> {
     }));
   },
   gImpl: ({ SUBRULE }) => (ast, { factory: F }) => {
-    SUBRULE(prologue, ast.context, undefined);
+    SUBRULE(prologue, ast.context);
     if (F.isQuerySelect(ast)) {
-      SUBRULE(selectQuery, ast, undefined);
+      SUBRULE(selectQuery, ast);
     } else if (F.isQueryConstruct(ast)) {
-      SUBRULE(constructQuery, ast, undefined);
+      SUBRULE(constructQuery, ast);
     } else if (F.isQueryDescribe(ast)) {
-      SUBRULE(describeQuery, ast, undefined);
+      SUBRULE(describeQuery, ast);
     } else if (F.isQueryAsk(ast)) {
-      SUBRULE(askQuery, ast, undefined);
+      SUBRULE(askQuery, ast);
     }
     if (ast.values) {
-      SUBRULE(inlineData, ast.values, undefined);
+      SUBRULE(inlineData, ast.values);
     }
   },
 };
@@ -84,10 +84,10 @@ export const query: SparqlRule<'query', Query> = <const> {
 export const selectQuery: SparqlRule<'selectQuery', Omit<QuerySelect, HandledByBase>> = <const> {
   name: 'selectQuery',
   impl: ({ ACTION, SUBRULE }) => (C) => {
-    const selectVal = SUBRULE(selectClause, undefined);
-    const from = SUBRULE(datasetClauseStar, undefined);
-    const where = SUBRULE(whereClause, undefined);
-    const modifiers = SUBRULE(solutionModifier, undefined);
+    const selectVal = SUBRULE(selectClause);
+    const from = SUBRULE(datasetClauseStar);
+    const where = SUBRULE(whereClause);
+    const modifiers = SUBRULE(solutionModifier);
 
     return ACTION(() => {
       const ret = {
@@ -114,10 +114,10 @@ export const selectQuery: SparqlRule<'selectQuery', Omit<QuerySelect, HandledByB
       variables: ast.variables,
       distinct: ast.distinct,
       reduced: ast.reduced,
-    }, F.sourceLocation(...ast.variables)), undefined);
-    SUBRULE(datasetClauseStar, ast.datasets, undefined);
-    SUBRULE(whereClause, F.wrap(ast.where, ast.where.loc), undefined);
-    SUBRULE(solutionModifier, ast.solutionModifiers, undefined);
+    }, F.sourceLocation(...ast.variables)));
+    SUBRULE(datasetClauseStar, ast.datasets);
+    SUBRULE(whereClause, F.wrap(ast.where, ast.where.loc));
+    SUBRULE(solutionModifier, ast.solutionModifiers);
   },
 };
 
@@ -127,10 +127,10 @@ export const selectQuery: SparqlRule<'selectQuery', Omit<QuerySelect, HandledByB
 export const subSelect: SparqlGrammarRule<'subSelect', SubSelect> = <const> {
   name: 'subSelect',
   impl: ({ ACTION, SUBRULE }) => (C) => {
-    const selectVal = SUBRULE(selectClause, undefined);
-    const where = SUBRULE(whereClause, undefined);
-    const modifiers = SUBRULE(solutionModifier, undefined);
-    const values = SUBRULE(valuesClause, undefined);
+    const selectVal = SUBRULE(selectClause);
+    const where = SUBRULE(whereClause);
+    const modifiers = SUBRULE(solutionModifier);
+    const values = SUBRULE(valuesClause);
 
     return ACTION(() => C.factory.querySelect({
       where: where.val,
@@ -202,7 +202,7 @@ export const selectClause: SparqlRule<'selectClause', Wrap<Pick<QuerySelect, 'va
         const variables: (TermVariable | PatternBind)[] = [];
         AT_LEAST_ONE(() => OR3([
           { ALT: () => {
-            const raw = SUBRULE1(var_, undefined);
+            const raw = SUBRULE1(var_);
             ACTION(() => {
               if (usedVars.some(v => v.value === raw.value)) {
                 throw new Error(`Variable ${raw.value} used more than once in SELECT clause`);
@@ -214,9 +214,9 @@ export const selectClause: SparqlRule<'selectClause', Wrap<Pick<QuerySelect, 'va
           } },
           { ALT: () => {
             const open = CONSUME(l.symbols.LParen);
-            const expr = SUBRULE1(expression, undefined);
+            const expr = SUBRULE1(expression);
             CONSUME(l.as);
-            const variable = SUBRULE2(var_, undefined);
+            const variable = SUBRULE2(var_);
             const close = CONSUME(l.symbols.RParen);
             ACTION(() => {
               last = close;
@@ -247,12 +247,12 @@ export const selectClause: SparqlRule<'selectClause', Wrap<Pick<QuerySelect, 'va
       if (F.isWildcard(variable)) {
         F.printFilter(ast, () => PRINT_WORD('*'));
       } else if (F.isTerm(variable)) {
-        SUBRULE(var_, variable, undefined);
+        SUBRULE(var_, variable);
       } else {
         F.printFilter(ast, () => PRINT_WORD('('));
-        SUBRULE(expression, variable.expression, undefined);
+        SUBRULE(expression, variable.expression);
         F.printFilter(ast, () => PRINT_WORD('AS'));
-        SUBRULE(var_, variable.variable, undefined);
+        SUBRULE(var_, variable.variable);
         F.printFilter(ast, () => PRINT_WORD(')'));
       }
     }
@@ -268,10 +268,10 @@ export const constructQuery: SparqlRule<'constructQuery', Omit<QueryConstruct, H
     const construct = CONSUME(l.construct);
     return OR<Omit<QueryConstruct, HandledByBase>>([
       { ALT: () => {
-        const template = SUBRULE1(constructTemplate, undefined);
-        const from = SUBRULE1(datasetClauseStar, undefined);
-        const where = SUBRULE1(whereClause, undefined);
-        const modifiers = SUBRULE1(solutionModifier, undefined);
+        const template = SUBRULE1(constructTemplate);
+        const from = SUBRULE1(datasetClauseStar);
+        const where = SUBRULE1(whereClause);
+        const modifiers = SUBRULE1(solutionModifier);
         return ACTION(() => ({
           subType: 'construct',
           template: template.val,
@@ -289,11 +289,11 @@ export const constructQuery: SparqlRule<'constructQuery', Omit<QueryConstruct, H
         } satisfies Omit<QueryConstruct, HandledByBase>));
       } },
       { ALT: () => {
-        const from = SUBRULE2(datasetClauseStar, undefined);
+        const from = SUBRULE2(datasetClauseStar);
         CONSUME(l.where);
         // ConstructTemplate is same as '{' TriplesTemplate? '}'
-        const template = SUBRULE2(constructTemplate, undefined);
-        const modifiers = SUBRULE2(solutionModifier, undefined);
+        const template = SUBRULE2(constructTemplate);
+        const modifiers = SUBRULE2(solutionModifier);
 
         return ACTION(() => ({
           subType: 'construct',
@@ -318,16 +318,16 @@ export const constructQuery: SparqlRule<'constructQuery', Omit<QueryConstruct, H
     if (!F.isSourceLocationNoMaterialize(ast.where.loc)) {
       // You are NOT in second case construct
       F.printFilter(ast, () => PRINT_WORD('{'));
-      SUBRULE(triplesBlock, ast.template, undefined);
+      SUBRULE(triplesBlock, ast.template);
       F.printFilter(ast, () => PRINT_WORD('}'));
     }
-    SUBRULE(datasetClauseStar, ast.datasets, undefined);
+    SUBRULE(datasetClauseStar, ast.datasets);
     if (F.isSourceLocationNoMaterialize(ast.where.loc)) {
-      SUBRULE(whereClause, F.wrap(F.patternGroup([ ast.template ], ast.template.loc), ast.template.loc), undefined);
+      SUBRULE(whereClause, F.wrap(F.patternGroup([ ast.template ], ast.template.loc), ast.template.loc));
     } else {
-      SUBRULE(whereClause, F.wrap(ast.where, ast.where.loc), undefined);
+      SUBRULE(whereClause, F.wrap(ast.where, ast.where.loc));
     }
-    SUBRULE(solutionModifier, ast.solutionModifiers, undefined);
+    SUBRULE(solutionModifier, ast.solutionModifiers);
   },
 };
 
@@ -342,7 +342,7 @@ export const describeQuery: SparqlRule<'describeQuery', Omit<QueryDescribe, Hand
       { ALT: () => {
         const variables: (TermVariable | TermIri)[] = [];
         AT_LEAST_ONE(() => {
-          variables.push(SUBRULE1(varOrIri, undefined));
+          variables.push(SUBRULE1(varOrIri));
         });
         return variables;
       } },
@@ -351,9 +351,9 @@ export const describeQuery: SparqlRule<'describeQuery', Omit<QueryDescribe, Hand
         return [ ACTION(() => C.factory.wildcard(C.factory.sourceLocation(star))) ];
       } },
     ]);
-    const from = SUBRULE1(datasetClauseStar, undefined);
-    const where = OPTION(() => SUBRULE1(whereClause, undefined));
-    const modifiers = SUBRULE1(solutionModifier, undefined);
+    const from = SUBRULE1(datasetClauseStar);
+    const where = OPTION(() => SUBRULE1(whereClause));
+    const modifiers = SUBRULE1(solutionModifier);
     return ACTION(() => ({
       subType: 'describe',
       variables,
@@ -378,14 +378,14 @@ export const describeQuery: SparqlRule<'describeQuery', Omit<QueryDescribe, Hand
       F.printFilter(ast, () => PRINT_WORD('*'));
     } else {
       for (const variable of (<Exclude<QueryDescribe['variables'], [Wildcard]>> ast.variables)) {
-        SUBRULE(varOrTerm, variable, undefined);
+        SUBRULE(varOrTerm, variable);
       }
     }
-    SUBRULE(datasetClauseStar, ast.datasets, undefined);
+    SUBRULE(datasetClauseStar, ast.datasets);
     if (ast.where) {
-      SUBRULE(whereClause, F.wrap(ast.where, ast.loc), undefined);
+      SUBRULE(whereClause, F.wrap(ast.where, ast.loc));
     }
-    SUBRULE(solutionModifier, ast.solutionModifiers, undefined);
+    SUBRULE(solutionModifier, ast.solutionModifiers);
   },
 };
 
@@ -396,9 +396,9 @@ export const askQuery: SparqlRule<'askQuery', Omit<QueryAsk, HandledByBase>> = <
   name: 'askQuery',
   impl: ({ ACTION, SUBRULE, CONSUME }) => (C) => {
     const ask = CONSUME(l.ask);
-    const from = SUBRULE(datasetClauseStar, undefined);
-    const where = SUBRULE(whereClause, undefined);
-    const modifiers = SUBRULE(solutionModifier, undefined);
+    const from = SUBRULE(datasetClauseStar);
+    const where = SUBRULE(whereClause);
+    const modifiers = SUBRULE(solutionModifier);
 
     return ACTION(() => ({
       subType: 'ask',
@@ -418,9 +418,9 @@ export const askQuery: SparqlRule<'askQuery', Omit<QueryAsk, HandledByBase>> = <
   },
   gImpl: ({ SUBRULE, PRINT_WORD }) => (ast, { factory: F }) => {
     F.printFilter(ast, () => PRINT_WORD('ASK'));
-    SUBRULE(datasetClauseStar, ast.datasets, undefined);
-    SUBRULE(whereClause, F.wrap(ast.where, ast.loc), undefined);
-    SUBRULE(solutionModifier, ast.solutionModifiers, undefined);
+    SUBRULE(datasetClauseStar, ast.datasets);
+    SUBRULE(whereClause, F.wrap(ast.where, ast.loc));
+    SUBRULE(solutionModifier, ast.solutionModifiers);
   },
 };
 
@@ -429,7 +429,7 @@ export const askQuery: SparqlRule<'askQuery', Omit<QueryAsk, HandledByBase>> = <
  */
 export const valuesClause: SparqlGrammarRule<'valuesClause', PatternValues | undefined> = <const> {
   name: 'valuesClause',
-  impl: ({ OPTION, SUBRULE }) => () => OPTION(() => SUBRULE(inlineData, undefined)),
+  impl: ({ OPTION, SUBRULE }) => () => OPTION(() => SUBRULE(inlineData)),
 };
 
 /**
@@ -439,7 +439,7 @@ export const constructTemplate: SparqlGrammarRule<'constructTemplate', Wrap<Patt
   name: 'constructTemplate',
   impl: ({ ACTION, SUBRULE1, CONSUME, OPTION }) => (C) => {
     const open = CONSUME(l.symbols.LCurly);
-    const triples = OPTION(() => SUBRULE1(constructTriples, undefined));
+    const triples = OPTION(() => SUBRULE1(constructTriples));
     const close = CONSUME(l.symbols.RCurly);
 
     return ACTION(() => C.factory.wrap(

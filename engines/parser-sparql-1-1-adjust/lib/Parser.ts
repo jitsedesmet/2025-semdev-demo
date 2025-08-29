@@ -7,8 +7,8 @@ import { gram, lex } from '@traqula/rules-sparql-1-1-adjust';
 const builtInPatch: typeof g11.builtInCall = {
   name: 'builtInCall',
   impl: ({ SUBRULE, OR }) => () => OR<Expression>([
-    { ALT: () => SUBRULE(gram.builtInAdjust, undefined) },
-    { ALT: () => SUBRULE(gram.existingBuildInCall, undefined) },
+    { ALT: () => SUBRULE(gram.builtInAdjust) },
+    { ALT: () => SUBRULE(gram.existingBuildInCall) },
   ]),
 };
 

@@ -15,12 +15,12 @@ export function datasetClauseUsing<RuleName extends 'usingClause' | 'datasetClau
       const start = CONSUME(token);
       return OR<RuleDefReturn<typeof datasetClause>>([
         { ALT: () => {
-          const iri = SUBRULE(defaultGraphClause, undefined);
+          const iri = SUBRULE(defaultGraphClause);
           return ACTION(() =>
             C.factory.wrap({ clauseType: 'default', value: iri }, C.factory.sourceLocation(start, iri)));
         } },
         { ALT: () => {
-          const namedClause = SUBRULE(namedGraphClause, undefined);
+          const namedClause = SUBRULE(namedGraphClause);
           return ACTION(() => C.factory.wrap({
             clauseType: 'named',
             value: namedClause.val,
@@ -41,7 +41,7 @@ export const datasetClause = datasetClauseUsing('datasetClause', l.from);
  */
 export const defaultGraphClause: SparqlGrammarRule<'defaultGraphClause', TermIri> = <const> {
   name: 'defaultGraphClause',
-  impl: ({ SUBRULE }) => () => SUBRULE(sourceSelector, undefined),
+  impl: ({ SUBRULE }) => () => SUBRULE(sourceSelector),
 };
 /**
  * [[44]](https://www.w3.org/TR/sparql11-query/#rUsingClause)
@@ -59,7 +59,7 @@ export function datasetClauseUsingStar<RuleName extends string>(
       const clauses: RuleDefReturn<typeof datasetClause>[] = [];
 
       MANY(() => {
-        const clause = SUBRULE(subRule, undefined);
+        const clause = SUBRULE(subRule);
         clauses.push(clause);
       });
 
@@ -74,7 +74,7 @@ export function datasetClauseUsingStar<RuleName extends string>(
         if (clause.clauseType === 'named') {
           F.printFilter(ast, () => PRINT_WORD('NAMED'));
         }
-        SUBRULE(iri, clause.value, undefined);
+        SUBRULE(iri, clause.value);
       }
     },
   };
@@ -90,7 +90,7 @@ export const namedGraphClause: SparqlGrammarRule<'namedGraphClause', Wrap<TermIr
   name: 'namedGraphClause',
   impl: ({ ACTION, SUBRULE, CONSUME }) => (C) => {
     const named = CONSUME(l.graph.named);
-    const iri = SUBRULE(sourceSelector, undefined);
+    const iri = SUBRULE(sourceSelector);
     return ACTION(() => C.factory.wrap(iri, C.factory.sourceLocation(named, iri)));
   },
 };
@@ -100,5 +100,5 @@ export const namedGraphClause: SparqlGrammarRule<'namedGraphClause', Wrap<TermIr
  */
 export const sourceSelector: SparqlGrammarRule<'sourceSelector', TermIri> = <const> {
   name: 'sourceSelector',
-  impl: ({ SUBRULE }) => () => SUBRULE(iri, undefined),
+  impl: ({ SUBRULE }) => () => SUBRULE(iri),
 };

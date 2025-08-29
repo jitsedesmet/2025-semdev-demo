@@ -23,10 +23,10 @@ import { constraint, functionCall } from './whereClause';
 export const solutionModifier: SparqlRule<'solutionModifier', SolutionModifiers> = <const> {
   name: 'solutionModifier',
   impl: ({ ACTION, SUBRULE, OPTION1, OPTION2, OPTION3, OPTION4 }) => () => {
-    const group = OPTION1(() => SUBRULE(groupClause, undefined));
-    const having = OPTION2(() => SUBRULE(havingClause, undefined));
-    const order = OPTION3(() => SUBRULE(orderClause, undefined));
-    const limitOffset = OPTION4(() => SUBRULE(limitOffsetClauses, undefined));
+    const group = OPTION1(() => SUBRULE(groupClause));
+    const having = OPTION2(() => SUBRULE(havingClause));
+    const order = OPTION3(() => SUBRULE(orderClause));
+    const limitOffset = OPTION4(() => SUBRULE(limitOffsetClauses));
     return ACTION(() => ({
       ...(limitOffset && { limitOffset }),
       ...(group && { group }),
@@ -36,16 +36,16 @@ export const solutionModifier: SparqlRule<'solutionModifier', SolutionModifiers>
   },
   gImpl: ({ SUBRULE }) => (ast) => {
     if (ast.group) {
-      SUBRULE(groupClause, ast.group, undefined);
+      SUBRULE(groupClause, ast.group);
     }
     if (ast.having) {
-      SUBRULE(havingClause, ast.having, undefined);
+      SUBRULE(havingClause, ast.having);
     }
     if (ast.order) {
-      SUBRULE(orderClause, ast.order, undefined);
+      SUBRULE(orderClause, ast.order);
     }
     if (ast.limitOffset) {
-      SUBRULE(limitOffsetClauses, ast.limitOffset, undefined);
+      SUBRULE(limitOffsetClauses, ast.limitOffset);
     }
   },
 };
@@ -60,7 +60,7 @@ export const groupClause: SparqlRule<'groupClause', SolutionModifierGroup> = <co
     const start = CONSUME(l.groupByGroup);
     CONSUME(l.by);
     AT_LEAST_ONE(() => {
-      groupings.push(SUBRULE1(groupCondition, undefined));
+      groupings.push(SUBRULE1(groupCondition));
     });
 
     return ACTION(() => ({
@@ -74,12 +74,12 @@ export const groupClause: SparqlRule<'groupClause', SolutionModifierGroup> = <co
     F.printFilter(ast, () => PRINT_WORDS('GROUP', 'BY'));
     for (const grouping of ast.groupings) {
       if (F.isExpression(grouping)) {
-        SUBRULE(expression, grouping, undefined);
+        SUBRULE(expression, grouping);
       } else {
         F.printFilter(ast, () => PRINT_WORDS('('));
-        SUBRULE(expression, grouping.value, undefined);
+        SUBRULE(expression, grouping.value);
         F.printFilter(ast, () => PRINT_WORDS('AS'));
-        SUBRULE(var_, grouping.variable, undefined);
+        SUBRULE(var_, grouping.variable);
         F.printFilter(ast, () => PRINT_WORDS(')'));
       }
     }
@@ -93,17 +93,17 @@ export const groupCondition: SparqlGrammarRule<'groupCondition', Expression | So
   name: 'groupCondition',
   impl: ({ ACTION, SUBRULE, CONSUME, SUBRULE1, SUBRULE2, OPTION, OR }) => C =>
     OR<Expression | SolutionModifierGroupBind>([
-      { ALT: () => SUBRULE(builtInCall, undefined) },
-      { ALT: () => SUBRULE(functionCall, undefined) },
-      { ALT: () => SUBRULE2(var_, undefined) },
+      { ALT: () => SUBRULE(builtInCall) },
+      { ALT: () => SUBRULE(functionCall) },
+      { ALT: () => SUBRULE2(var_) },
       {
         ALT: () => {
           // Creates a bracketted expression or a Bind.
           const open = CONSUME(l.symbols.LParen);
-          const expressionValue = SUBRULE(expression, undefined);
+          const expressionValue = SUBRULE(expression);
           const variable = OPTION(() => {
             CONSUME(l.as);
-            return SUBRULE1(var_, undefined);
+            return SUBRULE1(var_);
           });
           const close = CONSUME(l.symbols.RParen);
           return ACTION(() => {
@@ -133,7 +133,7 @@ export const havingClause: SparqlRule<'havingClause', SolutionModifierHaving> = 
     const couldParseAgg = ACTION(() =>
       C.parseMode.has('canParseAggregate') || !C.parseMode.add('canParseAggregate'));
     AT_LEAST_ONE(() => {
-      expressions.push(SUBRULE(havingCondition, undefined));
+      expressions.push(SUBRULE(havingCondition));
     });
     ACTION(() => !couldParseAgg && C.parseMode.delete('canParseAggregate'));
 
@@ -143,7 +143,7 @@ export const havingClause: SparqlRule<'havingClause', SolutionModifierHaving> = 
   gImpl: ({ PRINT_WORD, SUBRULE }) => (ast, { factory: F }) => {
     F.printFilter(ast, () => PRINT_WORD('HAVING'));
     for (const having of ast.having) {
-      SUBRULE(expression, having, undefined);
+      SUBRULE(expression, having);
     }
   },
 };
@@ -153,7 +153,7 @@ export const havingClause: SparqlRule<'havingClause', SolutionModifierHaving> = 
  */
 export const havingCondition: SparqlGrammarRule<'havingCondition', Expression> = <const> {
   name: 'havingCondition',
-  impl: ({ SUBRULE }) => () => SUBRULE(constraint, undefined),
+  impl: ({ SUBRULE }) => () => SUBRULE(constraint),
 };
 
 /**
@@ -169,7 +169,7 @@ export const orderClause: SparqlRule<'orderClause', SolutionModifierOrder> = <co
     const couldParseAgg = ACTION(() =>
       C.parseMode.has('canParseAggregate') || !C.parseMode.add('canParseAggregate'));
     AT_LEAST_ONE(() => {
-      orderings.push(SUBRULE1(orderCondition, undefined));
+      orderings.push(SUBRULE1(orderCondition));
     });
     ACTION(() => !couldParseAgg && C.parseMode.delete('canParseAggregate'));
 
@@ -185,7 +185,7 @@ export const orderClause: SparqlRule<'orderClause', SolutionModifierOrder> = <co
         F.printFilter(ast, () => PRINT_WORDS('ASC'));
       }
       F.printFilter(ast, () => PRINT_WORDS('('));
-      SUBRULE(expression, ordering.expression, undefined);
+      SUBRULE(expression, ordering.expression);
       F.printFilter(ast, () => PRINT_WORDS(')'));
     }
   },
@@ -209,7 +209,7 @@ export const orderCondition: SparqlGrammarRule<'orderCondition', Ordering> = <co
         } },
       ]);
 
-      const expr = SUBRULE(brackettedExpression, undefined);
+      const expr = SUBRULE(brackettedExpression);
 
       return ACTION(() => ({
         expression: expr,
@@ -218,11 +218,11 @@ export const orderCondition: SparqlGrammarRule<'orderCondition', Ordering> = <co
       }));
     } },
     { ALT: () => {
-      const expr = SUBRULE(constraint, undefined);
+      const expr = SUBRULE(constraint);
       return ACTION(() => ({ expression: expr, descending: false, loc: expr.loc }));
     } },
     { ALT: () => {
-      const expr = SUBRULE(var_, undefined);
+      const expr = SUBRULE(var_);
       return ACTION(() => ({ expression: expr, descending: false, loc: expr.loc }));
     } },
   ]),
@@ -236,8 +236,8 @@ export const limitOffsetClauses: SparqlRule<'limitOffsetClauses', SolutionModifi
   name: 'limitOffsetClauses',
   impl: ({ ACTION, SUBRULE1, SUBRULE2, OPTION1, OPTION2, OR }) => C => OR([
     { ALT: () => {
-      const limit = SUBRULE1(limitClause, undefined);
-      const offset = OPTION1(() => SUBRULE1(offsetClause, undefined));
+      const limit = SUBRULE1(limitClause);
+      const offset = OPTION1(() => SUBRULE1(offsetClause));
       return ACTION(() => C.factory.solutionModifierLimitOffset(
         limit.val,
         offset?.val,
@@ -245,8 +245,8 @@ export const limitOffsetClauses: SparqlRule<'limitOffsetClauses', SolutionModifi
       ));
     } },
     { ALT: () => {
-      const offset = SUBRULE2(offsetClause, undefined);
-      const limit = OPTION2(() => SUBRULE2(limitClause, undefined));
+      const offset = SUBRULE2(offsetClause);
+      const limit = OPTION2(() => SUBRULE2(limitClause));
       return ACTION(() => C.factory.solutionModifierLimitOffset(
         limit?.val,
         offset.val,

@@ -81,61 +81,61 @@ export const builtInIsnumeric = funcExpr1(l.builtIn.isnumeric);
 
 export function builtInCallList(SUBRULE: ImplArgs['SUBRULE']): IOrAlt<Expression>[] {
   return [
-    { ALT: () => SUBRULE(aggregate, undefined) },
-    { ALT: () => SUBRULE(builtInStr, undefined) },
-    { ALT: () => SUBRULE(builtInLang, undefined) },
-    { ALT: () => SUBRULE(builtInLangmatches, undefined) },
-    { ALT: () => SUBRULE(builtInDatatype, undefined) },
-    { ALT: () => SUBRULE(builtInBound, undefined) },
-    { ALT: () => SUBRULE(builtInIri, undefined) },
-    { ALT: () => SUBRULE(builtInUri, undefined) },
-    { ALT: () => SUBRULE(builtInBnodeSparqlJs, undefined) },
-    { ALT: () => SUBRULE(builtInRand, undefined) },
-    { ALT: () => SUBRULE(builtInAbs, undefined) },
-    { ALT: () => SUBRULE(builtInCeil, undefined) },
-    { ALT: () => SUBRULE(builtInFloor, undefined) },
-    { ALT: () => SUBRULE(builtInRound, undefined) },
-    { ALT: () => SUBRULE(builtInConcat, undefined) },
-    { ALT: () => SUBRULE(substringExpression, undefined) },
-    { ALT: () => SUBRULE(builtInStrlen, undefined) },
-    { ALT: () => SUBRULE(strReplaceExpression, undefined) },
-    { ALT: () => SUBRULE(builtInUcase, undefined) },
-    { ALT: () => SUBRULE(builtInLcase, undefined) },
-    { ALT: () => SUBRULE(builtInEncode_for_uri, undefined) },
-    { ALT: () => SUBRULE(builtInContains, undefined) },
-    { ALT: () => SUBRULE(builtInStrstarts, undefined) },
-    { ALT: () => SUBRULE(builtInStrends, undefined) },
-    { ALT: () => SUBRULE(builtInStrbefore, undefined) },
-    { ALT: () => SUBRULE(builtInStrafter, undefined) },
-    { ALT: () => SUBRULE(builtInYear, undefined) },
-    { ALT: () => SUBRULE(builtInMonth, undefined) },
-    { ALT: () => SUBRULE(builtInDay, undefined) },
-    { ALT: () => SUBRULE(builtInHours, undefined) },
-    { ALT: () => SUBRULE(builtInMinutes, undefined) },
-    { ALT: () => SUBRULE(builtInSeconds, undefined) },
-    { ALT: () => SUBRULE(builtInTimezone, undefined) },
-    { ALT: () => SUBRULE(builtInTz, undefined) },
-    { ALT: () => SUBRULE(builtInNow, undefined) },
-    { ALT: () => SUBRULE(builtInUuid, undefined) },
-    { ALT: () => SUBRULE(builtInStruuid, undefined) },
-    { ALT: () => SUBRULE(builtInMd5, undefined) },
-    { ALT: () => SUBRULE(builtInSha1, undefined) },
-    { ALT: () => SUBRULE(builtInSha256, undefined) },
-    { ALT: () => SUBRULE(builtInSha384, undefined) },
-    { ALT: () => SUBRULE(builtInSha512, undefined) },
-    { ALT: () => SUBRULE(builtInCoalesce, undefined) },
-    { ALT: () => SUBRULE(builtInIf, undefined) },
-    { ALT: () => SUBRULE(builtInStrlang, undefined) },
-    { ALT: () => SUBRULE(builtInStrdt, undefined) },
-    { ALT: () => SUBRULE(builtInSameterm, undefined) },
-    { ALT: () => SUBRULE(builtInIsiri, undefined) },
-    { ALT: () => SUBRULE(builtInIsuri, undefined) },
-    { ALT: () => SUBRULE(builtInIsblank, undefined) },
-    { ALT: () => SUBRULE(builtInIsliteral, undefined) },
-    { ALT: () => SUBRULE(builtInIsnumeric, undefined) },
-    { ALT: () => SUBRULE(regexExpression, undefined) },
-    { ALT: () => SUBRULE(existsFunc, undefined) },
-    { ALT: () => SUBRULE(notExistsFunc, undefined) },
+    { ALT: () => SUBRULE(aggregate) },
+    { ALT: () => SUBRULE(builtInStr) },
+    { ALT: () => SUBRULE(builtInLang) },
+    { ALT: () => SUBRULE(builtInLangmatches) },
+    { ALT: () => SUBRULE(builtInDatatype) },
+    { ALT: () => SUBRULE(builtInBound) },
+    { ALT: () => SUBRULE(builtInIri) },
+    { ALT: () => SUBRULE(builtInUri) },
+    { ALT: () => SUBRULE(builtInBnodeSparqlJs) },
+    { ALT: () => SUBRULE(builtInRand) },
+    { ALT: () => SUBRULE(builtInAbs) },
+    { ALT: () => SUBRULE(builtInCeil) },
+    { ALT: () => SUBRULE(builtInFloor) },
+    { ALT: () => SUBRULE(builtInRound) },
+    { ALT: () => SUBRULE(builtInConcat) },
+    { ALT: () => SUBRULE(substringExpression) },
+    { ALT: () => SUBRULE(builtInStrlen) },
+    { ALT: () => SUBRULE(strReplaceExpression) },
+    { ALT: () => SUBRULE(builtInUcase) },
+    { ALT: () => SUBRULE(builtInLcase) },
+    { ALT: () => SUBRULE(builtInEncode_for_uri) },
+    { ALT: () => SUBRULE(builtInContains) },
+    { ALT: () => SUBRULE(builtInStrstarts) },
+    { ALT: () => SUBRULE(builtInStrends) },
+    { ALT: () => SUBRULE(builtInStrbefore) },
+    { ALT: () => SUBRULE(builtInStrafter) },
+    { ALT: () => SUBRULE(builtInYear) },
+    { ALT: () => SUBRULE(builtInMonth) },
+    { ALT: () => SUBRULE(builtInDay) },
+    { ALT: () => SUBRULE(builtInHours) },
+    { ALT: () => SUBRULE(builtInMinutes) },
+    { ALT: () => SUBRULE(builtInSeconds) },
+    { ALT: () => SUBRULE(builtInTimezone) },
+    { ALT: () => SUBRULE(builtInTz) },
+    { ALT: () => SUBRULE(builtInNow) },
+    { ALT: () => SUBRULE(builtInUuid) },
+    { ALT: () => SUBRULE(builtInStruuid) },
+    { ALT: () => SUBRULE(builtInMd5) },
+    { ALT: () => SUBRULE(builtInSha1) },
+    { ALT: () => SUBRULE(builtInSha256) },
+    { ALT: () => SUBRULE(builtInSha384) },
+    { ALT: () => SUBRULE(builtInSha512) },
+    { ALT: () => SUBRULE(builtInCoalesce) },
+    { ALT: () => SUBRULE(builtInIf) },
+    { ALT: () => SUBRULE(builtInStrlang) },
+    { ALT: () => SUBRULE(builtInStrdt) },
+    { ALT: () => SUBRULE(builtInSameterm) },
+    { ALT: () => SUBRULE(builtInIsiri) },
+    { ALT: () => SUBRULE(builtInIsuri) },
+    { ALT: () => SUBRULE(builtInIsblank) },
+    { ALT: () => SUBRULE(builtInIsliteral) },
+    { ALT: () => SUBRULE(builtInIsnumeric) },
+    { ALT: () => SUBRULE(regexExpression) },
+    { ALT: () => SUBRULE(existsFunc) },
+    { ALT: () => SUBRULE(notExistsFunc) },
   ];
 }
 
@@ -193,7 +193,7 @@ SparqlGrammarRule<'builtInCount', ExpressionAggregateOnWildcard | ExpressionAggr
         const starToken = CONSUME(l.symbols.star);
         return ACTION(() => C.factory.wildcard(C.factory.sourceLocation(starToken)));
       } },
-      { ALT: () => SUBRULE(expression, undefined) },
+      { ALT: () => SUBRULE(expression) },
     ]);
     const closeToken = CONSUME(l.symbols.RParen);
 
@@ -232,12 +232,12 @@ SparqlGrammarRule<'builtInGroup_concat', ExpressionAggregateDefault | Expression
       CONSUME(l.symbols.LParen);
       const distinctToken = OPTION1(() => CONSUME(l.distinct));
 
-      const expr = SUBRULE(expression, undefined);
+      const expr = SUBRULE(expression);
       const sep = OPTION2(() => {
         CONSUME(l.symbols.semi);
         CONSUME(l.separator);
         CONSUME(l.symbols.equal);
-        return SUBRULE(string, undefined);
+        return SUBRULE(string);
       });
       const closeToken = CONSUME(l.symbols.RParen);
 
@@ -265,13 +265,13 @@ export const aggregate: SparqlRule<'aggregate', ExpressionAggregate> = <const>{
     const wasInAggregate = ACTION(() => C.parseMode.has('inAggregate'));
     ACTION(() => C.parseMode.add('inAggregate'));
     const result = OR<ExpressionAggregate>([
-      { ALT: () => SUBRULE(aggregateCount, undefined) },
-      { ALT: () => SUBRULE(aggregateSum, undefined) },
-      { ALT: () => SUBRULE(aggregateMin, undefined) },
-      { ALT: () => SUBRULE(aggregateMax, undefined) },
-      { ALT: () => SUBRULE(aggregateAvg, undefined) },
-      { ALT: () => SUBRULE(aggregateSample, undefined) },
-      { ALT: () => SUBRULE(aggregateGroup_concat, undefined) },
+      { ALT: () => SUBRULE(aggregateCount) },
+      { ALT: () => SUBRULE(aggregateSum) },
+      { ALT: () => SUBRULE(aggregateMin) },
+      { ALT: () => SUBRULE(aggregateMax) },
+      { ALT: () => SUBRULE(aggregateAvg) },
+      { ALT: () => SUBRULE(aggregateSample) },
+      { ALT: () => SUBRULE(aggregateGroup_concat) },
     ]);
     ACTION(() => !wasInAggregate && C.parseMode.delete('inAggregate'));
 
@@ -297,7 +297,7 @@ export const aggregate: SparqlRule<'aggregate', ExpressionAggregate> = <const>{
     if (F.isWildcard(arg)) {
       F.printFilter(ast, () => PRINT_WORD('*'));
     } else {
-      SUBRULE(expression, arg, undefined);
+      SUBRULE(expression, arg);
     }
     if (F.isExpressionAggregateSeparator(ast)) {
       F.printFilter(ast, () => PRINT_WORD(';', 'SEPARATOR', '=', stringEscapedLexical(ast.separator)));

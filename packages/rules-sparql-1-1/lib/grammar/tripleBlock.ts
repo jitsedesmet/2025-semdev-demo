@@ -28,7 +28,7 @@ SparqlGrammarRule<string, PatternBgp>['impl'] {
       GATE: () => parsedDot,
       DEF: () => {
         parsedDot = false;
-        const template = SUBRULE(triplesSameSubjectSubrule, undefined);
+        const template = SUBRULE(triplesSameSubjectSubrule);
         ACTION(() => {
           triples.push(...template);
         });
@@ -47,26 +47,26 @@ SparqlGrammarRule<string, PatternBgp>['impl'] {
  */
 export const triplesBlock: SparqlRule<'triplesBlock', PatternBgp> = <const>{
   name: 'triplesBlock',
-  impl: implArgs => C => triplesDotSeperated(triplesSameSubjectPath)(implArgs)(C, undefined),
+  impl: implArgs => C => triplesDotSeperated(triplesSameSubjectPath)(implArgs)(C),
   gImpl: ({ SUBRULE, PRINT_WORD, HANDLE_LOC }) => (ast, { factory: F }) => {
     for (const [ index, triple ] of ast.triples.entries()) {
       HANDLE_LOC(triple, () => {
         const nextTriple = ast.triples.at(index);
         if (F.isTripleCollection(triple)) {
-          SUBRULE(graphNodePath, triple, undefined);
+          SUBRULE(graphNodePath, triple);
           // A top level tripleCollection block means that it is not used in a triple. So you end with DOT.
           F.printFilter(triple, () => PRINT_WORD('.'));
         } else {
           // Subject
-          SUBRULE(graphNodePath, triple.subject, undefined);
+          SUBRULE(graphNodePath, triple.subject);
           // Predicate
           if (F.isTerm(triple.predicate) && F.isTermVariable(triple.predicate)) {
-            SUBRULE(varOrTerm, triple.predicate, undefined);
+            SUBRULE(varOrTerm, triple.predicate);
           } else {
             SUBRULE(pathGenerator, triple.predicate, undefined);
           }
           // Object
-          SUBRULE(graphNodePath, triple.object, undefined);
+          SUBRULE(graphNodePath, triple.object);
 
           // If no more things, or a top level collection (only possible if new block was part), or new subject: add DOT
           if (nextTriple === undefined || F.isTripleCollection(nextTriple) ||
@@ -95,10 +95,10 @@ SparqlGrammarRule<T, BasicGraphPattern> {
     name,
     impl: ({ ACTION, SUBRULE, OR }) => C => OR<BasicGraphPattern>([
       { ALT: () => {
-        const subject = SUBRULE(varOrTerm, undefined);
+        const subject = SUBRULE(varOrTerm);
         const res = SUBRULE(
           allowPaths ? propertyListPathNotEmpty : propertyListNotEmpty,
-          { subject: ACTION(() => C.factory.dematerialized(subject)) },
+          ACTION(() => C.factory.dematerialized(subject)),
         );
         // Only the first occurrence of a subject is actually materialized.
         return ACTION(() => {
@@ -110,10 +110,10 @@ SparqlGrammarRule<T, BasicGraphPattern> {
         });
       } },
       { ALT: () => {
-        const subjectNode = SUBRULE(allowPaths ? triplesNodePath : triplesNode, undefined);
+        const subjectNode = SUBRULE(allowPaths ? triplesNodePath : triplesNode);
         const restNode = SUBRULE(
           allowPaths ? propertyListPath : propertyList,
-          { subject: ACTION(() => C.factory.graphNodeIdentifier(subjectNode)) },
+          ACTION(() => C.factory.graphNodeIdentifier(subjectNode)),
         );
         return ACTION(() => {
           if (restNode.length === 0) {
@@ -143,11 +143,11 @@ export const triplesTemplate: SparqlGrammarRule<'triplesTemplate', PatternBgp> =
  * [[82]](https://www.w3.org/TR/sparql11-query/#rPropertyListPath)
  */
 function propertyListImpl<T extends string>(name: T, allowPaths: boolean):
-SparqlGrammarRule<T, TripleNesting[], Pick<TripleNesting, 'subject'>> {
+SparqlGrammarRule<T, TripleNesting[], [TripleNesting['subject']]> {
   return {
     name,
-    impl: ({ SUBRULE, OPTION }) => (_, arg) =>
-      OPTION(() => SUBRULE(allowPaths ? propertyListPathNotEmpty : propertyListNotEmpty, arg)) ?? [],
+    impl: ({ SUBRULE, OPTION }) => (_, subject) =>
+      OPTION(() => SUBRULE(allowPaths ? propertyListPathNotEmpty : propertyListNotEmpty, subject)) ?? [],
   };
 }
 export const propertyList = propertyListImpl('propertyList', false);
@@ -162,10 +162,10 @@ export const propertyListPath = propertyListImpl('propertyListPath', true);
 function propertyListNotEmptyImplementation<T extends string>(
   name: T,
   allowPaths: boolean,
-): SparqlGrammarRule<T, TripleNesting[], Pick<TripleNesting, 'subject'>> {
+): SparqlGrammarRule<T, TripleNesting[], [TripleNesting['subject']]> {
   return {
     name,
-    impl: ({ ACTION, CONSUME, AT_LEAST_ONE, SUBRULE1, MANY2, OR1 }) => (_, arg) => {
+    impl: ({ ACTION, CONSUME, AT_LEAST_ONE, SUBRULE1, MANY2, OR1 }) => (_, subject) => {
       const result: TripleNesting[] = [];
       let parsedSemi = true;
 
@@ -175,13 +175,14 @@ function propertyListNotEmptyImplementation<T extends string>(
           parsedSemi = false;
           const predicate = allowPaths ?
             OR1<TermVariable | Path>([
-              { ALT: () => SUBRULE1(verbPath, undefined) },
-              { ALT: () => SUBRULE1(verbSimple, undefined) },
+              { ALT: () => SUBRULE1(verbPath) },
+              { ALT: () => SUBRULE1(verbSimple) },
             ]) :
-            SUBRULE1(verb, undefined);
+            SUBRULE1(verb);
           const triples = SUBRULE1(
             allowPaths ? objectListPath : objectList,
-            ACTION(() => ({ subject: arg.subject, predicate })),
+            subject,
+            predicate,
           );
 
           MANY2(() => {
@@ -206,7 +207,7 @@ export const propertyListPathNotEmpty = propertyListNotEmptyImplementation('prop
  */
 export const verbPath: SparqlGrammarRule<'verbPath', Path> = <const> {
   name: 'verbPath',
-  impl: ({ SUBRULE }) => () => SUBRULE(path, undefined),
+  impl: ({ SUBRULE }) => () => SUBRULE(path),
 };
 
 /**
@@ -214,7 +215,7 @@ export const verbPath: SparqlGrammarRule<'verbPath', Path> = <const> {
  */
 export const verbSimple: SparqlGrammarRule<'verbSimple', TermVariable> = <const> {
   name: 'verbSimple',
-  impl: ({ SUBRULE }) => () => SUBRULE(var_, undefined),
+  impl: ({ SUBRULE }) => () => SUBRULE(var_),
 };
 
 /**
@@ -222,15 +223,15 @@ export const verbSimple: SparqlGrammarRule<'verbSimple', TermVariable> = <const>
  * [[86]](https://www.w3.org/TR/sparql11-query/#rObjectListPath)
  */
 function objectListImpl<T extends string>(name: T, allowPaths: boolean):
-SparqlGrammarRule<T, TripleNesting[], Pick<TripleNesting, 'subject' | 'predicate'>> {
+SparqlGrammarRule<T, TripleNesting[], [TripleNesting['subject'], TripleNesting['predicate']]> {
   return <const> {
     name,
-    impl: ({ ACTION, SUBRULE, AT_LEAST_ONE_SEP }) => (_, arg) => {
+    impl: ({ ACTION, SUBRULE, AT_LEAST_ONE_SEP }) => (_, subj, pred) => {
       const objects: TripleNesting[] = [];
       AT_LEAST_ONE_SEP({
         SEP: l.symbols.comma,
         DEF: () => {
-          const objectTriple = SUBRULE(allowPaths ? objectPath : object, arg);
+          const objectTriple = SUBRULE(allowPaths ? objectPath : object, subj, pred);
           ACTION(() => {
             objects.push(objectTriple);
           });
@@ -248,13 +249,13 @@ export const objectListPath = objectListImpl('objectListPath', true);
  * [[87]](https://www.w3.org/TR/sparql11-query/#rObjectPath)
  */
 function objectImpl<T extends string>(name: T, allowPaths: boolean):
-SparqlGrammarRule<T, TripleNesting, Pick<TripleNesting, 'subject' | 'predicate'>> {
+SparqlGrammarRule<T, TripleNesting, [TripleNesting['subject'], TripleNesting['predicate']]> {
   return {
     name,
-    impl: ({ ACTION, SUBRULE }) => (C, arg) => {
-      const node = SUBRULE(allowPaths ? graphNodePath : graphNode, undefined);
+    impl: ({ ACTION, SUBRULE }) => (C, subject, predicate) => {
+      const node = SUBRULE(allowPaths ? graphNodePath : graphNode);
       return ACTION(() =>
-        C.factory.triple(arg.subject, arg.predicate, node));
+        C.factory.triple(subject, predicate, node));
     },
   };
 }
@@ -276,7 +277,7 @@ function collectionImpl<T extends string>(name: T, allowPaths: boolean): SparqlR
       const startToken = CONSUME(l.symbols.LParen);
 
       AT_LEAST_ONE(() => {
-        terms.push(SUBRULE(allowPaths ? graphNodePath : graphNode, undefined));
+        terms.push(SUBRULE(allowPaths ? graphNodePath : graphNode));
       });
       const endToken = CONSUME(l.symbols.RParen);
 
@@ -319,7 +320,7 @@ function collectionImpl<T extends string>(name: T, allowPaths: boolean): SparqlR
       // Only every 2 triple is relevant. The odd triples are linking triples.
       for (const [ idx, triple ] of ast.triples.entries()) {
         if (idx % 2 === 0) {
-          SUBRULE(allowPaths ? graphNodePath : graphNode, triple.object, undefined);
+          SUBRULE(allowPaths ? graphNodePath : graphNode, triple.object);
         }
       }
       F.printFilter(ast, () => PRINT_WORD(')'));
@@ -337,12 +338,12 @@ function triplesNodeImpl<T extends string>(name: T, allowPaths: boolean): Sparql
   return <const>{
     name,
     impl: ({ SUBRULE, OR }) => () => OR<TripleCollection>([
-      { ALT: () => SUBRULE(allowPaths ? collectionPath : collection, undefined) },
-      { ALT: () => SUBRULE(allowPaths ? blankNodePropertyListPath : blankNodePropertyList, undefined) },
+      { ALT: () => SUBRULE(allowPaths ? collectionPath : collection) },
+      { ALT: () => SUBRULE(allowPaths ? blankNodePropertyListPath : blankNodePropertyList) },
     ]),
     gImpl: ({ SUBRULE }) => ast => ast.subType === 'list' ?
-      SUBRULE(allowPaths ? collectionPath : collection, ast, undefined) :
-      SUBRULE(allowPaths ? blankNodePropertyListPath : blankNodePropertyList, ast, undefined),
+      SUBRULE(allowPaths ? collectionPath : collection, ast) :
+      SUBRULE(allowPaths ? blankNodePropertyListPath : blankNodePropertyList, ast),
   };
 }
 export const triplesNode = triplesNodeImpl('triplesNode', false);
@@ -363,7 +364,7 @@ SparqlRule<T, TripleCollectionBlankNodeProperties> {
       const blankNode = ACTION(() =>
         C.factory.blankNode(undefined, C.factory.sourceLocationNoMaterialize()));
 
-      const propList = SUBRULE(propertyPathNotEmptyImpl, { subject: blankNode });
+      const propList = SUBRULE(propertyPathNotEmptyImpl, blankNode);
       const endToken = CONSUME(l.symbols.RSquare);
 
       return ACTION(() => C.factory.tripleCollectionBlankNodeProperties(
@@ -377,11 +378,11 @@ SparqlRule<T, TripleCollectionBlankNodeProperties> {
       for (const triple of ast.triples) {
         HANDLE_LOC(triple, () => {
           if (F.isTerm(triple.predicate) && F.isTermVariable(triple.predicate)) {
-            SUBRULE(varOrTerm, triple.predicate, undefined);
+            SUBRULE(varOrTerm, triple.predicate);
           } else {
             SUBRULE(pathGenerator, triple.predicate, undefined);
           }
-          SUBRULE(graphNodePath, triple.object, undefined);
+          SUBRULE(graphNodePath, triple.object);
 
           F.printFilter(ast, () => PRINT_WORD(';'));
         });
@@ -402,17 +403,17 @@ function graphNodeImpl<T extends string>(name: T, allowPaths: boolean): SparqlRu
   return {
     name,
     impl: ({ SUBRULE, OR }) => C => OR<Term | TripleCollection>([
-      { ALT: () => SUBRULE(varOrTerm, undefined) },
+      { ALT: () => SUBRULE(varOrTerm) },
       {
         GATE: () => C.parseMode.has('canCreateBlankNodes'),
-        ALT: () => SUBRULE(triplesNodeRule, undefined),
+        ALT: () => SUBRULE(triplesNodeRule),
       },
     ]),
     gImpl: ({ SUBRULE }) => (ast, { factory: F }) => {
       if (F.isTerm(ast)) {
-        SUBRULE(varOrTerm, ast, undefined);
+        SUBRULE(varOrTerm, ast);
       } else {
-        SUBRULE(triplesNodeRule, ast, undefined);
+        SUBRULE(triplesNodeRule, ast);
       }
     },
   };

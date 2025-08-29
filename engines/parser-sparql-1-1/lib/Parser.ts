@@ -17,16 +17,16 @@ import { updateParserBuilder } from './updateUnitParser';
 export const queryOrUpdate: T11.SparqlGrammarRule<'queryOrUpdate', T11.SparqlQuery> = {
   name: 'queryOrUpdate',
   impl: ({ ACTION, SUBRULE, OR1, OR2, MANY, OPTION1, CONSUME, SUBRULE2 }) => (C) => {
-    const prologueValues = SUBRULE(gram.prologue, undefined);
+    const prologueValues = SUBRULE(gram.prologue);
     return OR1<T11.Query | T11.Update>([
       { ALT: () => {
         const subType = OR2<Omit<T11.Query, T11.gram.HandledByBase>>([
-          { ALT: () => SUBRULE(gram.selectQuery, undefined) },
-          { ALT: () => SUBRULE(gram.constructQuery, undefined) },
-          { ALT: () => SUBRULE(gram.describeQuery, undefined) },
-          { ALT: () => SUBRULE(gram.askQuery, undefined) },
+          { ALT: () => SUBRULE(gram.selectQuery) },
+          { ALT: () => SUBRULE(gram.constructQuery) },
+          { ALT: () => SUBRULE(gram.describeQuery) },
+          { ALT: () => SUBRULE(gram.askQuery) },
         ]);
-        const values = SUBRULE(gram.valuesClause, undefined);
+        const values = SUBRULE(gram.valuesClause);
         return ACTION(() => (<T11.Query>{
           context: prologueValues,
           ...subType,
@@ -47,13 +47,13 @@ export const queryOrUpdate: T11.SparqlGrammarRule<'queryOrUpdate', T11.SparqlQue
           GATE: () => parsedSemi,
           DEF: () => {
             parsedSemi = false;
-            updates.at(-1)!.operation = SUBRULE(gram.update1, undefined);
+            updates.at(-1)!.operation = SUBRULE(gram.update1);
 
             OPTION1(() => {
               CONSUME(l.symbols.semi);
 
               parsedSemi = true;
-              const innerPrologue = SUBRULE2(gram.prologue, undefined);
+              const innerPrologue = SUBRULE2(gram.prologue);
               updates.push({ context: innerPrologue });
             });
           },

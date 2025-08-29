@@ -36,7 +36,7 @@ export const versionDecl: SparqlRule<'versionDecl', ContextDefinitionVersion> = 
   name: 'versionDecl',
   impl: ({ ACTION, SUBRULE, CONSUME }) => (C) => {
     const versionToken = CONSUME(l12.version);
-    const identifier = SUBRULE(versionSpecifier, undefined);
+    const identifier = SUBRULE(versionSpecifier);
     return ACTION(() =>
       C.factory.contextDefinitionVersion(identifier.val, C.factory.sourceLocation(versionToken, identifier)));
   },
@@ -70,22 +70,22 @@ export const prologue: SparqlRule<'prologue', ContextDefinition[]> = {
   impl: ({ SUBRULE, MANY, OR }) => () => {
     const result: ContextDefinition[] = [];
     MANY(() => OR([
-      { ALT: () => result.push(SUBRULE(S11.baseDecl, undefined)) },
+      { ALT: () => result.push(SUBRULE(S11.baseDecl)) },
       // TODO: the [spec](https://www.w3.org/TR/sparql11-query/#iriRefs) says you cannot redefine prefixes.
       //  We might need to check this.
-      { ALT: () => result.push(SUBRULE(S11.prefixDecl, undefined)) },
-      { ALT: () => result.push(SUBRULE(versionDecl, undefined)) },
+      { ALT: () => result.push(SUBRULE(S11.prefixDecl)) },
+      { ALT: () => result.push(SUBRULE(versionDecl)) },
     ]));
     return result;
   },
   gImpl: ({ SUBRULE }) => (ast, { factory: F }) => {
     for (const context of ast) {
       if (F.isContextDefinitionBase(context)) {
-        SUBRULE(S11.baseDecl, context, undefined);
+        SUBRULE(S11.baseDecl, context);
       } else if (F.isContextDefinitionPrefix(context)) {
-        SUBRULE(S11.prefixDecl, context, undefined);
+        SUBRULE(S11.prefixDecl, context);
       } else if (F.isContextDefinitionVersion(context)) {
-        SUBRULE(versionDecl, context, undefined);
+        SUBRULE(versionDecl, context);
       }
     }
   },
@@ -96,10 +96,10 @@ SparqlGrammarRule<T, T11.BasicGraphPattern> {
   return <const> {
     name,
     impl: ({ ACTION, SUBRULE }) => (C) => {
-      const triple = SUBRULE(reifiedTriple, undefined);
+      const triple = SUBRULE(reifiedTriple);
       const properties = SUBRULE(
         allowPath ? S11.propertyListPath : S11.propertyList,
-        { subject: ACTION(() => C.factory.dematerialized(triple.identifier)) },
+        ACTION(() => C.factory.dematerialized(triple.identifier)),
       );
 
       return ACTION(() => <T11.BasicGraphPattern> [ triple, ...properties ]);
@@ -123,8 +123,8 @@ export const dataBlockValue:
 SparqlGrammarRule<'dataBlockValue', RuleDefReturn<typeof S11.dataBlockValue> | TermTriple> = <const> {
   name: 'dataBlockValue',
   impl: $ => C => $.OR2<RuleDefReturn<typeof dataBlockValue>>([
-    { ALT: () => S11.dataBlockValue.impl($)(C, undefined) },
-    { ALT: () => $.SUBRULE(tripleTermData, undefined) },
+    { ALT: () => S11.dataBlockValue.impl($)(C) },
+    { ALT: () => $.SUBRULE(tripleTermData) },
   ]),
 };
 
@@ -135,7 +135,7 @@ export const reifier: SparqlGrammarRule<'reifier', Wrap<RuleDefReturn<typeof var
   name: 'reifier',
   impl: ({ ACTION, CONSUME, SUBRULE, OPTION }) => (C) => {
     const tildeToken = CONSUME(l12.tilde);
-    const reifier = OPTION(() => SUBRULE(varOrReifierId, undefined));
+    const reifier = OPTION(() => SUBRULE(varOrReifierId));
     return ACTION(() => {
       if (reifier === undefined && !C.parseMode.has('canCreateBlankNodes')) {
         throw new Error('Cannot create blanknodes in current parse mode');
@@ -155,9 +155,9 @@ export const varOrReifierId: SparqlGrammarRule<'varOrReifierId', TermVariable | 
   <const> {
     name: 'varOrReifierId',
     impl: ({ SUBRULE, OR }) => C => OR<RuleDefReturn<typeof varOrReifierId>>([
-      { GATE: () => C.parseMode.has('canParseVars'), ALT: () => SUBRULE(S11.var_, undefined) },
-      { ALT: () => SUBRULE(S11.iri, undefined) },
-      { ALT: () => SUBRULE(S11.blankNode, undefined) },
+      { GATE: () => C.parseMode.has('canParseVars'), ALT: () => SUBRULE(S11.var_) },
+      { ALT: () => SUBRULE(S11.iri) },
+      { ALT: () => SUBRULE(S11.blankNode) },
     ]),
   };
 
@@ -167,9 +167,9 @@ SparqlGrammarRule<T, T11.BasicGraphPattern> {
     name,
     impl: $ => C => $.OR2([
       { ALT: () => allowPaths ?
-        S11.triplesSameSubjectPath.impl($)(C, undefined) :
-        S11.triplesSameSubject.impl($)(C, undefined) },
-      { ALT: () => $.SUBRULE(allowPaths ? reifiedTripleBlockPath : reifiedTripleBlock, undefined) },
+        S11.triplesSameSubjectPath.impl($)(C) :
+        S11.triplesSameSubject.impl($)(C) },
+      { ALT: () => $.SUBRULE(allowPaths ? reifiedTripleBlockPath : reifiedTripleBlock) },
     ]),
   };
 }
@@ -185,15 +185,14 @@ export const triplesSameSubject = triplesSameSubjectImpl('triplesSameSubject', f
 export const triplesSameSubjectPath = triplesSameSubjectImpl('triplesSameSubjectPath', true);
 
 function objectImpl<T extends string>(name: T, allowPaths: boolean):
-SparqlGrammarRule<T, TripleNesting, Pick<TripleNesting, 'subject' | 'predicate'>> {
+SparqlGrammarRule<T, TripleNesting, [TripleNesting['subject'], TripleNesting['predicate']]> {
   return <const>{
     name,
-    impl: ({ ACTION, SUBRULE }) => (C, arg) => {
-      const objectVal = SUBRULE(allowPaths ? graphNodePath : graphNode, undefined);
-      const annotationVal = SUBRULE(allowPaths ? annotationPath : annotation, undefined);
+    impl: ({ ACTION, SUBRULE }) => (C, subject, predicate) => {
+      const objectVal = SUBRULE(allowPaths ? graphNodePath : graphNode);
+      const annotationVal = SUBRULE(allowPaths ? annotationPath : annotation);
 
       return ACTION(() => {
-        const { subject, predicate } = arg;
         const F = C.factory;
         if (F.isPathPure(predicate) && annotationVal.length > 0) {
           throw new Error('Note 17 violation');
@@ -229,7 +228,7 @@ function annotationImpl<T extends string>(name: T, allowPaths: boolean): SparqlR
       MANY(() => {
         OR([
           { ALT: () => {
-            const node = SUBRULE(reifier, undefined);
+            const node = SUBRULE(reifier);
             annotations.push(node);
             currentReifier = node.val;
           } },
@@ -256,10 +255,10 @@ function annotationImpl<T extends string>(name: T, allowPaths: boolean): SparqlR
     gImpl: ({ SUBRULE, PRINT_WORD }) => (ast, { factory: F }) => {
       for (const annotation of ast) {
         if (F.isTripleCollectionBlankNodeProperties(annotation)) {
-          SUBRULE(annotationBlockPath, annotation, undefined);
+          SUBRULE(annotationBlockPath, annotation);
         } else {
           F.printFilter(annotation, () => PRINT_WORD('~'));
-          SUBRULE(graphNodePath, annotation.val, undefined);
+          SUBRULE(graphNodePath, annotation.val);
         }
       }
     },
@@ -275,7 +274,7 @@ export const annotationPath = annotationImpl('annotationPath', true);
 export const annotation = annotationImpl('annotation', false);
 
 function annotationBlockImpl<T extends string>(name: T, allowPaths: boolean):
-  SparqlGrammarRule<T, TripleCollectionBlankNodeProperties, TripleCollectionBlankNodeProperties['identifier']> &
+  SparqlGrammarRule<T, TripleCollectionBlankNodeProperties, [TripleCollectionBlankNodeProperties['identifier']]> &
   SparqlGeneratorRule<T, TripleCollectionBlankNodeProperties> {
   return <const> {
     name,
@@ -283,7 +282,7 @@ function annotationBlockImpl<T extends string>(name: T, allowPaths: boolean):
       const open = CONSUME(l12.annotationOpen);
       const res = SUBRULE(
         allowPaths ? S11.propertyListPathNotEmpty : S11.propertyListNotEmpty,
-        { subject: arg },
+        arg,
       );
       const close = CONSUME(l12.annotationClose);
 
@@ -298,11 +297,11 @@ function annotationBlockImpl<T extends string>(name: T, allowPaths: boolean):
       for (const triple of ast.triples) {
         HANDLE_LOC(triple, () => {
           if (F.isTerm(triple.predicate)) {
-            SUBRULE(graphNodePath, triple.predicate, undefined);
+            SUBRULE(graphNodePath, triple.predicate);
           } else {
             SUBRULE(S11.pathGenerator, triple.predicate, undefined);
           }
-          SUBRULE(graphNodePath, triple.object, undefined);
+          SUBRULE(graphNodePath, triple.object);
 
           F.printFilter(ast, () => PRINT_WORD(';'));
         });
@@ -327,8 +326,8 @@ export const annotationBlock = annotationBlockImpl('annotationBlock', false);
 export const graphNode: SparqlGrammarRule<'graphNode', GraphNode> = <const> {
   name: 'graphNode',
   impl: $ => C => $.OR2<RuleDefReturn<typeof graphNode>>([
-    { ALT: () => S11.graphNode.impl($)(C, undefined) },
-    { ALT: () => $.SUBRULE(reifiedTriple, undefined) },
+    { ALT: () => S11.graphNode.impl($)(C) },
+    { ALT: () => $.SUBRULE(reifiedTriple) },
   ]),
 };
 /**
@@ -338,14 +337,14 @@ export const graphNode: SparqlGrammarRule<'graphNode', GraphNode> = <const> {
 export const graphNodePath: SparqlRule<'graphNodePath', GraphNode> = <const> {
   name: 'graphNodePath',
   impl: $ => C => $.OR2<RuleDefReturn<typeof graphNodePath>>([
-    { ALT: () => S11.graphNodePath.impl($)(C, undefined) },
-    { ALT: () => $.SUBRULE(reifiedTriple, undefined) },
+    { ALT: () => S11.graphNodePath.impl($)(C) },
+    { ALT: () => $.SUBRULE(reifiedTriple) },
   ]),
-  gImpl: $ => (ast, C, params) => {
+  gImpl: $ => (ast, C) => {
     if (C.factory.isTripleCollectionReifiedTriple(ast)) {
-      $.SUBRULE(reifiedTriple, ast, undefined);
+      $.SUBRULE(reifiedTriple, ast);
     } else {
-      S11.graphNodePath.gImpl($)(<T11.Term | T11.TripleCollection> ast, C, params);
+      S11.graphNodePath.gImpl($)(<T11.Term | T11.TripleCollection> ast, C);
     }
   },
 };
@@ -357,17 +356,17 @@ export const graphNodePath: SparqlRule<'graphNodePath', GraphNode> = <const> {
 export const varOrTerm: SparqlGrammarRule<'varOrTerm', Term> = <const> {
   name: 'varOrTerm',
   impl: ({ ACTION, SUBRULE, OR, CONSUME }) => C => OR<Term>([
-    { GATE: () => C.parseMode.has('canParseVars'), ALT: () => SUBRULE(S11.var_, undefined) },
-    { ALT: () => SUBRULE(S11.iri, undefined) },
-    { ALT: () => SUBRULE(rdfLiteral, undefined) },
-    { ALT: () => SUBRULE(S11.numericLiteral, undefined) },
-    { ALT: () => SUBRULE(S11.booleanLiteral, undefined) },
-    { ALT: () => SUBRULE(S11.blankNode, undefined) },
+    { GATE: () => C.parseMode.has('canParseVars'), ALT: () => SUBRULE(S11.var_) },
+    { ALT: () => SUBRULE(S11.iri) },
+    { ALT: () => SUBRULE(rdfLiteral) },
+    { ALT: () => SUBRULE(S11.numericLiteral) },
+    { ALT: () => SUBRULE(S11.booleanLiteral) },
+    { ALT: () => SUBRULE(S11.blankNode) },
     { ALT: () => {
       const token = CONSUME(l11.terminals.nil);
       return ACTION(() => C.factory.namedNode(C.factory.sourceLocation(token), CommonIRIs.NIL));
     } },
-    { ALT: () => SUBRULE(tripleTerm, undefined) },
+    { ALT: () => SUBRULE(tripleTerm) },
   ]),
   // Generation remains untouched - go through graphTerm
 };
@@ -379,10 +378,10 @@ export const reifiedTriple: SparqlRule<'reifiedTriple', TripleCollectionReifiedT
   name: 'reifiedTriple',
   impl: ({ ACTION, CONSUME, SUBRULE, OPTION }) => (C) => {
     const open = CONSUME(l12.reificationOpen);
-    const subject = SUBRULE(reifiedTripleSubject, undefined);
-    const predicate = SUBRULE(S11.verb, undefined);
-    const object = SUBRULE(reifiedTripleObject, undefined);
-    const reifierVal = OPTION(() => SUBRULE(reifier, undefined));
+    const subject = SUBRULE(reifiedTripleSubject);
+    const predicate = SUBRULE(S11.verb);
+    const object = SUBRULE(reifiedTripleObject);
+    const reifierVal = OPTION(() => SUBRULE(reifier));
     const close = CONSUME(l12.reificationClose);
 
     return ACTION(() => {
@@ -402,14 +401,14 @@ export const reifiedTriple: SparqlRule<'reifiedTriple', TripleCollectionReifiedT
   gImpl: ({ SUBRULE, PRINT_WORD }) => (ast, { factory: F }) => {
     F.printFilter(ast, () => PRINT_WORD('<<'));
     const triple = ast.triples[0];
-    SUBRULE(graphNodePath, triple.subject, undefined);
+    SUBRULE(graphNodePath, triple.subject);
     if (F.isPathPure(triple.predicate)) {
       SUBRULE(S11.pathGenerator, triple.predicate, undefined);
     } else {
-      SUBRULE(graphNodePath, triple.predicate, undefined);
+      SUBRULE(graphNodePath, triple.predicate);
     }
-    SUBRULE(graphNodePath, triple.object, undefined);
-    SUBRULE(annotationPath, [ F.wrap(ast.identifier, ast.identifier.loc) ], undefined);
+    SUBRULE(graphNodePath, triple.object);
+    SUBRULE(annotationPath, [ F.wrap(ast.identifier, ast.identifier.loc) ]);
     F.printFilter(ast, () => PRINT_WORD('>>'));
   },
 };
@@ -421,14 +420,14 @@ export const reifiedTripleSubject:
 SparqlGrammarRule<'reifiedTripleSubject', Term | TripleCollectionReifiedTriple> = <const> {
   name: 'reifiedTripleSubject',
   impl: ({ OR, SUBRULE }) => C => OR<RuleDefReturn<typeof reifiedTripleSubject>>([
-    { GATE: () => C.parseMode.has('canParseVars'), ALT: () => SUBRULE(S11.var_, undefined) },
-    { ALT: () => SUBRULE(S11.iri, undefined) },
-    { ALT: () => SUBRULE(rdfLiteral, undefined) },
-    { ALT: () => SUBRULE(S11.numericLiteral, undefined) },
-    { ALT: () => SUBRULE(S11.booleanLiteral, undefined) },
-    { ALT: () => SUBRULE(S11.blankNode, undefined) },
-    { ALT: () => SUBRULE(reifiedTriple, undefined) },
-    { ALT: () => SUBRULE(tripleTerm, undefined) },
+    { GATE: () => C.parseMode.has('canParseVars'), ALT: () => SUBRULE(S11.var_) },
+    { ALT: () => SUBRULE(S11.iri) },
+    { ALT: () => SUBRULE(rdfLiteral) },
+    { ALT: () => SUBRULE(S11.numericLiteral) },
+    { ALT: () => SUBRULE(S11.booleanLiteral) },
+    { ALT: () => SUBRULE(S11.blankNode) },
+    { ALT: () => SUBRULE(reifiedTriple) },
+    { ALT: () => SUBRULE(tripleTerm) },
   ]),
 };
 
@@ -449,17 +448,17 @@ export const tripleTerm: SparqlRule<'tripleTerm', TermTriple> = <const> {
   name: 'tripleTerm',
   impl: ({ ACTION, CONSUME, SUBRULE }) => (C) => {
     const open = CONSUME(l12.tripleTermOpen);
-    const subject = SUBRULE(tripleTermSubject, undefined);
-    const predicate = SUBRULE(S11.verb, undefined);
-    const object = SUBRULE(tripleTermObject, undefined);
+    const subject = SUBRULE(tripleTermSubject);
+    const predicate = SUBRULE(S11.verb);
+    const object = SUBRULE(tripleTermObject);
     const close = CONSUME(l12.tripleTermClose);
     return ACTION(() => C.factory.termTriple(subject, predicate, object, C.factory.sourceLocation(open, close)));
   },
   gImpl: ({ SUBRULE, PRINT_WORD }) => (ast, { factory: F }) => {
     F.printFilter(ast, () => PRINT_WORD('<<('));
-    SUBRULE(graphNodePath, ast.subject, undefined);
-    SUBRULE(graphNodePath, ast.predicate, undefined);
-    SUBRULE(graphNodePath, ast.object, undefined);
+    SUBRULE(graphNodePath, ast.subject);
+    SUBRULE(graphNodePath, ast.predicate);
+    SUBRULE(graphNodePath, ast.object);
     F.printFilter(ast, () => PRINT_WORD(')>>'));
   },
 };
@@ -471,13 +470,13 @@ export const tripleTermSubject:
 SparqlGrammarRule<'tripleTermSubject', TermVariable | TermIri | TermLiteral | TermBlank | TermTriple> = <const> {
   name: 'tripleTermSubject',
   impl: ({ SUBRULE, OR }) => C => OR<RuleDefReturn<typeof tripleTermSubject>>([
-    { GATE: () => C.parseMode.has('canParseVars'), ALT: () => SUBRULE(S11.var_, undefined) },
-    { ALT: () => SUBRULE(S11.iri, undefined) },
-    { ALT: () => SUBRULE(rdfLiteral, undefined) },
-    { ALT: () => SUBRULE(S11.numericLiteral, undefined) },
-    { ALT: () => SUBRULE(S11.booleanLiteral, undefined) },
-    { ALT: () => SUBRULE(S11.blankNode, undefined) },
-    { ALT: () => SUBRULE(tripleTerm, undefined) },
+    { GATE: () => C.parseMode.has('canParseVars'), ALT: () => SUBRULE(S11.var_) },
+    { ALT: () => SUBRULE(S11.iri) },
+    { ALT: () => SUBRULE(rdfLiteral) },
+    { ALT: () => SUBRULE(S11.numericLiteral) },
+    { ALT: () => SUBRULE(S11.booleanLiteral) },
+    { ALT: () => SUBRULE(S11.blankNode) },
+    { ALT: () => SUBRULE(tripleTerm) },
   ]),
 };
 
@@ -497,15 +496,15 @@ export const tripleTermData: SparqlGrammarRule<'tripleTermData', TermTriple> = <
   name: 'tripleTermData',
   impl: ({ ACTION, CONSUME, OR, SUBRULE }) => (C) => {
     const open = CONSUME(l12.tripleTermOpen);
-    const subject = SUBRULE(tripleTermDataSubject, undefined);
+    const subject = SUBRULE(tripleTermDataSubject);
     const predicate = OR([
-      { ALT: () => SUBRULE(S11.iri, undefined) },
+      { ALT: () => SUBRULE(S11.iri) },
       { ALT: () => {
         const token = CONSUME(l11.a);
         return ACTION(() => C.factory.namedNode(C.factory.sourceLocation(token), CommonIRIs.TYPE));
       } },
     ]);
-    const object = SUBRULE(tripleTermDataObject, undefined);
+    const object = SUBRULE(tripleTermDataObject);
     const close = CONSUME(l12.tripleTermClose);
 
     return ACTION(() => C.factory.termTriple(subject, predicate, object, C.factory.sourceLocation(open, close)));
@@ -519,11 +518,11 @@ export const tripleTermDataSubject: SparqlGrammarRule<'tripleTermDataSubject', T
   <const> {
     name: 'tripleTermDataSubject',
     impl: ({ OR, SUBRULE }) => () => OR<RuleDefReturn<typeof tripleTermDataSubject>>([
-      { ALT: () => SUBRULE(S11.iri, undefined) },
-      { ALT: () => SUBRULE(rdfLiteral, undefined) },
-      { ALT: () => SUBRULE(S11.numericLiteral, undefined) },
-      { ALT: () => SUBRULE(S11.booleanLiteral, undefined) },
-      { ALT: () => SUBRULE(tripleTermData, undefined) },
+      { ALT: () => SUBRULE(S11.iri) },
+      { ALT: () => SUBRULE(rdfLiteral) },
+      { ALT: () => SUBRULE(S11.numericLiteral) },
+      { ALT: () => SUBRULE(S11.booleanLiteral) },
+      { ALT: () => SUBRULE(tripleTermData) },
     ]),
   };
 
@@ -543,8 +542,8 @@ SparqlGrammarRule<'tripleTermDataObject', RuleDefReturn<typeof tripleTermDataSub
 export const primaryExpression: SparqlGrammarRule<'primaryExpression', Expression> = <const> {
   name: 'primaryExpression',
   impl: $ => C => $.OR2<Expression>([
-    { ALT: () => S11.primaryExpression.impl($)(C, undefined) },
-    { ALT: () => $.SUBRULE(exprTripleTerm, undefined) },
+    { ALT: () => S11.primaryExpression.impl($)(C) },
+    { ALT: () => $.SUBRULE(exprTripleTerm) },
   ]),
 };
 
@@ -555,9 +554,9 @@ export const exprTripleTerm: SparqlGrammarRule<'exprTripleTerm', TermTriple> = <
   name: 'exprTripleTerm',
   impl: ({ ACTION, CONSUME, SUBRULE }) => (C) => {
     const open = CONSUME(l12.tripleTermOpen);
-    const subject = SUBRULE(exprTripleTermSubject, undefined);
-    const predicate = SUBRULE(S11.verb, undefined);
-    const object = SUBRULE(exprTripleTermObject, undefined);
+    const subject = SUBRULE(exprTripleTermSubject);
+    const predicate = SUBRULE(S11.verb);
+    const object = SUBRULE(exprTripleTermObject);
     const close = CONSUME(l12.tripleTermClose);
 
     return ACTION(() => C.factory.termTriple(
@@ -577,12 +576,12 @@ SparqlGrammarRule<'exprTripleTermSubject', TermIri | TermVariable | TermLiteral 
   name: 'exprTripleTermSubject',
   impl: ({ OR, SUBRULE }) => C =>
     OR<RuleDefReturn<typeof exprTripleTermSubject>>([
-      { ALT: () => SUBRULE(S11.iri, undefined) },
-      { ALT: () => SUBRULE(rdfLiteral, undefined) },
-      { ALT: () => SUBRULE(S11.numericLiteral, undefined) },
-      { ALT: () => SUBRULE(S11.booleanLiteral, undefined) },
-      { GATE: () => C.parseMode.has('canParseVars'), ALT: () => SUBRULE(S11.var_, undefined) },
-      { ALT: () => SUBRULE(exprTripleTerm, undefined) },
+      { ALT: () => SUBRULE(S11.iri) },
+      { ALT: () => SUBRULE(rdfLiteral) },
+      { ALT: () => SUBRULE(S11.numericLiteral) },
+      { ALT: () => SUBRULE(S11.booleanLiteral) },
+      { GATE: () => C.parseMode.has('canParseVars'), ALT: () => SUBRULE(S11.var_) },
+      { ALT: () => SUBRULE(exprTripleTerm) },
     ]),
 };
 
@@ -612,16 +611,16 @@ export const builtinObject = funcExpr1(l12.builtinOBJECT);
 export const builtInCall: typeof S11.builtInCall = <const> {
   name: 'builtInCall',
   impl: $ => C => $.OR2<T11.Expression>([
-    { ALT: () => S11.builtInCall.impl($)(C, undefined) },
-    { ALT: () => $.SUBRULE(builtinLangDir, undefined) },
-    { ALT: () => $.SUBRULE(builtinLangStrDir, undefined) },
-    { ALT: () => $.SUBRULE(builtinHasLang, undefined) },
-    { ALT: () => $.SUBRULE(builtinHasLangDir, undefined) },
-    { ALT: () => $.SUBRULE(builtinIsTriple, undefined) },
-    { ALT: () => $.SUBRULE(builtinTriple, undefined) },
-    { ALT: () => $.SUBRULE(builtinSubject, undefined) },
-    { ALT: () => $.SUBRULE(builtinPredicate, undefined) },
-    { ALT: () => $.SUBRULE(builtinObject, undefined) },
+    { ALT: () => S11.builtInCall.impl($)(C) },
+    { ALT: () => $.SUBRULE(builtinLangDir) },
+    { ALT: () => $.SUBRULE(builtinLangStrDir) },
+    { ALT: () => $.SUBRULE(builtinHasLang) },
+    { ALT: () => $.SUBRULE(builtinHasLangDir) },
+    { ALT: () => $.SUBRULE(builtinIsTriple) },
+    { ALT: () => $.SUBRULE(builtinTriple) },
+    { ALT: () => $.SUBRULE(builtinSubject) },
+    { ALT: () => $.SUBRULE(builtinPredicate) },
+    { ALT: () => $.SUBRULE(builtinObject) },
   ]),
 };
 
@@ -633,7 +632,7 @@ export const builtInCall: typeof S11.builtInCall = <const> {
 export const rdfLiteral: SparqlGrammarRule<'rdfLiteral', RuleDefReturn<typeof S11.rdfLiteral>> = <const> {
   name: 'rdfLiteral',
   impl: ({ ACTION, SUBRULE, OPTION, CONSUME, OR }) => (C) => {
-    const value = SUBRULE(S11.string, undefined);
+    const value = SUBRULE(S11.string);
     return OPTION(() => OR<RuleDefReturn<typeof rdfLiteral>>([
       { ALT: () => {
         const langTag = CONSUME(l12.LANG_DIR);
@@ -649,7 +648,7 @@ export const rdfLiteral: SparqlGrammarRule<'rdfLiteral', RuleDefReturn<typeof S1
       } },
       { ALT: () => {
         CONSUME(l11.symbols.hathat);
-        const iriVal = SUBRULE(S11.iri, undefined);
+        const iriVal = SUBRULE(S11.iri);
         return ACTION(() => C.factory.literalTerm(
           C.factory.sourceLocation(value, iriVal),
           value.value,
@@ -670,21 +669,21 @@ export const generateTriplesBlock: SparqlGeneratorRule<'triplesBlock', PatternBg
       HANDLE_LOC(triple, () => {
         const nextTriple = ast.triples.at(index);
         if (F.isTripleCollection(triple)) {
-          SUBRULE(graphNodePath, triple, undefined);
+          SUBRULE(graphNodePath, triple);
           // A top level tripleCollection block means that it is not used in a triple. So you end with DOT.
           F.printFilter(triple, () => PRINT_WORD('.'));
         } else {
           // Subject
-          SUBRULE(graphNodePath, triple.subject, undefined);
+          SUBRULE(graphNodePath, triple.subject);
           // Predicate
           if (F.isPathPure(triple.predicate)) {
             SUBRULE(S11.pathGenerator, triple.predicate, undefined);
           } else {
-            SUBRULE(graphNodePath, triple.predicate, undefined);
+            SUBRULE(graphNodePath, triple.predicate);
           }
           // Object
-          SUBRULE(graphNodePath, triple.object, undefined);
-          SUBRULE(annotationPath, triple.annotations ?? [], undefined);
+          SUBRULE(graphNodePath, triple.object);
+          SUBRULE(annotationPath, triple.annotations ?? []);
 
           // If no more things, or a top level collection (only possible if new block was part), or new subject: add DOT
           if (nextTriple === undefined || F.isTripleCollection(nextTriple) ||
@@ -708,11 +707,11 @@ export const generateTriplesBlock: SparqlGeneratorRule<'triplesBlock', PatternBg
  */
 export const generateGraphTerm: SparqlGeneratorRule<'graphTerm', GraphTerm> = {
   name: 'graphTerm',
-  gImpl: $ => (ast, C, par) => {
+  gImpl: $ => (ast, C) => {
     if (C.factory.isTermTriple(ast)) {
-      $.SUBRULE(tripleTerm, ast, undefined);
+      $.SUBRULE(tripleTerm, ast);
     } else {
-      S11.graphTerm.gImpl($)(ast, C, par);
+      S11.graphTerm.gImpl($)(ast, C);
     }
   },
 };

@@ -38,7 +38,7 @@ export type SparqlRule<
   /**
    * Function arguments that can be given to convey the state of the current parse operation.
    */
-  ParamType = undefined,
+  ParamType extends any[] = [],
 > = SparqlGrammarRule<NameType, ReturnType, ParamType>
   & SparqlGeneratorRule<NameType, GenInputType, ParamType>;
 export type SparqlGeneratorRule<
@@ -54,7 +54,7 @@ export type SparqlGeneratorRule<
   /**
    * Function arguments that can be given to convey the state of the current parse operation.
    */
-  ParamType = undefined,
+  ParamType extends any[] = [],
 > = GeneratorRule<{ factory: Factory }, NameType, ReturnType, ParamType>;
 export type SparqlGrammarRule<
   /**
@@ -69,5 +69,5 @@ export type SparqlGrammarRule<
   /**
    * Function arguments that can be given to convey the state of the current parse operation.
    */
-  ParamType = undefined,
+  ParamType extends any[] = [],
 > = ParserRule<SparqlContext, NameType, ReturnType, ParamType>;

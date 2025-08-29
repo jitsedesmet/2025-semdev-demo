@@ -42,7 +42,7 @@ export function stringEscapedLexical(str: string): string {
 export const rdfLiteral: SparqlRule<'rdfLiteral', TermLiteral> = <const> {
   name: 'rdfLiteral',
   impl: ({ ACTION, SUBRULE1, CONSUME, OPTION, OR }) => (C) => {
-    const value = SUBRULE1(string, undefined);
+    const value = SUBRULE1(string);
     return OPTION(() => OR<TermLiteral>([
       { ALT: () => {
         const lang = CONSUME(l.terminals.langTag);
@@ -54,7 +54,7 @@ export const rdfLiteral: SparqlRule<'rdfLiteral', TermLiteral> = <const> {
       } },
       { ALT: () => {
         CONSUME(l.symbols.hathat);
-        const iriVal = SUBRULE1(iri, undefined);
+        const iriVal = SUBRULE1(iri);
         return ACTION(() => C.factory.literalTerm(
           C.factory.sourceLocation(value, iriVal),
           value.value,
@@ -71,7 +71,7 @@ export const rdfLiteral: SparqlRule<'rdfLiteral', TermLiteral> = <const> {
         factory.printFilter(ast, () => PRINT('@', ast.langOrIri));
       } else {
         factory.printFilter(ast, () => PRINT('^^'));
-        SUBRULE(iri, ast.langOrIri, undefined);
+        SUBRULE(iri, ast.langOrIri);
       }
     }
   },
@@ -84,9 +84,9 @@ export const rdfLiteral: SparqlRule<'rdfLiteral', TermLiteral> = <const> {
 export const numericLiteral: SparqlGrammarRule<'numericLiteral', TermLiteralTyped> = <const> {
   name: 'numericLiteral',
   impl: ({ SUBRULE, OR }) => () => OR([
-    { ALT: () => SUBRULE(numericLiteralUnsigned, undefined) },
-    { ALT: () => SUBRULE(numericLiteralPositive, undefined) },
-    { ALT: () => SUBRULE(numericLiteralNegative, undefined) },
+    { ALT: () => SUBRULE(numericLiteralUnsigned) },
+    { ALT: () => SUBRULE(numericLiteralPositive) },
+    { ALT: () => SUBRULE(numericLiteralNegative) },
   ]),
 };
 
@@ -226,11 +226,11 @@ export const string: SparqlGrammarRule<'string', TermLiteralStr> = <const> {
 export const iri: SparqlRule<'iri', TermIri> = <const> {
   name: 'iri',
   impl: ({ SUBRULE, OR }) => () => OR<TermIri>([
-    { ALT: () => SUBRULE(iriFull, undefined) },
-    { ALT: () => SUBRULE(prefixedName, undefined) },
+    { ALT: () => SUBRULE(iriFull) },
+    { ALT: () => SUBRULE(prefixedName) },
   ]),
   gImpl: ({ SUBRULE }) => (ast, { factory: F }) =>
-    F.isTermNamedPrefixed(ast) ? SUBRULE(prefixedName, ast, undefined) : SUBRULE(iriFull, ast, undefined),
+    F.isTermNamedPrefixed(ast) ? SUBRULE(prefixedName, ast) : SUBRULE(iriFull, ast),
 };
 
 export const iriFull: SparqlRule<'iriFull', TermIriFull> = <const> {

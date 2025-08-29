@@ -34,8 +34,8 @@ export class DynamicParser<Context, Names extends string, RuleDefs extends Parse
 
   private constructSelfRef(): CstDef {
     const subRuleImpl = (chevrotainSubrule: typeof this.SUBRULE): CstDef['SUBRULE'] =>
-      ((cstDef, arg) =>
-        chevrotainSubrule(<any> this[<keyof (typeof this)>cstDef.name], <any>{ ARGS: [ this.context, arg ]})
+      ((cstDef, ...arg) =>
+        chevrotainSubrule(<any> this[<keyof (typeof this)>cstDef.name], <any>{ ARGS: [ this.context, ...arg ]})
       ) satisfies CstDef['SUBRULE'];
     return {
       CONSUME: (tokenType, option) => this.CONSUME(tokenType, option),
