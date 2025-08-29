@@ -1,17 +1,15 @@
 import { unCapitalize } from '@traqula/core';
 import type { TokenType } from 'chevrotain';
-import { var_ } from './grammar';
-import { expression, expressionList } from './grammar/expression';
-import { groupGraphPattern } from './grammar/whereClause';
+import { var_, expression, expressionList, groupGraphPattern } from './grammar';
 import * as l from './lexer';
+import type { SparqlGrammarRule } from './sparql11HelperTypes';
 import type {
   Expression,
   ExpressionAggregateDefault,
   ExpressionOperation,
   ExpressionPatternOperation,
   TermVariable,
-} from './RoundTripTypes';
-import type { SparqlGrammarRule } from './Sparql11types';
+} from './Sparql11types';
 
 export type ExpressionFunctionX<U extends Expression[]> = ExpressionOperation & {
   args: U;

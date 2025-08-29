@@ -8,7 +8,7 @@ import type {
   QueryConstruct,
   QuerySelect,
   SolutionModifiers,
-} from '../RoundTripTypes';
+} from '../Sparql11types';
 import type { Constructor } from './mixins';
 
 type NodeType = 'query';

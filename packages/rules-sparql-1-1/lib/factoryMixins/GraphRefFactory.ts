@@ -5,7 +5,7 @@ import type {
   GraphRefNamed,
   GraphRefSpecific,
   TermIri,
-} from '../RoundTripTypes';
+} from '../Sparql11types';
 import type { Constructor } from './mixins';
 
 type NodeType = 'graphRef';

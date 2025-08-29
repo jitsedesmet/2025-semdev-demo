@@ -1,15 +1,12 @@
 import type { ImplArgs, RuleDefReturn, Wrap } from '@traqula/core';
 import * as l from '../lexer';
+import type { SparqlGrammarRule, SparqlRule } from '../sparql11HelperTypes';
 import type {
   Expression,
   ExpressionFunctionCall,
   ExpressionOperation,
   TermIri,
   TermLiteral,
-} from '../RoundTripTypes';
-import type {
-  SparqlGrammarRule,
-  SparqlRule,
 } from '../Sparql11types';
 import { aggregate, builtInCall } from './builtIn';
 import {

@@ -7,7 +7,7 @@ import type {
   PathNegatedElt,
   PropertyPathChain,
   TermIri,
-} from '../RoundTripTypes';
+} from '../Sparql11types';
 import type { Constructor } from './mixins';
 
 type NodeType = 'path';

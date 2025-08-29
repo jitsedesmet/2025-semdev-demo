@@ -1,6 +1,6 @@
 import type { IToken } from 'chevrotain';
-import { CommonIRIs } from '../grammar-helpers/utils';
 import * as l from '../lexer';
+import type { SparqlGrammarRule, SparqlRule } from '../sparql11HelperTypes';
 import type {
   TermBlank,
   TermIri,
@@ -9,9 +9,8 @@ import type {
   TermLiteral,
   TermLiteralStr,
   TermLiteralTyped,
-} from '../RoundTripTypes';
-
-import type { SparqlGrammarRule, SparqlRule } from '../Sparql11types';
+} from '../Sparql11types';
+import { CommonIRIs } from '../utils';
 
 export function stringEscapedLexical(str: string): string {
   const lexical = str.replaceAll(/["\\\t\n\r\b\f]/gu, (char) => {

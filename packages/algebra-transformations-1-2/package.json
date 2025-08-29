@@ -42,6 +42,7 @@
     "rdf-string": "^2.0.0"
   },
   "devDependencies": {
-    "@rdfjs/types": "^2.0.1"
+    "@rdfjs/types": "^2.0.1",
+    "@traqula/core": "^0.0.3"
   }
 }

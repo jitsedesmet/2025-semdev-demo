@@ -25,7 +25,7 @@ import type {
   TripleNesting,
   Update,
   Wildcard,
-} from './RoundTripTypes';
+} from './Sparql11types';
 
 export class Factory extends asArg(CoreFactory)
   .call(ContextFactoryMixin)

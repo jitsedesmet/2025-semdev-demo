@@ -17,6 +17,7 @@ import {
   funcVar1,
 } from '../expressionHelpers';
 import * as l from '../lexer';
+import type { SparqlGrammarRule, SparqlRule } from '../sparql11HelperTypes';
 import type {
   Expression,
   ExpressionAggregate,
@@ -24,8 +25,7 @@ import type {
   ExpressionAggregateOnWildcard,
   ExpressionAggregateSeparator,
   Wildcard,
-} from '../RoundTripTypes';
-import type { SparqlGrammarRule, SparqlRule } from '../Sparql11types';
+} from '../Sparql11types';
 import { expression } from './expression';
 import { string, stringEscapedLexical } from './literals';
 

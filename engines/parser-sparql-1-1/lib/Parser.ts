@@ -1,12 +1,12 @@
 import { ParserBuilder } from '@traqula/core';
-import type * as T11 from '@traqula/rules-sparql-1-1';
 import {
-  sparqlCodepointEscape,
-  lex as l,
-  SparqlParser,
   gram,
+  lex as l,
+  sparqlCodepointEscape,
+  SparqlParser,
   updateNoReuseBlankNodeLabels,
 } from '@traqula/rules-sparql-1-1';
+import type * as T11 from '@traqula/rules-sparql-1-1';
 import { queryUnitParserBuilder } from './queryUnitParser';
 import { updateParserBuilder } from './updateUnitParser';
 

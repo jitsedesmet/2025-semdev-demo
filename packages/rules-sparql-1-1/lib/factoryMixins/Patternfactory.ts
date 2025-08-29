@@ -16,7 +16,7 @@ import type {
   TermIri,
   TermVariable,
   ValuePatternRow,
-} from '../RoundTripTypes';
+} from '../Sparql11types';
 import type { Constructor } from './mixins';
 
 type NodeType = 'pattern';

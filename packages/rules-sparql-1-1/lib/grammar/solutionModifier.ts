@@ -1,6 +1,7 @@
 import type { IToken } from '@chevrotain/types';
 import type { Wrap } from '@traqula/core';
 import * as l from '../lexer';
+import type { SparqlGrammarRule, SparqlRule } from '../sparql11HelperTypes';
 import type {
   Expression,
   SolutionModifierGroup,
@@ -10,8 +11,7 @@ import type {
   Ordering,
   SolutionModifierLimitOffset,
   SolutionModifiers,
-} from '../RoundTripTypes';
-import type { SparqlGrammarRule, SparqlRule } from '../Sparql11types';
+} from '../Sparql11types';
 import { builtInCall } from './builtIn';
 import { brackettedExpression, expression } from './expression';
 import { var_ } from './general';

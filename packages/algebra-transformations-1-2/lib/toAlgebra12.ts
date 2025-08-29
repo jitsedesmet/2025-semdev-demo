@@ -4,10 +4,11 @@ import {
   translateTripleCollection,
   translateTripleNesting,
 } from '@traqula/algebra-transformations-1-1';
-import type { AlgebraIndir, FlattenedTriple } from '@traqula/algebra-transformations-1-1';
+import type { FlattenedTriple } from '@traqula/algebra-transformations-1-1';
 import type * as T11 from '@traqula/rules-sparql-1-1';
 import type { Term, TripleCollection, TripleNesting } from '@traqula/rules-sparql-1-2';
 import { termToString } from 'rdf-string';
+import type { AlgebraIndir } from './types';
 
 const reificationIri = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#reifies';
 
@@ -32,7 +33,7 @@ void,
 > = {
   name: 'translateTripleCollection',
   fun: s => (c, collection, result) => {
-    if (collection.subType === 'reifiedTriple') {
+    if (c.astFactory.isTripleCollectionReifiedTriple(collection)) {
       const { SUBRULE } = s;
       const { dataFactory } = c;
       const translated: FlattenedTriple[] = [];

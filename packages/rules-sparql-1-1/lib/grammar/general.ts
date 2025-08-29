@@ -1,5 +1,5 @@
-import { CommonIRIs } from '../grammar-helpers/utils';
 import * as l from '../lexer';
+import type { SparqlGrammarRule, SparqlRule } from '../sparql11HelperTypes';
 import type {
   ContextDefinition,
   ContextDefinitionBase,
@@ -8,8 +8,8 @@ import type {
   Term,
   TermIri,
   TermVariable,
-} from '../RoundTripTypes';
-import type { SparqlGrammarRule, SparqlRule } from '../Sparql11types';
+} from '../Sparql11types';
+import { CommonIRIs } from '../utils';
 import { blankNode, booleanLiteral, iri, iriFull, numericLiteral, rdfLiteral, verbA } from './literals';
 
 /**

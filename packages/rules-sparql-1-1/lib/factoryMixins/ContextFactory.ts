@@ -3,7 +3,7 @@ import type {
   ContextDefinitionBase,
   ContextDefinitionPrefix,
   TermIriFull,
-} from '../RoundTripTypes';
+} from '../Sparql11types';
 import type { Constructor } from './mixins';
 
 type NodeType = 'contextDef';

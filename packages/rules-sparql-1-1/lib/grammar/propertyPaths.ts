@@ -1,11 +1,8 @@
 import type { RuleDefReturn } from '@traqula/core';
 import type { IToken, TokenType } from 'chevrotain';
 import * as l from '../lexer';
-import type { TermIri, PathNegatedElt, Path, PathModified, PathNegated } from '../RoundTripTypes';
-import type {
-  SparqlGeneratorRule,
-  SparqlGrammarRule,
-} from '../Sparql11types';
+import type { SparqlGeneratorRule, SparqlGrammarRule } from '../sparql11HelperTypes';
+import type { TermIri, PathNegatedElt, Path, PathModified, PathNegated } from '../Sparql11types';
 import { iri, verbA } from './literals';
 
 /**

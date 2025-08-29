@@ -1,6 +1,6 @@
 import { GeneratorBuilder } from '@traqula/core';
-import { gram, Factory } from '@traqula/rules-sparql-1-1';
 import type * as T11 from '@traqula/rules-sparql-1-1';
+import { Factory, gram } from '@traqula/rules-sparql-1-1';
 
 const queryOrUpdate: T11.SparqlGeneratorRule<'queryOrUpdate', T11.Query | T11.Update> = {
   name: 'queryOrUpdate',

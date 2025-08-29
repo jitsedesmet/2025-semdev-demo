@@ -9,7 +9,7 @@ import type {
   TermLiteralStr,
   TermLiteralTyped,
   TermVariable,
-} from '../RoundTripTypes';
+} from '../Sparql11types';
 import type { Constructor } from './mixins';
 
 type NodeType = 'term';

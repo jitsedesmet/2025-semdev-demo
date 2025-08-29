@@ -17,7 +17,7 @@ import type {
   TripleNesting,
   Term,
   SparqlQuery,
-} from '../RoundTripTypes';
+} from '../Sparql11types';
 
 const F = new Factory();
 const transformer = new Transformer<Sparql11Nodes>();

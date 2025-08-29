@@ -1,16 +1,18 @@
 import { sparqlAlgebraTransformerBuilder } from '@traqula/algebra-sparql-1-1';
 import type { Algebra, ContextConfigs, translateQuery } from '@traqula/algebra-transformations-1-1';
-import { createAlgebraContext } from '@traqula/algebra-transformations-1-1';
 import {
+  createAlgebraContext,
   translateTerm12,
   translateTripleCollection12,
   translateTripleNesting12,
 } from '@traqula/algebra-transformations-1-2';
+import type { AlgebraContext } from '@traqula/algebra-transformations-1-2';
 import { IndirBuilder } from '@traqula/core';
 import type { SparqlQuery } from '@traqula/rules-sparql-1-2';
 
 export const sparqlAlgebraTransformerBuilder12 = IndirBuilder
   .create(sparqlAlgebraTransformerBuilder)
+  .widenContext<AlgebraContext>()
   .patchRule(translateTerm12)
   .patchRule(translateTripleCollection12)
   .patchRule(translateTripleNesting12)

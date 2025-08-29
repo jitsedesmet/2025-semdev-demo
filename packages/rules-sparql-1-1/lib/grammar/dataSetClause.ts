@@ -1,8 +1,8 @@
 import type { RuleDefReturn, Wrap } from '@traqula/core';
 import type { TokenType } from 'chevrotain';
 import * as l from '../lexer';
-import type { DatasetClauses, TermIri } from '../RoundTripTypes';
-import type { SparqlGrammarRule, SparqlRule } from '../Sparql11types';
+import type { SparqlGrammarRule, SparqlRule } from '../sparql11HelperTypes';
+import type { DatasetClauses, TermIri } from '../Sparql11types';
 import { iri } from './literals';
 
 export function datasetClauseUsing<RuleName extends 'usingClause' | 'datasetClause'>(

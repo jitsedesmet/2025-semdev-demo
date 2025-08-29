@@ -1,6 +1,6 @@
 import type { IToken } from 'chevrotain';
-import { CommonIRIs } from '../grammar-helpers/utils';
 import * as l from '../lexer';
+import type { SparqlGrammarRule, SparqlRule } from '../sparql11HelperTypes';
 import type {
   BasicGraphPattern,
   GraphNode,
@@ -12,11 +12,8 @@ import type {
   TripleCollectionBlankNodeProperties,
   TripleCollectionList,
   TripleNesting,
-} from '../RoundTripTypes';
-import type {
-  SparqlGrammarRule,
-  SparqlRule,
 } from '../Sparql11types';
+import { CommonIRIs } from '../utils';
 import { var_, varOrTerm, verb } from './general';
 import { path, pathGenerator } from './propertyPaths';
 

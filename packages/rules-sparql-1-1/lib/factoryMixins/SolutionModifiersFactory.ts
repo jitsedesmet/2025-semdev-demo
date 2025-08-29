@@ -7,7 +7,7 @@ import type {
   SolutionModifierHaving,
   SolutionModifierLimitOffset,
   SolutionModifierOrder,
-} from '../RoundTripTypes';
+} from '../Sparql11types';
 import type { Constructor } from './mixins';
 
 type NodeType = 'solutionModifier';
