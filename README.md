@@ -1,3 +1,17 @@
+This repo is a fork of the original [Traqula repo](https://github.com/comunica/traqula).
+This repo is NOT MAINTAINED, and only serves the purpose of providing a demonstration of a modular parser.
+The code is used as part of [a presentation](https://modular-parsing.demo.jitsedesmet.be/)
+at the [SEMDEV workshop](https://semantics2025.semdev.org/) at [SEMANTiCS 2025](https://2025-eu.semantics.cc/).
+The presentation presents the [paper of Jitse De Smet and Ruben Tealman on modular SPARQL Parsing](https://traqula-demo-semantics-2025.jitsedesmet.be/).
+
+Dedicated to the demo are 4 parsers:
+1. [adjust parser](./engines/parser-sparql-1-1-adjust)
+2. [construct quads parser](./engines/parser-sparql-1-1-construct-quad)
+3. [full text search parser](./engines/parser-sparql-1-1-full-text-search)
+4. [no optional parser](./engines/parser-sparql-1-1-no-optional)
+
+---
+
 <p align="center">
     <img alt="Traqula logo" width="70%" style="border-radius: 20px" src="assets/white-on-red/logo-white-on-red-lettered-social.png">
 </p>

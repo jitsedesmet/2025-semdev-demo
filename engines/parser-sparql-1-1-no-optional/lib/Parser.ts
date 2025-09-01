@@ -19,13 +19,13 @@ export const graphPatternNotTriples:
 SparqlGrammarRule<(typeof g.graphPatternNotTriples)['name'], RuleDefReturn<typeof g.graphPatternNotTriples>> = {
   name: 'graphPatternNotTriples',
   impl: ({ SUBRULE, OR }) => () => OR<RuleDefReturn<typeof graphPatternNotTriples>>([
-    { ALT: () => SUBRULE(g.groupOrUnionGraphPattern, undefined) },
-    { ALT: () => SUBRULE(g.minusGraphPattern, undefined) },
-    { ALT: () => SUBRULE(g.graphGraphPattern, undefined) },
-    { ALT: () => SUBRULE(g.serviceGraphPattern, undefined) },
-    { ALT: () => SUBRULE(g.filter, undefined) },
-    { ALT: () => SUBRULE(g.bind, undefined) },
-    { ALT: () => SUBRULE(g.inlineData, undefined) },
+    { ALT: () => SUBRULE(g.groupOrUnionGraphPattern) },
+    { ALT: () => SUBRULE(g.minusGraphPattern) },
+    { ALT: () => SUBRULE(g.graphGraphPattern) },
+    { ALT: () => SUBRULE(g.serviceGraphPattern) },
+    { ALT: () => SUBRULE(g.filter) },
+    { ALT: () => SUBRULE(g.bind) },
+    { ALT: () => SUBRULE(g.inlineData) },
   ]),
 };
 
@@ -36,7 +36,7 @@ export const noOptionalBuilder = ParserBuilder.create(sparql11ParserBuilder)
 export class Parser {
   private readonly F = new Factory();
   private readonly parser: {
-    queryOrUpdate: (query: string, context: SparqlContext, _: undefined) => SparqlQuery;
+    queryOrUpdate: (query: string, context: SparqlContext) => SparqlQuery;
   };
 
   public constructor() {
@@ -50,6 +50,6 @@ export class Parser {
   }
 
   public parse(query: string, context: Partial<SparqlContext> = {}): SparqlQuery {
-    return this.parser.queryOrUpdate(query, completeParseContext(context), undefined);
+    return this.parser.queryOrUpdate(query, completeParseContext(context));
   }
 }

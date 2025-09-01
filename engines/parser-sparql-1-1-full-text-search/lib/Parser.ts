@@ -24,13 +24,13 @@ export const fulltextSearchBuilder = ParserBuilder.create(sparql11ParserBuilder)
   .patchRule(objectList)
   .patchRule(objectListPath)
   .typePatch<{
-    [g.objectPath.name]: TripleNesting;
+    [g.objectPath.name]: [TripleNesting];
   }>();
 
 export class Parser {
   private readonly F = new Factory();
   private readonly parser: {
-    queryOrUpdate: (query: string, context: SparqlContext, _: undefined) => SparqlQuery;
+    queryOrUpdate: (query: string, context: SparqlContext) => SparqlQuery;
   };
 
   public constructor() {
@@ -45,6 +45,6 @@ export class Parser {
   }
 
   public parse(query: string, context: Partial<SparqlContext> = {}): SparqlQuery {
-    return this.parser.queryOrUpdate(query, completeParseContext(context), undefined);
+    return this.parser.queryOrUpdate(query, completeParseContext(context));
   }
 }

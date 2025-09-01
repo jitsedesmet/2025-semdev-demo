@@ -6,23 +6,22 @@
   <strong>A query language transpiler framework for JavaScript</strong>
 </p>
 
-**WARNING:** V2 will come shortly and will have lots of breaking changes.
+# Traqula parser engine for SPARQL 1.1 + No OPTIONAL
 
-# Traqula parser engine for SPARQL 1.1 + Adjust
-
-Traqula Sparql 1.1 Adjust is a [SPARQL 1.1](https://www.w3.org/TR/sparql11-query/#grammar) query parser that also parses the [builtin function ADJUST](https://github.com/w3c/sparql-dev/blob/main/SEP/SEP-0002/sep-0002.md) for TypeScript.
+Traqula Sparql 1.1 no optional is a [SPARQL 1.1](https://www.w3.org/TR/sparql11-query/#grammar) query parser that does not parse the
+[OPTIONAL pattern](https://www.w3.org/TR/sparql11-query/#rOptionalGraphPattern) for TypeScript.
 Simple grammar extension of [Traqula engine-sparql-1-1](https://github.com/comunica/traqula/tree/main/engines/parser-sparql-1-1)
 
 ## Installation
 
 ```bash
-npm install @traqula/parser-sparql-1-1-adjust
+npm install @traqula/parser-sparql-1-1-no-optional
 ```
 
 or
 
 ```bash
-yarn add @traqula/parser-sparql-1-1-adjust
+yarn add @traqula/parser-sparql-1-1-no-optional
 ```
 
 ## Import
@@ -30,27 +29,19 @@ yarn add @traqula/parser-sparql-1-1-adjust
 Either through ESM import:
 
 ```typescript
-import { Parser } from '@traqula/parser-sparql-1-1-adjust';
+import { Parser } from '@traqula/parser-sparql-1-1-no-optional';
 ```
 
 _or_ CJS require:
 
 ```typescript
-const Sparql11AdjustParser = require('@traqula/parser-sparql-1-1-adjust').Parser;
+const Sparql11NoOptional = require('@traqula/parser-sparql-1-1-no-optional').Parser;
 ```
 
 ## Usage
 
-This package contains a `Sparql11AdjustParser` that is able to parse SPARQL 1.1 queries including the [builtin function ADJUST](https://github.com/w3c/sparql-dev/blob/main/SEP/SEP-0002/sep-0002.md):
+This package contains a `Parser` that is able to parse SPARQL 1.1 queries excluding the
+[OPTIONAL pattern](https://www.w3.org/TR/sparql11-query/#rOptionalGraphPattern):
 
-```typescript
-const parser = new Parser();
-const abstractSyntaxTree = parser.parse(`
-SELECT ?s ?p (ADJUST(?o, "-PT10H"^^<http://www.w3.org/2001/XMLSchema#dayTimeDuration>) as ?adjusted) WHERE {
-  ?s ?p ?o
-}
-`);
-```
-
-This parser is a simple grammar extension to the [engine-sparql-1-1](https://github.com/comunica/traqula/tree/main/engines/engine-sparql-1-1).
+This parser is a simple grammar modification of the [engine-sparql-1-1](https://github.com/comunica/traqula/tree/main/engines/engine-sparql-1-1).
 As such, most, if not all, documentation of that parser holds for this one too.

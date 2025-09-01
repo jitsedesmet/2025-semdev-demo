@@ -29,14 +29,14 @@ export const constructQuadBuilder = ParserBuilder.create(sparql11ParserBuilder)
   )
   .patchRule(constructQuery)
   .typePatch<{
-    [g.query.name]: Query;
-    [queryOrUpdate.name]: SparqlQuery;
+    [g.query.name]: [Query];
+    [queryOrUpdate.name]: [SparqlQuery];
   }>();
 
 export class Parser {
   private readonly F = new Factory();
   private readonly parser: {
-    queryOrUpdate: (query: string, context: SparqlContext, _: undefined) => SparqlQuery;
+    queryOrUpdate: (query: string, context: SparqlContext) => SparqlQuery;
   };
 
   public constructor() {
@@ -47,6 +47,6 @@ export class Parser {
   }
 
   public parse(query: string, context: Partial<SparqlContext> = {}): SparqlQuery {
-    return this.parser.queryOrUpdate(query, completeParseContext(context), undefined);
+    return this.parser.queryOrUpdate(query, completeParseContext(context));
   }
 }

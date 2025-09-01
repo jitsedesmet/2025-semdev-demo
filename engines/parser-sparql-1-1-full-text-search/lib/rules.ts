@@ -8,7 +8,7 @@ export const tripleOption: SparqlGrammarRule<'tripleOption', Option> = {
   name: 'tripleOption',
   impl: ({ CONSUME, SUBRULE }) => () => {
     const name = CONSUME(qName);
-    const expression = SUBRULE(g.expression, undefined);
+    const expression = SUBRULE(g.expression);
     return {
       name: name.image.toLowerCase(),
       expression,
@@ -27,7 +27,7 @@ export const tripleOptions: SparqlGrammarRule<'tripleOptions', Wrap<Option[]>> =
     AT_LEAST_ONE_SEP({
       SEP: l.symbols.comma,
       DEF: () => {
-        const option = SUBRULE1(tripleOption, undefined);
+        const option = SUBRULE1(tripleOption);
         options.push(option);
       },
     });
@@ -42,16 +42,16 @@ export const tripleOptions: SparqlGrammarRule<'tripleOptions', Wrap<Option[]>> =
  * the [score example](https://docs.openlinksw.com/virtuoso/sparqlextensions/#rdfsparqlrulescoreexmp)
  */
 function objectListImpl<T extends string>(name: T, allowPaths: boolean):
-SparqlGrammarRule<T, TripleNesting[], Pick<TripleNesting, 'subject' | 'predicate'>> {
+SparqlGrammarRule<T, TripleNesting[], [TripleNesting['subject'], TripleNesting['predicate']]> {
   return <const> {
     name,
-    impl: ({ ACTION, SUBRULE, AT_LEAST_ONE_SEP, OPTION }) => (_, arg) => {
+    impl: ({ ACTION, SUBRULE, AT_LEAST_ONE_SEP, OPTION }) => (_, subj, pred) => {
       const objects: TripleNesting[] = [];
       AT_LEAST_ONE_SEP({
         SEP: l.symbols.comma,
         DEF: () => {
-          const objectTriple = SUBRULE(allowPaths ? g.objectPath : g.object, arg);
-          const options = OPTION(() => SUBRULE(tripleOptions, undefined));
+          const objectTriple = SUBRULE(allowPaths ? g.objectPath : g.object, subj, pred);
+          const options = OPTION(() => SUBRULE(tripleOptions));
           ACTION(() => {
             const casted = <TripleNesting> objectTriple;
             if (options !== undefined) {

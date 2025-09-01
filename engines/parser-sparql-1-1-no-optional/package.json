@@ -1,13 +1,13 @@
 {
   "name": "@traqula/parser-sparql-1-1-no-optional",
   "version": "0.0.3",
-  "description": "SPARQL 1.1 + ADJUST parser",
+  "description": "SPARQL 1.1 + no optional parser",
   "lsd:module": true,
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/comunica/traqula.git",
-    "directory": "engines/parser-sparql-1-1-adjust"
+    "directory": "engines/parser-sparql-1-1-no-optional"
   },
   "bugs": {
     "url": "https://github.com/comunica/traqula/issues"

@@ -19,7 +19,7 @@ export const constructTemplateQ: SparqlGrammarRule<'constructTemplateQ', Wrap<Co
   name: 'constructTemplateQ',
   impl: ({ SUBRULE, CONSUME, ACTION }) => (C) => {
     const open = CONSUME(l.symbols.LCurly);
-    const quads = SUBRULE(constructQuads, undefined);
+    const quads = SUBRULE(constructQuads);
     const close = CONSUME(l.symbols.RCurly);
     return ACTION(() => C.factory.wrap(quads.val, C.factory.sourceLocation(open, close)));
   },
@@ -30,16 +30,16 @@ export const constructQuads: SparqlGrammarRule<'constructQuads', Wrap<ConstructQ
   impl: ({ ACTION, SUBRULE1, SUBRULE2, MANY, OPTION1, OPTION2, OPTION3, CONSUME }) => (C) => {
     const result: ConstructQuads[] = [];
     let lastDot: IToken | undefined;
-    const firstTriples = OPTION1(() => SUBRULE1(g.triplesTemplate, undefined));
+    const firstTriples = OPTION1(() => SUBRULE1(g.triplesTemplate));
     ACTION(() => {
       if (firstTriples) {
         result.push(firstTriples);
       }
     });
     MANY(() => {
-      const notTriples = SUBRULE1(constructQuadsNotTriples, undefined);
+      const notTriples = SUBRULE1(constructQuadsNotTriples);
       lastDot = OPTION2(() => CONSUME(l.symbols.dot));
-      const triples = OPTION3(() => SUBRULE2(g.triplesTemplate, undefined));
+      const triples = OPTION3(() => SUBRULE2(g.triplesTemplate));
       ACTION(() => {
         result.push(notTriples);
         if (triples) {
@@ -54,8 +54,8 @@ export const constructQuads: SparqlGrammarRule<'constructQuads', Wrap<ConstructQ
 export const varOrBlankNodeIri: SparqlGrammarRule<'varOrBlankNodeIri', TermVariable | TermBlank | TermIri> = {
   name: 'varOrBlankNodeIri',
   impl: ({ SUBRULE, OR }) => () => OR<RuleDefReturn<typeof varOrBlankNodeIri>>([
-    { ALT: () => SUBRULE(g.varOrIri, undefined) },
-    { ALT: () => SUBRULE(g.blankNode, undefined) },
+    { ALT: () => SUBRULE(g.varOrIri) },
+    { ALT: () => SUBRULE(g.blankNode) },
   ]),
 };
 
@@ -63,9 +63,9 @@ export const constructQuadsNotTriples: SparqlGrammarRule<'constructQuadsNotTripl
   name: 'constructQuadsNotTriples',
   impl: ({ ACTION, SUBRULE, CONSUME, OPTION }) => (C) => {
     const graph = CONSUME(l.graph.graph);
-    const graphVal = SUBRULE(varOrBlankNodeIri, undefined);
+    const graphVal = SUBRULE(varOrBlankNodeIri);
     CONSUME(l.symbols.LCurly);
-    const triples = OPTION(() => SUBRULE(g.triplesTemplate, undefined));
+    const triples = OPTION(() => SUBRULE(g.triplesTemplate));
     const rCurly = CONSUME(l.symbols.RCurly);
     return ACTION(() => ({
       type: 'graph',
@@ -90,10 +90,10 @@ SparqlGrammarRule<'constructQuery', Omit<QueryConstruct, 'type' | 'context' | 'v
     return OR<RuleDefReturn<typeof constructQuery>>([
       { ALT: () => {
         // Long format
-        const template = SUBRULE1(constructTemplateQ, undefined);
-        const from = SUBRULE1(g.datasetClauseStar, undefined);
-        const where = SUBRULE1(g.whereClause, undefined);
-        const modifiers = SUBRULE1(g.solutionModifier, undefined);
+        const template = SUBRULE1(constructTemplateQ);
+        const from = SUBRULE1(g.datasetClauseStar);
+        const where = SUBRULE1(g.whereClause);
+        const modifiers = SUBRULE1(g.solutionModifier);
         return ACTION(() => ({
           subType: 'construct',
           template: template.val,
@@ -112,11 +112,11 @@ SparqlGrammarRule<'constructQuery', Omit<QueryConstruct, 'type' | 'context' | 'v
       } },
       { ALT: () => {
         // Short format
-        const from = SUBRULE2(g.datasetClauseStar, undefined);
+        const from = SUBRULE2(g.datasetClauseStar);
         CONSUME(l.where);
         // ConstructTemplate is same as '{' TriplesTemplate? '}'
-        const template = SUBRULE2(constructTemplateQ, undefined);
-        const modifiers = SUBRULE2(g.solutionModifier, undefined);
+        const template = SUBRULE2(constructTemplateQ);
+        const modifiers = SUBRULE2(g.solutionModifier);
 
         return ACTION(() => {
           const where = C.factory.patternGroup(
