@@ -39,7 +39,7 @@ export class DynamicGenerator<Context, Names extends string, RuleDefs extends Ge
     return <Context> this.__context;
   }
 
-  protected readonly subrule: RuleDefArg['SUBRULE'] = (cstDef, ast, arg) => {
+  protected readonly subrule: RuleDefArg['SUBRULE'] = (cstDef, ast, ...arg) => {
     const def = this.rules[<Names> cstDef.name];
     if (!def) {
       throw new Error(`Rule ${cstDef.name} not found`);
@@ -53,7 +53,7 @@ export class DynamicGenerator<Context, Names extends string, RuleDefs extends Ge
       PRINT_WORDS: this.printWords,
       CATCHUP: this.catchup,
       HANDLE_LOC: this.handleLoc,
-    })(ast, this.getSafeContext(), arg);
+    })(ast, this.getSafeContext(), ...arg);
 
     if (this.factory.isLocalized(ast)) {
       this.handleLoc(ast, generate);

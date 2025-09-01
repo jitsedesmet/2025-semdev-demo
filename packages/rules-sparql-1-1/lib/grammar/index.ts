@@ -1,5 +1,5 @@
-export * from './queryUnit/queryUnit';
-export * from './updateUnit/updateUnit';
+export * from './queryUnit';
+export * from './updateUnit';
 export * from './builtIn';
 export * from './dataSetClause';
 export * from './expression';

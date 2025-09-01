@@ -137,14 +137,21 @@
             },
             "annotations": [
               {
-                "type": "term",
-                "subType": "blankNode",
+                "val": {
+                  "type": "term",
+                  "subType": "blankNode",
+                  "loc": {
+                    "sourceLocationType": "source",
+                    "start": 130,
+                    "end": 137
+                  },
+                  "label": "e_bnode"
+                },
                 "loc": {
                   "sourceLocationType": "source",
-                  "start": 130,
+                  "start": 128,
                   "end": 137
-                },
-                "label": "e_bnode"
+                }
               },
               {
                 "type": "tripleCollection",

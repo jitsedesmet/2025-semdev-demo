@@ -28,10 +28,10 @@ export type ParseRulesToObject<
 
 export type ParserFromRules<Context, Names extends string, RuleDefs extends ParseRuleMap<Names>> = {
   [K in Names]: RuleDefs[K] extends ParserRule<Context, K, infer RET, infer ARGS> ?
-      (input: string, context: Context, args: ARGS) => RET : never
+      (input: string, context: Context, ...args: ARGS) => RET : never
 };
 
 export type ParseMethodsFromRules<Context, Names extends string, RuleDefs extends ParseRuleMap<Names>> = {
   [K in Names]: RuleDefs[K] extends ParserRule<Context, K, infer RET, infer ARGS> ?
-    ParserMethod<[Context, ARGS], RET> : never
+    ParserMethod<[Context, ...ARGS], RET> : never
 };

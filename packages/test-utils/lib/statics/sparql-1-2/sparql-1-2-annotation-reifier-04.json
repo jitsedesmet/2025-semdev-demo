@@ -137,15 +137,22 @@
             },
             "annotations": [
               {
-                "type": "term",
-                "subType": "namedNode",
-                "value": "iri",
+                "val": {
+                  "type": "term",
+                  "subType": "namedNode",
+                  "value": "iri",
+                  "loc": {
+                    "sourceLocationType": "source",
+                    "start": 129,
+                    "end": 133
+                  },
+                  "prefix": ""
+                },
                 "loc": {
                   "sourceLocationType": "source",
-                  "start": 129,
+                  "start": 127,
                   "end": 133
-                },
-                "prefix": ""
+                }
               },
               {
                 "type": "tripleCollection",

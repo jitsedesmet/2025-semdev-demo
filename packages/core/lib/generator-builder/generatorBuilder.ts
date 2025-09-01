@@ -67,7 +67,7 @@ export class GeneratorBuilder<Context, Names extends string, RuleDefs extends Ge
   /**
    * Change the implementation of an existing generator rule.
    */
-  public patchRule<U extends Names, RET, ARGS>(patch: GeneratorRule<Context, U, RET, ARGS>):
+  public patchRule<U extends Names, RET, ARGS extends any[]>(patch: GeneratorRule<Context, U, RET, ARGS>):
   GeneratorBuilder<Context, Names, {[Key in Names]: Key extends U ?
     GeneratorRule<Context, Key, RET, ARGS> :
       (RuleDefs[Key] extends GeneratorRule<Context, Key> ? RuleDefs[Key] : never)
@@ -83,7 +83,7 @@ export class GeneratorBuilder<Context, Names extends string, RuleDefs extends Ge
   /**
    * Add a rule to the grammar. If the rule already exists, but the implementation differs, an error will be thrown.
    */
-  public addRuleRedundant<U extends string, RET, ARGS>(rule: GeneratorRule<Context, U, RET, ARGS>):
+  public addRuleRedundant<U extends string, RET, ARGS extends any[]>(rule: GeneratorRule<Context, U, RET, ARGS>):
   GeneratorBuilder<Context, Names | U, {[K in Names | U]: K extends Names ?
       (RuleDefs[K] extends GeneratorRule<Context, K> ? RuleDefs[K] : never)
     : (K extends U ? GeneratorRule<Context, K, RET, ARGS> : never)
@@ -103,7 +103,7 @@ export class GeneratorBuilder<Context, Names extends string, RuleDefs extends Ge
   /**
    * Add a rule to the grammar. Will raise a typescript error if the rule already exists in the grammar.
    */
-  public addRule<U extends string, RET, ARGS>(
+  public addRule<U extends string, RET, ARGS extends any[]>(
     rule: CheckOverlap<U, Names, GeneratorRule<Context, U, RET, ARGS>>,
   ): GeneratorBuilder<Context, Names | U, {[K in Names | U]: K extends Names ?
       (RuleDefs[K] extends GeneratorRule<Context, K> ? RuleDefs[K] : never)

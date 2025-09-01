@@ -59,19 +59,23 @@ export class ParserBuilder<Context, Names extends string, RuleDefs extends Parse
     return <ParserBuilder<NewContext, Names, RuleDefs>> <unknown> this;
   }
 
-  public typePatch<Patch extends {[Key in Names]?: any }>():
+  public typePatch<Patch extends {[Key in Names]?: [any] | [any, any]}>():
   ParserBuilder<Context, Names, {[Key in Names]: Key extends keyof Patch ? (
-    RuleDefs[Key] extends ParserRule<Context, Key, any, infer Par> ? ParserRule<Context, Key, Patch[Key], Par> : never
+    Patch[Key] extends [any, any] ? ParserRule<Context, Key, Patch[Key][0], Patch[Key][1]> : (
+      // Only one - infer yourself
+      Patch[Key] extends [any] ? (
+        RuleDefs[Key] extends ParserRule<any, any, any, infer Par> ?
+          ParserRule<Context, Key, Patch[Key][0], Par> : never
+      ) : never
+    )
   ) : (RuleDefs[Key] extends ParserRule<Context, Key> ? RuleDefs[Key] : never) }> {
-    return <ParserBuilder<Context, Names, {[Key in Names]: Key extends keyof Patch ? (
-      RuleDefs[Key] extends ParserRule<Context, Key, any, infer Par> ? ParserRule<Context, Key, Patch[Key], Par> : never
-    ) : (RuleDefs[Key] extends ParserRule<Context, Key> ? RuleDefs[Key] : never) }>> <unknown> this;
+    return <any> this;
   }
 
   /**
    * Change the implementation of an existing grammar rule.
    */
-  public patchRule<U extends Names, RET, ARGS>(patch: ParserRule<Context, U, RET, ARGS>):
+  public patchRule<U extends Names, RET, ARGS extends any[]>(patch: ParserRule<Context, U, RET, ARGS>):
   ParserBuilder<Context, Names, {[Key in Names]: Key extends U ?
     ParserRule<Context, Key, RET, ARGS> :
       (RuleDefs[Key] extends ParserRule<Context, Key> ? RuleDefs[Key] : never)
@@ -86,7 +90,7 @@ export class ParserBuilder<Context, Names extends string, RuleDefs extends Parse
   /**
    * Add a rule to the grammar. If the rule already exists, but the implementation differs, an error will be thrown.
    */
-  public addRuleRedundant<U extends string, RET, ARGS>(rule: ParserRule<Context, U, RET, ARGS>):
+  public addRuleRedundant<U extends string, RET, ARGS extends any[]>(rule: ParserRule<Context, U, RET, ARGS>):
   ParserBuilder<Context, Names | U, {[K in Names | U]: K extends U ?
     ParserRule<Context, K, RET, ARGS> :
       (K extends Names ? (RuleDefs[K] extends ParserRule<Context, K> ? RuleDefs[K] : never) : never)
@@ -106,7 +110,7 @@ export class ParserBuilder<Context, Names extends string, RuleDefs extends Parse
   /**
    * Add a rule to the grammar. Will raise a typescript error if the rule already exists in the grammar.
    */
-  public addRule<U extends string, RET, ARGS>(
+  public addRule<U extends string, RET, ARGS extends any[]>(
     rule: CheckOverlap<U, Names, ParserRule<Context, U, RET, ARGS>>,
   ): ParserBuilder<Context, Names | U, {[K in Names | U]: K extends U ?
     ParserRule<Context, K, RET, ARGS> :
@@ -247,7 +251,7 @@ ${errorLine}`);
     // To do that, we need to create a wrapper for each parser rule.
     // eslint-disable-next-line ts/no-unnecessary-type-assertion
     for (const rule of <ParserRule<Context, Names>[]> Object.values(this.rules)) {
-      selfSufficientParser[rule.name] = <any> ((input: string, context: Context, arg: unknown) => {
+      selfSufficientParser[rule.name] = <any> ((input: string, context: Context, ...args: unknown[]) => {
         const processedInput = queryPreProcessor(input);
         const lexResult = lexer.tokenize(processedInput);
         // Console.log(JSON.stringify(lexResult, null, 2));
@@ -255,7 +259,7 @@ ${errorLine}`);
         // This also resets the parser
         parser.input = lexResult.tokens;
         parser.setContext(context);
-        const result = parser[rule.name](context, arg);
+        const result = parser[rule.name](context, ...args);
         if (parser.errors.length > 0) {
           if (errorHandler) {
             errorHandler(parser.errors);

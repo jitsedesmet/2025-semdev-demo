@@ -7,7 +7,7 @@ function isLangDir(dir: string): dir is 'ltr' | 'rtl' {
   return dir === 'ltr' || dir === 'rtl';
 }
 
-export function langTagHasCorrectDomain(literal: TermLiteral): void {
+export function langTagHasCorrectRange(literal: TermLiteral): void {
   if (F.isTermLiteralLangStr(literal)) {
     const dirSplit = literal.langOrIri.split('--');
     if (dirSplit.length > 1) {

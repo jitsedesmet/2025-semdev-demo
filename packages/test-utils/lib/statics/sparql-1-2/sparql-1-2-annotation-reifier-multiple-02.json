@@ -65,15 +65,22 @@
             },
             "annotations": [
               {
-                "type": "term",
-                "subType": "namedNode",
-                "value": "iri1",
+                "val": {
+                  "type": "term",
+                  "subType": "namedNode",
+                  "value": "iri1",
+                  "loc": {
+                    "sourceLocationType": "source",
+                    "start": 59,
+                    "end": 64
+                  },
+                  "prefix": ""
+                },
                 "loc": {
                   "sourceLocationType": "source",
-                  "start": 59,
+                  "start": 57,
                   "end": 64
-                },
-                "prefix": ""
+                }
               },
               {
                 "type": "tripleCollection",
@@ -139,15 +146,22 @@
                 }
               },
               {
-                "type": "term",
-                "subType": "namedNode",
-                "value": "iri2",
+                "val": {
+                  "type": "term",
+                  "subType": "namedNode",
+                  "value": "iri2",
+                  "loc": {
+                    "sourceLocationType": "source",
+                    "start": 80,
+                    "end": 85
+                  },
+                  "prefix": ""
+                },
                 "loc": {
                   "sourceLocationType": "source",
-                  "start": 80,
+                  "start": 79,
                   "end": 85
-                },
-                "prefix": ""
+                }
               }
             ],
             "loc": {

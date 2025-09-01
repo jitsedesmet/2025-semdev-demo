@@ -34,10 +34,10 @@ export type ParserRule<
   /**
    * Function arguments that can be given to convey the state of the current parse operation.
    */
-  ParamType = any,
+  ParamType extends any[] = any[],
 > = {
   name: NameType;
-  impl: (def: ImplArgs) => (context: Context, params: ParamType) => ReturnType;
+  impl: (def: ImplArgs) => (context: Context, ...params: ParamType) => ReturnType;
 };
 
 /**
@@ -50,16 +50,16 @@ export interface ImplArgs extends CstDef {
 /**
  * Type definition used by {@link CstDef.SUBRULE} and family.
  */
-type SubRuleFunc = <T extends string, U = unknown, ARGS = any>(
+type SubRuleFunc = <T extends string, U = unknown, ARGS extends any[] = any>(
   cstDef: ParserRule<any, T, U, ARGS>,
-  argument: ARGS
+  ...argument: ARGS
 ) => U;
 /**
  * Type definition used by {@link CstDef.BACKTRACK}.
  */
-type BacktrackFunc = <T extends string, U = unknown, ARGS = any>(
+type BacktrackFunc = <T extends string, U = unknown, ARGS extends any[] = any>(
   cstDef: ParserRule<any, T, U, ARGS>,
-  argument: ARGS
+  ...argument: ARGS
 ) => () => boolean;
 
 /**

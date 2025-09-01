@@ -1,10 +1,10 @@
 import { Factory } from './factory';
-import type { Path, TermIri } from './RoundTripTypes';
-import type { SparqlContext } from './Sparql11types';
+import type { SparqlContext } from './sparql11HelperTypes';
+import type { Path, TermIri } from './Sparql11types';
 
 interface Parser<ParseRet> {
-  queryOrUpdate: (input: string, context: SparqlContext, arg: undefined) => ParseRet;
-  path: (input: string, context: SparqlContext, arg: undefined) => TermIri | Path;
+  queryOrUpdate: (input: string, context: SparqlContext) => ParseRet;
+  path: (input: string, context: SparqlContext) => TermIri | Path;
 }
 
 export function completeParseContext(
@@ -26,12 +26,12 @@ export class SparqlParser<ParseRet> {
   private readonly F = new Factory();
 
   public parse(query: string, context: Partial<SparqlContext> = {}): ParseRet {
-    return this.parser.queryOrUpdate(query, completeParseContext(context), undefined);
+    return this.parser.queryOrUpdate(query, completeParseContext(context));
   }
 
   public parsePath(query: string, context: Partial<SparqlContext> = {}):
     (Path & { prefixes: object }) | TermIri {
-    const result = this.parser.path(query, completeParseContext(context), undefined);
+    const result = this.parser.path(query, completeParseContext(context));
     if (this.F.isPathPure(result)) {
       return {
         ...result,

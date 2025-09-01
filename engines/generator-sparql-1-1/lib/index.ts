@@ -1,14 +1,14 @@
 import { GeneratorBuilder } from '@traqula/core';
-import { gram, Factory } from '@traqula/rules-sparql-1-1';
 import type * as T11 from '@traqula/rules-sparql-1-1';
+import { Factory, gram } from '@traqula/rules-sparql-1-1';
 
 const queryOrUpdate: T11.SparqlGeneratorRule<'queryOrUpdate', T11.Query | T11.Update> = {
   name: 'queryOrUpdate',
   gImpl: ({ SUBRULE }) => (ast, { factory: F }) => {
     if (F.isQuery(ast)) {
-      SUBRULE(gram.query, ast, undefined);
+      SUBRULE(gram.query, ast);
     } else {
-      SUBRULE(gram.update, ast, undefined);
+      SUBRULE(gram.update, ast);
     }
   },
 };
@@ -105,7 +105,7 @@ export class Generator {
       factory: this.factory,
       offset: 0,
       origSource,
-    }, undefined);
+    });
   }
 
   public generatePath(ast: T11.Path, origSource = ''): string {

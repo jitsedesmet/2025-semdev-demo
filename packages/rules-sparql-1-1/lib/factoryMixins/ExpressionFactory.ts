@@ -11,7 +11,7 @@ import type {
   PatternGroup,
   TermIri,
   Wildcard,
-} from '../RoundTripTypes';
+} from '../Sparql11types';
 import type { Constructor } from './mixins';
 
 type NodeType = 'expression';
