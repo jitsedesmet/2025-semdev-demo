@@ -4,7 +4,7 @@ import { Generator as Generator12 } from '@traqula/generator-sparql-1-2';
 import { Parser as Parser12 } from '@traqula/parser-sparql-1-2';
 import { positiveTest, sparqlAlgebraTests } from '@traqula/test-utils';
 import { describe, it } from 'vitest';
-import { toSparql12, translate12 } from '../lib';
+import { toAst, toAlgebra } from '../lib';
 
 // https://www.w3.org/2001/sw/DataAccess/tests/r2#syntax-basic-01
 // https://www.w3.org/2009/sparql/implementations/
@@ -19,12 +19,12 @@ describe('sparql output', () => {
       const { name, json, quads } = test;
       const expected = <Algebra.Operation> json;
       it (name, ({ expect }) => {
-        const genAst = toSparql12(expected);
+        const genAst = toAst(expected);
         // Console.log(JSON.stringify(genAst, null, 2));
         const genQuery = generator.generate(genAst);
         // Console.log(genQuery);
         const ast = parser.parse(genQuery);
-        const algebra = utils.objectify(translate12(ast, { quads }));
+        const algebra = utils.objectify(toAlgebra(ast, { quads }));
         expect(canon.canonicalizeQuery(algebra, false)).toEqual(canon.canonicalizeQuery(expected, false));
       });
     }
@@ -34,14 +34,14 @@ describe('sparql output', () => {
     it(`can algebra circle ${name}`, async({ expect }) => {
       const path = parser.parse(await query);
       // Console.log(JSON.stringify(path, null, 2));
-      const algebra = utils.objectify(translate12(path, { quads: true }));
+      const algebra = utils.objectify(toAlgebra(path, { quads: true }));
       // Console.log(JSON.stringify(algebra, null, 2));
-      const pathFromAlg = toSparql12(algebra);
+      const pathFromAlg = toAst(algebra);
       // Console.log(JSON.stringify(pathFromAlg, null, 2));
       const queryGen = generator.generate(pathFromAlg);
       // Console.log(queryGen);
       const parsedGen = parser.parse(queryGen);
-      const astFromGen = utils.objectify(translate12(parsedGen, { quads: true }));
+      const astFromGen = utils.objectify(toAlgebra(parsedGen, { quads: true }));
       expect(canon.canonicalizeQuery(astFromGen, false)).toEqual(canon.canonicalizeQuery(algebra, false));
     });
   }

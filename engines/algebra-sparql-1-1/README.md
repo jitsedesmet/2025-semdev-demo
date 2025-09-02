@@ -39,13 +39,13 @@ Returns:
 }
 ```
 
-Translating back to a Traqula AST can be done with the `toSparql` (or `toSparqlJs`) function.
+Translating back to a Traqula AST can be done with the `toAst` function.
 
 ## Algebra object
 The algebra object contains a `types` object,
 which contains all possible values for the `type` field in the output results.
 Besides that it also contains all the TypeScript interfaces of the possible output results.
-The output of the `translate` function will always be an `Algebra.Operation` instance.
+The output of the `toAlgebra` function will always be an `Algebra.Operation` instance.
 
 The best way to see what output would be generated is to look in the [`test` folder](../../packages/test-utils/lib/statics/algebra),
 where we have many SPARQL queries and their corresponding algebra output.

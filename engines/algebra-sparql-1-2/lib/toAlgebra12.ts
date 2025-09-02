@@ -1,4 +1,4 @@
-import { sparqlAlgebraTransformerBuilder } from '@traqula/algebra-sparql-1-1';
+import { toAlgebra11Builder } from '@traqula/algebra-sparql-1-1';
 import type { Algebra, ContextConfigs, translateQuery } from '@traqula/algebra-transformations-1-1';
 import {
   createAlgebraContext,
@@ -10,8 +10,8 @@ import type { AlgebraContext } from '@traqula/algebra-transformations-1-2';
 import { IndirBuilder } from '@traqula/core';
 import type { SparqlQuery } from '@traqula/rules-sparql-1-2';
 
-export const sparqlAlgebraTransformerBuilder12 = IndirBuilder
-  .create(sparqlAlgebraTransformerBuilder)
+export const toAlgebra12Builder = IndirBuilder
+  .create(toAlgebra11Builder)
   .widenContext<AlgebraContext>()
   .patchRule(translateTerm12)
   .patchRule(translateTripleCollection12)
@@ -33,8 +33,8 @@ export const sparqlAlgebraTransformerBuilder12 = IndirBuilder
  * @param options.blankToVariable - translate all blank nodes into variables
  * @returns Operation
  */
-export function translate12(query: SparqlQuery, options: ContextConfigs = {}): Algebra.Operation {
+export function toAlgebra(query: SparqlQuery, options: ContextConfigs = {}): Algebra.Operation {
   const c = createAlgebraContext(options);
-  const transformer = sparqlAlgebraTransformerBuilder12.build();
+  const transformer = toAlgebra12Builder.build();
   return transformer.translateQuery(c, query, options.quads, options.blankToVariable);
 }
