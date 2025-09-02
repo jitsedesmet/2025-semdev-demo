@@ -1,6 +1,16 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+<a name="v0.0.4"></a>
+## [v0.0.4](https://github.com/comunica/traqula/compare/v0.0.3...v0.0.4) - 2025-09-02
+
+* [algebra engine consistent function naming](https://github.com/comunica/traqula/commit/0dc2d826fd86ba791d52811f19bb564e055f1168)
+* [Remove undefined call in SUBRULE - use rest argument for parser and generator arguments](https://github.com/comunica/traqula/commit/85f65b0a90d745ed9689533f9df3ecad31529f90)
+* [reinstate type correctness parser-sparql-1-2](https://github.com/comunica/traqula/commit/33712d7fc2af872d162ec045edaf47fe86392a8d)
+* [use factory in sparql 12 algebra translations](https://github.com/comunica/traqula/commit/7365adc5527a0b5b4dd260496033e2b275834289)
+* [Split algebra into multiple packages](https://github.com/comunica/traqula/commit/c79afc9e483defc01cf037448976a7613bf56d5c)
+* [Add documentation on lexer rules & export grammar rules](https://github.com/comunica/traqula/commit/bd90b0566d23a48cbfed7d1161eb9c815cb50179)
+
 <a name="v0.0.3"></a>
 ## [v0.0.3](https://github.com/comunica/traqula/compare/v0.0.2...v0.0.3) - 2025-08-19
 

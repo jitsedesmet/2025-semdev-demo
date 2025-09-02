@@ -87,7 +87,7 @@ import {
 import { IndirBuilder } from '@traqula/core';
 import type { SparqlQuery } from '@traqula/rules-sparql-1-1';
 
-export const toAstBuilder = IndirBuilder
+export const toAst11Builder = IndirBuilder
   .create(<const> [ resetContext, registerProjection ])
   .addMany(
     translateAlgPureExpression,
@@ -173,8 +173,8 @@ export const toAstBuilder = IndirBuilder
     algToSparql,
   );
 
-export function toSparql(op: Algebra.Operation): SparqlQuery {
+export function toAst(op: Algebra.Operation): SparqlQuery {
   const c = createAstContext();
-  const transformer = toAstBuilder.build();
+  const transformer = toAst11Builder.build();
   return transformer.toSparqlJs(c, op);
 }

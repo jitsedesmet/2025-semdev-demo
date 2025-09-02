@@ -13,6 +13,7 @@ to make sure the output contains all relevant information from the query.
 
 ## Translate
 
-Input for the translate function should be a Traqula AST, by calling [Traqula parser](../parser-sparql-1-2).
+Input for the `toAlgebra` function should be a Traqula AST, by calling [Traqula parser](../parser-sparql-1-2).
 More documentation can be found in the algebra [transformer for SPARQL 1.1](../algebra-sparql-1-1).
 This transformer build on that one but also allows triple terms introduced in [SPARQL 1.2 spec](https://www.w3.org/TR/sparql12-query/).
+Using `toAst` you can convert the Algebra  back to a Traqula AST.

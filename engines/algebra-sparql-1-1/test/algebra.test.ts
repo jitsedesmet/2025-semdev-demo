@@ -3,7 +3,7 @@ import { Canonicalizer, utils } from '@traqula/algebra-transformations-1-1';
 import { Parser } from '@traqula/parser-sparql-1-1';
 import { sparqlAlgebraTests } from '@traqula/test-utils';
 import { describe, it } from 'vitest';
-import { translate } from '../lib';
+import { toAlgebra } from '../lib';
 
 // https://www.w3.org/2001/sw/DataAccess/tests/r2#syntax-basic-01
 // https://www.w3.org/2009/sparql/implementations/
@@ -18,7 +18,7 @@ describe('algebra output', () => {
       it(`${name}${blankToVariable ? ' (no blanks)' : ''}`, ({ expect }) => {
         const ast = parser.parse(query);
         const algebra = utils.objectify(
-          translate(ast, {
+          toAlgebra(ast, {
             quads: name.endsWith('-quads'),
             blankToVariable,
           }),

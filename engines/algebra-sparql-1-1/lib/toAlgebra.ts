@@ -38,7 +38,7 @@ import type { Algebra, ContextConfigs } from '@traqula/algebra-transformations-1
 import { IndirBuilder } from '@traqula/core';
 import type { SparqlQuery } from '@traqula/rules-sparql-1-1';
 
-export const sparqlAlgebraTransformerBuilder = IndirBuilder
+export const toAlgebra11Builder = IndirBuilder
   .create(<const> [
     // Aggregate
     translateAggregates,
@@ -97,8 +97,8 @@ export const sparqlAlgebraTransformerBuilder = IndirBuilder
  * @param options.blankToVariable - translate all blank nodes into variables
  * @returns Operation
  */
-export function translate(query: SparqlQuery, options: ContextConfigs = {}): Algebra.Operation {
+export function toAlgebra(query: SparqlQuery, options: ContextConfigs = {}): Algebra.Operation {
   const c = createAlgebraContext(options);
-  const transformer = sparqlAlgebraTransformerBuilder.build();
+  const transformer = toAlgebra11Builder.build();
   return transformer.translateQuery(c, query, options.quads, options.blankToVariable);
 }
