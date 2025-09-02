@@ -15,13 +15,13 @@ Simple grammar extension of [Traqula engine-sparql-1-1](https://github.com/comun
 ## Installation
 
 ```bash
-npm install @traqula/A-parser-sparql-1-1-construct-quad
+npm install @traqula/parser-sparql-1-1-construct-quad
 ```
 
 or
 
 ```bash
-yarn add @traqula/A-parser-sparql-1-1-construct-quad
+yarn add @traqula/parser-sparql-1-1-construct-quad
 ```
 
 ## Import
